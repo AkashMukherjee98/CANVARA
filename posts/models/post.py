@@ -10,3 +10,11 @@ class Post(pynamodb.models.Model):
     post_id = UnicodeAttribute(range_key=True)
     summary = UnicodeAttribute()
     description = UnicodeAttribute(null=True)
+
+    def as_dict(self):
+        return {
+            'customer_id': self.customer_id,
+            'post_id': self.post_id,
+            'summary': self.summary,
+            'description': self.description,
+        }

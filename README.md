@@ -43,3 +43,22 @@ Then, update the Lambda function:
 cd $CANVARA_ROOT/prototype/build/
 aws lambda update-function-code --function-name create_post --zip-file fileb://create_post.zip
 ```
+
+## Invoke AWS Lambda Functions
+In all of the following examples, replace the values in payload as desired. Replace `/dev/stdout` with any output filename as desired.
+
+### create_post
+```
+aws lambda invoke --cli-binary-format raw-in-base64-out --function-name create_post --payload='{ "customer_id": "1", "post": {"summary": "Task summary", "description": "Task details"}}' /dev/stdout
+```
+
+### list_posts
+```
+aws lambda invoke --cli-binary-format raw-in-base64-out --function-name list_posts --payload='{ "customer_id": "1"}' /dev/stdout
+```
+
+### Pretty-print the Response
+The output from Lambda can be pretty printed using a handy python module.
+```
+aws lambda invoke --cli-binary-format raw-in-base64-out --function-name list_posts --payload='{ "customer_id": "1"}' response.json && python3 -m json.tool response.json
+```

@@ -29,7 +29,7 @@ sam build
 ### Deploy the application
 ```
 cd $CANVARA_ROOT/prototype
-sam deploy
+sam deploy --image-repository 423429615815.dkr.ecr.us-west-2.amazonaws.com/canvara
 ```
 
 ## Invoke AWS Lambda Functions

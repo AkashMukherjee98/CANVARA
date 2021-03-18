@@ -29,3 +29,42 @@ Resources:
       Dockerfile: deploy/Dockerfile
       DockerContext: .
       DockerTag: v1
+  GetPost:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get_post
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - post.get_post_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  UpdatePost:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update_post
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - post.update_post_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  DeletePost:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: delete_post
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - post.delete_post_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1

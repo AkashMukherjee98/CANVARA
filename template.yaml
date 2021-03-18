@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM template for Canvara Lambda functions.
+
+Resources:
+  CreatePost:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create_post
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - create_post.lambda_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  ListPosts:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: list_posts
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - list_posts.lambda_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1

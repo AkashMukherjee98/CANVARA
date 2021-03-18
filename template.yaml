@@ -10,7 +10,7 @@ Resources:
       PackageType: Image
       ImageConfig:
         Command:
-          - create_post.lambda_handler
+          - post.create_post_handler
       Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
     Metadata:
       Dockerfile: deploy/Dockerfile
@@ -23,7 +23,7 @@ Resources:
       PackageType: Image
       ImageConfig:
         Command:
-          - list_posts.lambda_handler
+          - post.list_posts_handler
       Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
     Metadata:
       Dockerfile: deploy/Dockerfile

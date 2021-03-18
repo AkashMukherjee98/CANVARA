@@ -1,8 +1,10 @@
+"""AWS Lambda functions related to posts"""
+
 import uuid
 
 from models.post import Post
 
-def lambda_handler(event, context):
+def create_post_handler(event, context):
     """Handler for create_post Lambda function
 
     Sample payload:
@@ -29,4 +31,20 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
+    }
+
+def list_posts_handler(event, context):
+    """Handler for list_posts Lambda function
+
+    Sample payload:
+    {
+        'customer_id': '1234'
+    }
+    """
+
+    posts = [post.as_dict() for post in Post.query(event['customer_id'])]
+
+    return {
+        'statusCode': 200,
+        'posts': posts
     }

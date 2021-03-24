@@ -68,3 +68,68 @@ Resources:
       Dockerfile: deploy/Dockerfile
       DockerContext: .
       DockerTag: v1
+  CreateCustomer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create_customer
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - customer.create_customer_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  ListCustomers:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: list_customers
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - customer.list_customers_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  GetCustomer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get_customer
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - customer.get_customer_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  UpdateCustomer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update_customer
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - customer.update_customer_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  DeleteCustomer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: delete_customer
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - customer.delete_customer_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1

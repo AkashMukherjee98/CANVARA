@@ -1,0 +1,455 @@
+openapi: 3.0.0
+info:
+  title: Canvara Backend API
+  version: 0.1.0
+servers: []
+paths:
+  /customers:
+    get:
+      summary: List all customers
+      tags:
+        - customers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+              examples: {}
+      operationId: list_customers
+      description: ''
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_customers/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    post:
+      summary: Add a new customer
+      tags:
+        - customers
+      operationId: create_customer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_customer/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+  '/customers/{customer_id}':
+    parameters:
+      - schema:
+          type: string
+        name: customer_id
+        in: path
+        required: true
+    get:
+      summary: Get customer details
+      tags:
+        - customers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+      operationId: get_customer
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_customer/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "customer_id" : "$input.params('customer_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    delete:
+      summary: Delete a customer
+      tags:
+        - customers
+      operationId: delete_customer
+      responses:
+        '200':
+          description: OK
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:delete_customer/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "customer_id" : "$input.params('customer_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+  '/customers/{customer_id}/users':
+    parameters:
+      - schema:
+          type: string
+        name: customer_id
+        in: path
+        required: true
+    get:
+      summary: List all users for a customer
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+      operationId: list_users
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_users/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "customer_id" : "$input.params('customer_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    post:
+      summary: Add a new user for a customer
+      tags:
+        - users
+      operationId: create_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_user/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "customer_id": "$input.params('customer_id')",
+            "user_id": $input.json('user_id'),
+            "name": $input.json('name')
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                name:
+                  type: string
+              required:
+                - user_id
+                - name
+  /posts:
+    get:
+      summary: List all posts
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+      operationId: list_posts
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_posts/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "post_owner_id": "$context.authorizer.claims['sub']"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    post:
+      summary: Add a new post
+      tags:
+        - posts
+      operationId: create_post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_post/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "post_owner_id": "$context.authorizer.claims['sub']",
+            "summary": $input.json('summary'),
+            "description": $input.json('description')
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+                task_owner_id:
+                  type: string
+                description:
+                  type: string
+              required:
+                - summary
+  '/posts/{post_id}':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+      operationId: get_post
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_post/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "user_id": "$context.authorizer.claims['sub']",
+            "post_id" : "$input.params('post_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    put:
+      summary: Update details of a post
+      tags:
+        - posts
+      operationId: update_post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:update_post/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "user_id": "$context.authorizer.claims['sub']",
+            "post_id" : "$input.params('post_id')",
+            "summary": $input.json('summary'),
+            "description": $input.json('description')
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_owner_id:
+                  type: string
+                summary:
+                  type: string
+                description:
+                  type: string
+    delete:
+      summary: Delete a post
+      tags:
+        - posts
+      operationId: delete_post
+      responses:
+        '200':
+          description: OK
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:delete_post/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "user_id": "$context.authorizer.claims['sub']",
+            "post_id" : "$input.params('post_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+components:
+  schemas:
+    Customer:
+      title: Customer
+      type: object
+      x-examples: {}
+      properties:
+        customer_id:
+          type: string
+        name:
+          type: string
+      required:
+        - customer_id
+        - name
+    User:
+      title: User
+      type: object
+      properties:
+        customer_id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+      required:
+        - customer_id
+        - user_id
+        - name
+    Post:
+      title: Post
+      type: object
+      properties:
+        customer_id:
+          type: string
+        post_id:
+          type: string
+        post_owner_id:
+          type: string
+        task_owner_id:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+      required:
+        - customer_id
+        - post_id
+        - post_owner_id
+        - task_owner_id
+        - summary
+  securitySchemes:
+    CanvaraPrototype:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: ''
+      x-amazon-apigateway-authtype: cognito_user_pools
+      x-amazon-apigateway-authorizer:
+        providerARNs:
+          - 'arn:aws:cognito-idp:us-west-2:423429615815:userpool/us-west-2_WXlSvui2Y'
+        type: cognito_user_pools

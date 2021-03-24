@@ -7,7 +7,7 @@ from common.exceptions import DoesNotExistError
 from models.customer import Customer
 
 def create_customer_handler(event, context):
-    """Handler for create_customer Lambda function
+    """Create a new customer.
 
     Sample payload:
     {
@@ -26,12 +26,12 @@ def create_customer_handler(event, context):
     return customer.as_dict()
 
 def list_customers_handler(event, context):
-    """Handler for list_customers Lambda function"""
+    """Return all customers."""
     customers = [customer.as_dict() for customer in Customer.scan()]
     return customers
 
 def get_customer_handler(event, context):
-    """Handler for get_customer Lambda function
+    """Return details of a single customer.
 
     Sample payload:
     {
@@ -45,7 +45,7 @@ def get_customer_handler(event, context):
     return customer.as_dict()
 
 def update_customer_handler(event, context):
-    """Handler for update_customer Lambda function
+    """Update details of a single customer.
 
     Sample payload:
     {
@@ -63,7 +63,7 @@ def update_customer_handler(event, context):
     return customer.as_dict()
 
 def delete_customer_handler(event, context):
-    """Handler for delete_customer Lambda function
+    """Delete a single customer.
 
     Sample payload:
     {

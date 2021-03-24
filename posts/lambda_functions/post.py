@@ -3,10 +3,8 @@
 import uuid
 
 import pynamodb.exceptions
+from common.exceptions import DoesNotExistError
 from models.post import Post
-
-class DoesNotExistError(Exception):
-    """Raised when a request entity is not found"""
 
 def create_post_handler(event, context):
     """Handler for create_post Lambda function

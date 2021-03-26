@@ -1,5 +1,16 @@
 from pynamodb.attributes import UnicodeAttribute
+from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pynamodb.models
+from common.exceptions import DoesNotExistError
+
+class UserIdIndex(GlobalSecondaryIndex):
+    class Meta:
+        index_name = 'user_id-index'
+        read_capacity_units = 1
+        write_capacity_units = 1
+        projection = AllProjection()
+
+    user_id = UnicodeAttribute(hash_key=True)
 
 class User(pynamodb.models.Model):
     class Meta:
@@ -9,13 +20,22 @@ class User(pynamodb.models.Model):
     customer_id = UnicodeAttribute(hash_key=True)
     user_id = UnicodeAttribute(range_key=True)
     name = UnicodeAttribute()
+    user_id_index = UserIdIndex()
 
     @classmethod
     def lookup(cls, user_id, customer_id=None):
         if customer_id is None:
-            # TODO: (sunil) Not Yet Implemented
-            raise NotImplementedError()
+            users = User.user_id_index.query(user_id)
+            if not users:
+                raise DoesNotExistError("User does not exist")
+            return next(users)
         return User.get(customer_id, user_id)
+
+    @classmethod
+    def exists(cls, user_id, customer_id=None):
+        if customer_id is None:
+            return User.user_id_index.count(user_id) > 0
+        return User.count(customer_id, user_id) > 0
 
     def as_dict(self):
         return {

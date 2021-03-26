@@ -50,7 +50,7 @@ def get_user_handler(event, context):
     try:
         user = User.lookup(event['user_id'], event.get('customer_id'))
     except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError("User does not exist")
+        raise DoesNotExistError(f"User '{event['user_id']}' does not exist")
     return user.as_dict()
 
 def update_user_handler(event, context):
@@ -66,7 +66,7 @@ def update_user_handler(event, context):
     try:
         user = User.lookup(event['user_id'], event.get('customer_id'))
     except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError("User does not exist")
+        raise DoesNotExistError(f"User '{event['user_id']}' does not exist")
 
     user.name = event.get('name', user.name)
     user.save()

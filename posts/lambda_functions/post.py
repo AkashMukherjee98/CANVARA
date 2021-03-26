@@ -5,6 +5,7 @@ import uuid
 import pynamodb.exceptions
 from common.exceptions import DoesNotExistError
 from models.post import Post
+from models.user import User
 
 def create_post_handler(event, context):
     """Create a new post.
@@ -12,13 +13,21 @@ def create_post_handler(event, context):
     Sample payload:
     {
         'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
-        'post_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b'
+        'post_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'task_owner_id': '085d75d2-5b84-412e-aad4-7262977a327a',
         'summary': 'Task summary goes here',
         'description': 'Additional details go here'
     }
     """
-    # TODO: (sunil) lookup post_owner_id and task_owner_id to make sure those are valid users within this customer
+    post_owner_id = event['post_owner_id']
+    task_owner_id = event.get('task_owner_id', post_owner_id)
+
+    # Validate the user ids mentioned in the payload
+    if not User.exists(post_owner_id):
+        raise DoesNotExistError(f"User '{post_owner_id}' does not exist")
+
+    if task_owner_id != post_owner_id and not User.exists(task_owner_id):
+        raise DoesNotExistError(f"User '{task_owner_id}' does not exist")
 
     # Generate a unique id for this post
     post_id = str(uuid.uuid4())
@@ -26,8 +35,8 @@ def create_post_handler(event, context):
     post = Post(
         event['customer_id'],
         post_id,
-        post_owner_id=event['post_owner_id'],
-        task_owner_id=event.get('task_owner_id', event['post_owner_id']),
+        post_owner_id=post_owner_id,
+        task_owner_id=task_owner_id,
         summary=event['summary'],
         description=event['description']
     )
@@ -39,7 +48,7 @@ def list_posts_handler(event, context):
 
     Sample payload:
     {
-        'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
+        'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1'
     }
     """
 
@@ -59,7 +68,7 @@ def get_post_handler(event, context):
     try:
         post = Post.get(event['customer_id'], event['post_id'])
     except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError("Post does not exist")
+        raise DoesNotExistError(f"Post '{event['post_id']}' does not exist")
     return post.as_dict()
 
 def update_post_handler(event, context):
@@ -77,11 +86,14 @@ def update_post_handler(event, context):
     try:
         post = Post.get(event['customer_id'], event['post_id'])
     except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError("Post does not exist")
+        raise DoesNotExistError(f"Post '{event['post_id']}' does not exist")
 
-    # TODO: (sunil) lookup task_owner_id to make sure it is a valid user within this customer
+    # Validate the task_owner_id, if mentioned in the payload
+    task_owner_id = event.get('task_owner_id', post.task_owner_id)
+    if task_owner_id != post.task_owner_id and not User.exists(task_owner_id):
+        raise DoesNotExistError(f"User '{task_owner_id}' does not exist")
 
-    post.task_owner_id = event.get('task_owner_id', post.task_owner_id)
+    post.task_owner_id = task_owner_id
     post.summary = event.get('summary', post.summary)
     post.description = event.get('description', post.description)
     post.save()

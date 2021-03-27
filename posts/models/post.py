@@ -1,5 +1,16 @@
 from pynamodb.attributes import UnicodeAttribute
+from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pynamodb.models
+
+class PostOwnerIdIndex(GlobalSecondaryIndex):
+    class Meta:
+        index_name = 'post_owner_id-index'
+        read_capacity_units = 1
+        write_capacity_units = 1
+        projection = AllProjection()
+
+    customer_id = UnicodeAttribute(hash_key=True)
+    post_owner_id = UnicodeAttribute(range_key=True)
 
 class Post(pynamodb.models.Model):
     class Meta:
@@ -12,6 +23,9 @@ class Post(pynamodb.models.Model):
     task_owner_id = UnicodeAttribute()
     summary = UnicodeAttribute()
     description = UnicodeAttribute(null=True)
+
+    # Secondary Indexes
+    post_owner_id_index = PostOwnerIdIndex()
 
     def as_dict(self):
         return {

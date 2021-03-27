@@ -1,5 +1,6 @@
 from pynamodb.attributes import UnicodeAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
+import pynamodb.exceptions
 import pynamodb.models
 from common.exceptions import DoesNotExistError
 
@@ -29,7 +30,11 @@ class User(pynamodb.models.Model):
                 return next(User.user_id_index.query(user_id))
             except StopIteration:
                 raise DoesNotExistError(f"User '{user_id}' does not exist")
-        return User.get(customer_id, user_id)
+
+        try:
+            return User.get(customer_id, user_id)
+        except pynamodb.exceptions.DoesNotExist:
+            raise DoesNotExistError(f"User '{user_id}' does not exist")
 
     @classmethod
     def exists(cls, user_id, customer_id=None):

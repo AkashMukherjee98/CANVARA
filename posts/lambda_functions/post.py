@@ -2,8 +2,7 @@
 
 import uuid
 
-import pynamodb.exceptions
-from common.exceptions import DoesNotExistError
+from common.exceptions import DoesNotExistError, NotAllowedError
 from models.post import Post
 from models.user import User
 
@@ -18,11 +17,8 @@ def create_post_handler(event, context):
         'description': 'Additional details go here'
     }
     """
-    try:
-        post_owner_id = event['post_owner_id']
-        post_owner = User.lookup(post_owner_id)
-    except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError(f"User '{post_owner_id}' does not exist")
+    post_owner_id = event['post_owner_id']
+    post_owner = User.lookup(post_owner_id)
 
     # Validate the task_owner_id, if it was specified
     task_owner_id = event.get('task_owner_id', post_owner_id)
@@ -51,11 +47,8 @@ def list_posts_handler(event, context):
         'post_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b'
     }
     """
-    try:
-        post_owner_id = event['post_owner_id']
-        post_owner = User.lookup(post_owner_id)
-    except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError(f"User '{post_owner_id}' does not exist")
+    post_owner_id = event['post_owner_id']
+    post_owner = User.lookup(post_owner_id)
 
     # TODO: (sunil) accept post_owner_id and task_owner_id and filter on those
     posts = Post.post_owner_id_index.query(post_owner.customer_id, Post.post_owner_id == post_owner_id)
@@ -66,15 +59,12 @@ def get_post_handler(event, context):
 
     Sample payload:
     {
-        'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
+        'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'post_id': '1f5aac8b-5b52-4aaa-af02-e677f6edb54c'
     }
     """
-    # TODO: (sunil) change this to not require customer_id
-    try:
-        post = Post.get(event['customer_id'], event['post_id'])
-    except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError(f"Post '{event['post_id']}' does not exist")
+    user = User.lookup(event['user_id'])
+    post = Post.lookup(user.customer_id, event['post_id'])
     return post.as_dict()
 
 def update_post_handler(event, context):
@@ -82,18 +72,19 @@ def update_post_handler(event, context):
 
     Sample payload:
     {
-        'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
+        'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'post_id': '1f5aac8b-5b52-4aaa-af02-e677f6edb54c',
         'task_owner_id': '085d75d2-5b84-412e-aad4-7262977a327a',
         'summary': 'Updated task summary goes here',
         'description': 'Updated details go here'
     }
     """
-    # TODO: (sunil) change this to not require customer_id
-    try:
-        post = Post.get(event['customer_id'], event['post_id'])
-    except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError(f"Post '{event['post_id']}' does not exist")
+    user = User.lookup(event['user_id'])
+    post = Post.lookup(user.customer_id, event['post_id'])
+
+    # For now, only the post owner is allowed to update the post
+    if post.post_owner_id != event['user_id']:
+        raise NotAllowedError(f"User '{event['user_id']}' is not the post owner")
 
     # Validate the task_owner_id, if it was specified
     task_owner_id = event.get('task_owner_id', post.task_owner_id)
@@ -111,14 +102,19 @@ def delete_post_handler(event, context):
 
     Sample payload:
     {
-        'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
+        'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'post_id': '1f5aac8b-5b52-4aaa-af02-e677f6edb54c'
     }
     """
-    # TODO: (sunil) change this to not require customer_id
-    try:
-        post = Post.get(event['customer_id'], event['post_id'])
-    except pynamodb.exceptions.DoesNotExist:
+    user = User.lookup(event['user_id'])
+    post = Post.lookup(user.customer_id, event['post_id'], must_exist=False)
+
+    if post is None:
         # Noop if the post does not exist
         return
+
+    # For now, only the post owner is allowed to delete the post
+    if post.post_owner_id != event['user_id']:
+        raise NotAllowedError(f"User '{event['user_id']}' is not the post owner")
+
     post.delete()

@@ -1,6 +1,8 @@
 from pynamodb.attributes import UnicodeAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
+import pynamodb.exceptions
 import pynamodb.models
+from common.exceptions import DoesNotExistError
 
 class PostOwnerIdIndex(GlobalSecondaryIndex):
     class Meta:
@@ -26,6 +28,14 @@ class Post(pynamodb.models.Model):
 
     # Secondary Indexes
     post_owner_id_index = PostOwnerIdIndex()
+
+    @classmethod
+    def lookup(cls, customer_id, post_id, must_exist=True):
+        try:
+            return Post.get(customer_id, post_id)
+        except pynamodb.exceptions.DoesNotExist:
+            if must_exist:
+                raise DoesNotExistError(f"Post '{post_id}' does not exist")
 
     def as_dict(self):
         return {

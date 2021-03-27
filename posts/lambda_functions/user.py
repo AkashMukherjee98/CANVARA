@@ -1,7 +1,5 @@
 """AWS Lambda functions related to users"""
 
-import uuid
-
 import pynamodb.exceptions
 from common.exceptions import DoesNotExistError
 from models.user import User
@@ -12,15 +10,13 @@ def create_user_handler(event, context):
     Sample payload:
     {
         'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
+        'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'name': 'Milton Waddams'
     }
     """
-    # Generate a unique id for this user
-    user_id = str(uuid.uuid4())
-
     user = User(
         event['customer_id'],
-        user_id,
+        event['user_id'],
         name=event['name'],
     )
     user.save()

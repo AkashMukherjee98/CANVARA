@@ -25,10 +25,10 @@ class User(pynamodb.models.Model):
     @classmethod
     def lookup(cls, user_id, customer_id=None):
         if customer_id is None:
-            users = User.user_id_index.query(user_id)
-            if not users:
-                raise DoesNotExistError("User does not exist")
-            return next(users)
+            try:
+                return next(User.user_id_index.query(user_id))
+            except StopIteration:
+                raise DoesNotExistError(f"User '{user_id}' does not exist")
         return User.get(customer_id, user_id)
 
     @classmethod

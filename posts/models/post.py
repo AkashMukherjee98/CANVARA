@@ -36,6 +36,7 @@ class Post(pynamodb.models.Model):
         except pynamodb.exceptions.DoesNotExist:
             if must_exist:
                 raise DoesNotExistError(f"Post '{post_id}' does not exist")
+        return None
 
     def as_dict(self):
         return {

@@ -392,6 +392,201 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+  '/posts/{post_id}/applications':
+    get:
+      summary: List all applications for a post
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+      operationId: list_applications_by_post
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_applications_by_post/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "post_id" : "$input.params('post_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    post:
+      summary: Add a new application for a post
+      operationId: create_application
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_application/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "post_id" : "$input.params('post_id')",
+            "applicant_id": "$context.authorizer.claims['sub']",
+            "summary": $input.json('summary')
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+    parameters: []
+  /applications:
+    get:
+      summary: List all applications
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+      operationId: list_applications_by_applicant
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_applications_by_applicant/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "applicant_id": "$context.authorizer.claims['sub']"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+  '/applications/{application_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+    get:
+      summary: Get details of an application
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+      operationId: get_application
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_application/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "application_id" : "$input.params('application_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    put:
+      summary: Update details of an application
+      operationId: update_application
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:update_application/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "application_id" : "$input.params('application_id')",
+            "summary": $input.json('summary')
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+    delete:
+      summary: Delete an application
+      operationId: delete_application
+      responses:
+        '200':
+          description: OK
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:delete_application/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "user_id": "$context.authorizer.claims['sub']",
+            "application_id" : "$input.params('application_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
 components:
   schemas:
     Customer:
@@ -442,6 +637,18 @@ components:
         - post_owner_id
         - task_owner_id
         - summary
+    Application:
+      title: Application
+      type: object
+      properties:
+        post_id:
+          type: string
+        applicant_id:
+          type: string
+        application_id:
+          type: string
+        summary:
+          type: string
   securitySchemes:
     CanvaraPrototype:
       type: apiKey

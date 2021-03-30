@@ -198,3 +198,81 @@ Resources:
       Dockerfile: deploy/Dockerfile
       DockerContext: .
       DockerTag: v1
+  CreateApplication:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create_application
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - application.create_application_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  ListApplicationsByPost:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: list_applications_by_post
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - application.list_applications_by_post_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  ListApplicationsByApplicant:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: list_applications_by_applicant
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - application.list_applications_by_applicant_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  GetApplication:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get_application
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - application.get_application_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  UpdateApplication:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update_application
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - application.update_application_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1
+  DeleteApplication:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: delete_application
+      PackageType: Image
+      ImageConfig:
+        Command:
+          - application.delete_application_handler
+      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
+    Metadata:
+      Dockerfile: deploy/Dockerfile
+      DockerContext: .
+      DockerTag: v1

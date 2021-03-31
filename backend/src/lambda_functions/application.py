@@ -75,15 +75,14 @@ def update_application_handler(event, context):
         'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'application_id': '527d334d-8f99-4e73-bcd9-96cd4ff388d4',
         'summary': 'Updated information for this application',
-        'approval_status': 'none|approved|denied',
-        'selection_status': 'none|rejected|shortlisted|selected'
+        'status': 'approved'
     }
     """
     application = Application.lookup(event['application_id'])
 
     # TODO: (sunil) add authorization - 
-    #   Only the post owner can update the selection status
-    #   Only the manager of the applicant can update the approval status
+    #   Only the post owner can change status to rejected/shortlisted/selected
+    #   Only the manager of the applicant can change status to approved or denied
     #   Only the applicant can update other values
 
     application.summary = event.get('summary', application.summary)

@@ -30,13 +30,10 @@ class Application(pynamodb.models.Model):
         table_name = 'application'
         region = 'us-west-2'
 
-    class ApprovalStatus(Enum):
-        NONE = 'none'
+    class Status(Enum):
+        NEW = 'new'
         APPROVED = 'approved'
         DENIED = 'denied'
-
-    class SelectionStatus(Enum):
-        NONE = 'none'
         REJECTED = 'rejected'
         SHORTLISTED = 'shortlisted'
         SELECTED = 'selected'
@@ -46,9 +43,8 @@ class Application(pynamodb.models.Model):
     application_id = UnicodeAttribute()
     summary = UnicodeAttribute()
 
-    # TODO: (sunil) Convert these to enum attribute
-    approval_status = UnicodeAttribute()
-    selection_status = UnicodeAttribute()
+    # TODO: (sunil) Convert this to enum attribute
+    status = UnicodeAttribute()
 
     # Secondary Indexes
     applicant_id_index = ApplicantIdIndex()
@@ -79,6 +75,5 @@ class Application(pynamodb.models.Model):
             'applicant_id': self.applicant_id,
             'application_id': self.application_id,
             'summary': self.summary,
-            'approval_status': self.approval_status,
-            'selection_status': self.selection_status,
+            'status': self.status,
         }

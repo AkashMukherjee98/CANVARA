@@ -1,4 +1,4 @@
-from pynamodb.attributes import UnicodeAttribute
+from pynamodb.attributes import MapAttribute, UnicodeAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pynamodb.exceptions
 import pynamodb.models
@@ -20,7 +20,7 @@ class User(pynamodb.models.Model):
 
     customer_id = UnicodeAttribute(hash_key=True)
     user_id = UnicodeAttribute(range_key=True)
-    name = UnicodeAttribute()
+    profile = MapAttribute(default={})
     user_id_index = UserIdIndex()
 
     @classmethod
@@ -46,5 +46,5 @@ class User(pynamodb.models.Model):
         return {
             'customer_id': self.customer_id,
             'user_id': self.user_id,
-            'name': self.name,
+            'name': self.profile.name,
         }

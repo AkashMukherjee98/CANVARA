@@ -593,6 +593,80 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+  '/users/{user_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    get:
+      summary: Get user details
+      tags:
+        - users
+      operationId: get_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - CanvaraPrototype: []
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_user/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "user_id" : "$input.params('user_id')"
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
+    put:
+      summary: Update details of a user
+      tags:
+        - users
+      operationId: update_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - CanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      x-amazon-apigateway-integration:
+        type: aws
+        httpMethod: POST
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:update_user/invocations'
+        responses:
+          default:
+            statusCode: '200'
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+            "user_id" : "$input.params('user_id')",
+            "name": $input.json('name')
+            }
+        passthroughBehavior: when_no_templates
+        contentHandling: CONVERT_TO_TEXT
 components:
   schemas:
     Customer:

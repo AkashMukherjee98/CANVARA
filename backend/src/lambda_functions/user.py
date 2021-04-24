@@ -14,10 +14,14 @@ def create_user_handler(event, context):
         'name': 'Milton Waddams'
     }
     """
+    profile = {}
+    if 'name' in event:
+        profile['name'] = event['name']
+
     user = User(
         event['customer_id'],
         event['user_id'],
-        name=event['name'],
+        profile=profile,
     )
     user.save()
     return user.as_dict()
@@ -64,7 +68,9 @@ def update_user_handler(event, context):
     except pynamodb.exceptions.DoesNotExist:
         raise DoesNotExistError(f"User '{event['user_id']}' does not exist")
 
-    user.name = event.get('name', user.name)
+    if 'name' in event:
+        user.profile.name = event['name']
+
     user.save()
     return user.as_dict()
 

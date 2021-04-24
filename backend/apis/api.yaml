@@ -234,9 +234,15 @@ paths:
             statusCode: '200'
         requestTemplates:
           application/json: |-
+            #set($hasPostOwnerId = $input.params('post_owner_id') != "")
+            #set($hasTaskOwnerId = $input.params('task_owner_id') != "")
+            #set($hasQuery = $input.params('q') != "")
             #set($inputRoot = $input.path('$'))
             {
-            "post_owner_id": "$context.authorizer.claims['sub']"
+            "user_id": "$context.authorizer.claims['sub']"
+            #if($hasPostOwnerId), "post_owner_id": "$input.params('post_owner_id')"#end
+            #if($hasTaskOwnerId), "task_owner_id": "$input.params('task_owner_id')"#end
+            #if($hasQuery), "query": "$input.params('q')"#end
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT

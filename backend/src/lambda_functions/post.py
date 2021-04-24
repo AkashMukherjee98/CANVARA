@@ -40,19 +40,25 @@ def create_post_handler(event, context):
     return post.as_dict()
 
 def list_posts_handler(event, context):
-    """Return all posts owned by a user.
+    """Return all posts based on given criteria.
 
     Sample payload:
     {
-        'post_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b'
+        'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
+        'post_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
+        'task_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
+        'query': 'some text'
     }
     """
-    post_owner_id = event['post_owner_id']
-    post_owner = User.lookup(post_owner_id)
+    # This is the user making the request, for authorization purposes
+    user = User.lookup(event['user_id'])
 
-    # TODO: (sunil) accept post_owner_id and task_owner_id and filter on those
-    posts = Post.post_owner_id_index.query(post_owner.customer_id, Post.post_owner_id == post_owner_id)
-    return [post.as_dict() for post in posts]
+    return Post.search(
+        user.customer_id,
+        post_owner_id=event.get('post_owner_id'),
+        task_owner_id=event.get('task_owner_id'),
+        query=event.get('query')
+        )
 
 def get_post_handler(event, context):
     """Get details of a single post.

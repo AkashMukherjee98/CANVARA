@@ -3,7 +3,7 @@
 from datetime import datetime
 import uuid
 
-from common.exceptions import DoesNotExistError, NotAllowedError
+from common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
 from models.post import Post
 from models.user import User
 
@@ -15,7 +15,9 @@ def create_post_handler(event, context):
         'post_owner_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'task_owner_id': '085d75d2-5b84-412e-aad4-7262977a327a',
         'summary': 'Task summary goes here',
-        'description': 'Additional details go here'
+        'description': 'Additional details go here',
+        'target_date': '2021-12-02',
+        'size': 'S'
     }
     """
     post_owner_id = event['post_owner_id']
@@ -25,6 +27,19 @@ def create_post_handler(event, context):
     task_owner_id = event.get('task_owner_id', post_owner_id)
     if task_owner_id != post_owner_id and not User.exists(task_owner_id):
         raise DoesNotExistError(f"User '{task_owner_id}' does not exist")
+
+    post_details = {}
+
+    # If target_date was specified, it must be in ISO 8601 format (YYYY-MM-DD)
+    if event.get('target_date', '') != '':
+        try:
+            target_date = datetime.fromisoformat(event['target_date'])
+            post_details['target_date'] = target_date.date().isoformat()
+        except ValueError:
+            raise InvalidArgumentError(f"Unable to parse target_date: {event['target_date']}")
+
+    if event.get('size', '') != '':
+        post_details['size'] = event['size']
 
     # Generate a unique id for this post
     post_id = str(uuid.uuid4())
@@ -38,7 +53,8 @@ def create_post_handler(event, context):
         summary=event['summary'],
         description=event['description'],
         created_at=now,
-        last_updated_at=now
+        last_updated_at=now,
+        details=post_details
     )
     post.save()
     return post.as_dict()
@@ -86,7 +102,9 @@ def update_post_handler(event, context):
         'post_id': '1f5aac8b-5b52-4aaa-af02-e677f6edb54c',
         'task_owner_id': '085d75d2-5b84-412e-aad4-7262977a327a',
         'summary': 'Updated task summary goes here',
-        'description': 'Updated details go here'
+        'description': 'Updated details go here',
+        'target_date': '2021-12-02',
+        'size': 'M'
     }
     """
     user = User.lookup(event['user_id'])
@@ -100,6 +118,17 @@ def update_post_handler(event, context):
     task_owner_id = event.get('task_owner_id', post.task_owner_id)
     if task_owner_id != post.task_owner_id and not User.exists(task_owner_id):
         raise DoesNotExistError(f"User '{task_owner_id}' does not exist")
+
+    # If target_date was specified, it must be in ISO 8601 format (YYYY-MM-DD)
+    if event.get('target_date', '') != '':
+        try:
+            target_date = datetime.fromisoformat(event['target_date'])
+            post.details.target_date = target_date.date().isoformat()
+        except ValueError:
+            raise InvalidArgumentError(f"Unable to parse target_date: {event['target_date']}")
+
+    if event.get('size', '') != '':
+        post.details.size = event['size']
 
     post.task_owner_id = task_owner_id
     post.summary = event.get('summary', post.summary)

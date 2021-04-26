@@ -1,4 +1,4 @@
-from pynamodb.attributes import UnicodeAttribute
+from pynamodb.attributes import MapAttribute, UnicodeAttribute
 from pynamodb.expressions.condition import Condition
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pynamodb.models
@@ -26,6 +26,10 @@ class TaskOwnerIdIndex(GlobalSecondaryIndex):
     customer_id = UnicodeAttribute(hash_key=True)
     task_owner_id = UnicodeAttribute(range_key=True)
 
+class PostDetails(MapAttribute):
+    target_date = UnicodeAttribute(null=True)
+    size = UnicodeAttribute(null=True)
+
 class Post(pynamodb.models.Model):
     class Meta:
         table_name = 'post'
@@ -37,6 +41,7 @@ class Post(pynamodb.models.Model):
     task_owner_id = UnicodeAttribute()
     summary = UnicodeAttribute()
     description = UnicodeAttribute(null=True)
+    details = PostDetails(default={})
 
     created_at = UnicodeAttribute()
     last_updated_at = UnicodeAttribute()
@@ -75,11 +80,24 @@ class Post(pynamodb.models.Model):
         return [post.as_dict() for post in posts]
 
     def as_dict(self):
-        return {
+        post = {
             'customer_id': self.customer_id,
             'post_id': self.post_id,
             'post_owner_id': self.post_owner_id,
             'task_owner_id': self.task_owner_id,
             'summary': self.summary,
-            'description': self.description,
+            'created_at': self.created_at,
+            'last_updated_at': self.last_updated_at,
         }
+
+        def add_if_not_none(key, value):
+            if value is not None:
+                post[key] = value
+
+        add_if_not_none('description', self.description)
+
+        details = self.details.as_dict()
+        add_if_not_none('size', details.get('size'))
+        add_if_not_none('target_date', details.get('target_date'))
+
+        return post

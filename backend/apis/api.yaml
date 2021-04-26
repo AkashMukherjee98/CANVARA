@@ -273,7 +273,9 @@ paths:
             {
             "post_owner_id": "$context.authorizer.claims['sub']",
             "summary": $input.json('summary'),
-            "description": $input.json('description')
+            "description": $input.json('description'),
+            "size": $input.json('size'),
+            "target_date": $input.json('target_date')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -288,6 +290,10 @@ paths:
                 task_owner_id:
                   type: string
                 description:
+                  type: string
+                size:
+                  type: string
+                target_date:
                   type: string
               required:
                 - summary
@@ -710,6 +716,14 @@ components:
         summary:
           type: string
         description:
+          type: string
+        size:
+          type: string
+        target_date:
+          type: string
+        created_at:
+          type: string
+        last_updated_at:
           type: string
       required:
         - customer_id

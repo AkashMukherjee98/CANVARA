@@ -3,6 +3,7 @@ from pynamodb.expressions.condition import Condition
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pynamodb.models
 import pynamodb.exceptions
+
 from common.exceptions import DoesNotExistError
 
 class PostOwnerIdIndex(GlobalSecondaryIndex):
@@ -36,6 +37,9 @@ class Post(pynamodb.models.Model):
     task_owner_id = UnicodeAttribute()
     summary = UnicodeAttribute()
     description = UnicodeAttribute(null=True)
+
+    created_at = UnicodeAttribute()
+    last_updated_at = UnicodeAttribute()
 
     # Secondary Indexes
     post_owner_id_index = PostOwnerIdIndex()

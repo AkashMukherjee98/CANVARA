@@ -1,5 +1,6 @@
 """AWS Lambda functions related to posts"""
 
+from datetime import datetime
 import uuid
 
 from common.exceptions import DoesNotExistError, NotAllowedError
@@ -28,13 +29,16 @@ def create_post_handler(event, context):
     # Generate a unique id for this post
     post_id = str(uuid.uuid4())
 
+    now = datetime.utcnow().isoformat()
     post = Post(
         post_owner.customer_id,
         post_id,
         post_owner_id=post_owner_id,
         task_owner_id=task_owner_id,
         summary=event['summary'],
-        description=event['description']
+        description=event['description'],
+        created_at=now,
+        last_updated_at=now
     )
     post.save()
     return post.as_dict()
@@ -100,6 +104,7 @@ def update_post_handler(event, context):
     post.task_owner_id = task_owner_id
     post.summary = event.get('summary', post.summary)
     post.description = event.get('description', post.description)
+    post.last_updated_at = datetime.utcnow().isoformat()
     post.save()
     return post.as_dict()
 

@@ -13,6 +13,11 @@ class UserIdIndex(GlobalSecondaryIndex):
 
     user_id = UnicodeAttribute(hash_key=True)
 
+class UserProfile(MapAttribute):
+    name = UnicodeAttribute()
+    title = UnicodeAttribute(null=True)
+    picture_url = UnicodeAttribute(null=True)
+
 class User(pynamodb.models.Model):
     class Meta:
         table_name = 'user'
@@ -20,7 +25,7 @@ class User(pynamodb.models.Model):
 
     customer_id = UnicodeAttribute(hash_key=True)
     user_id = UnicodeAttribute(range_key=True)
-    profile = MapAttribute(default={})
+    profile = UserProfile(default={})
     user_id_index = UserIdIndex()
 
     @classmethod
@@ -43,8 +48,17 @@ class User(pynamodb.models.Model):
         return User.count(customer_id, user_id) > 0
 
     def as_dict(self):
-        return {
+        user = {
             'customer_id': self.customer_id,
             'user_id': self.user_id,
             'name': self.profile.name,
         }
+
+        def add_if_not_none(key, value):
+            if value is not None:
+                user[key] = value
+
+        profile = self.profile.as_dict()
+        add_if_not_none('title', profile.get('title'))
+        add_if_not_none('profile_picture_url', profile.get('picture_url'))
+        return user

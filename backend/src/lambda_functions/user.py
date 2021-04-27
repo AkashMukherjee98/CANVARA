@@ -2,7 +2,8 @@
 
 import pynamodb.exceptions
 from common.exceptions import DoesNotExistError
-from models.user import User
+from models.customer import Customer
+from models.user import User, UserProfile
 
 def create_user_handler(event, context):
     """Create a new user within the given customer.
@@ -11,12 +12,15 @@ def create_user_handler(event, context):
     {
         'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
         'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
-        'name': 'Milton Waddams'
+        'name': 'Milton Waddams',
+        'title': 'Stapler Evangelist',
+        'profile_picture_url': 'http://example.com/profile.jpg'
     }
     """
-    profile = {}
-    if 'name' in event:
-        profile['name'] = event['name']
+    profile = UserProfile()
+    profile.name = event['name']
+    profile.title = event.get('title')
+    profile.picture_url = event.get('profile_picture_url')
 
     user = User(
         event['customer_id'],
@@ -49,9 +53,13 @@ def get_user_handler(event, context):
     """
     try:
         user = User.lookup(event['user_id'], event.get('customer_id'))
+        customer = Customer.get(user.customer_id)
     except pynamodb.exceptions.DoesNotExist:
         raise DoesNotExistError(f"User '{event['user_id']}' does not exist")
-    return user.as_dict()
+
+    user_details = user.as_dict()
+    user_details['customer_name'] = customer.name
+    return user_details
 
 def update_user_handler(event, context):
     """Update details of a single user.
@@ -61,6 +69,8 @@ def update_user_handler(event, context):
         'customer_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
         'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'name': 'Peter Gibbons',
+        'title': 'Unmotivated Programmer',
+        'profile_picture_url': 'http://example.com/profile.jpg'
     }
     """
     try:
@@ -68,8 +78,14 @@ def update_user_handler(event, context):
     except pynamodb.exceptions.DoesNotExist:
         raise DoesNotExistError(f"User '{event['user_id']}' does not exist")
 
-    if 'name' in event:
+    if event.get('name', '') != '':
         user.profile.name = event['name']
+
+    if event.get('title', '') != '':
+        user.profile.title = event['title']
+
+    if event.get('profile_picture_url', '') != '':
+        user.profile.picture_url = event['profile_picture_url']
 
     user.save()
     return user.as_dict()

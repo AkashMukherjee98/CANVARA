@@ -362,7 +362,9 @@ paths:
             "user_id": "$context.authorizer.claims['sub']",
             "post_id" : "$input.params('post_id')",
             "summary": $input.json('summary'),
-            "description": $input.json('description')
+            "description": $input.json('description'),
+            "size": $input.json('size'),
+            "target_date": $input.json('target_date')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -377,6 +379,10 @@ paths:
                 summary:
                   type: string
                 description:
+                  type: string
+                size:
+                  type: string
+                target_date:
                   type: string
     delete:
       summary: Delete a post

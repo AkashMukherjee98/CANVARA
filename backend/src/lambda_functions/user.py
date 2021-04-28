@@ -14,13 +14,35 @@ def create_user_handler(event, context):
         'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'name': 'Milton Waddams',
         'title': 'Stapler Evangelist',
-        'profile_picture_url': 'http://example.com/profile.jpg'
+        'profile_picture_url': 'http://example.com/profile.jpg',
+        'skills': [{
+            'name': 'Accounting Software',
+            'level': 2
+        }, {
+            'name': 'Excel spreadsheet creation',
+            'level': 3
+        }, {
+            'name': 'Machine Learning',
+            'level': 1
+        }],
+        'skills_to_acquire': [{
+            'name': 'Python programming',
+            'level': 1
+        }]
     }
     """
     profile = UserProfile()
     profile.name = event['name']
     profile.title = event.get('title')
     profile.picture_url = event.get('profile_picture_url')
+
+    if event.get('skills', '') != '':
+        User.validate_skills(event['skills'])
+        profile.skills = event['skills']
+
+    if event.get('skills_to_acquire', '') != '':
+        User.validate_skills(event['skills_to_acquire'])
+        profile.skills_to_acquire = event['skills_to_acquire']
 
     user = User(
         event['customer_id'],
@@ -70,7 +92,21 @@ def update_user_handler(event, context):
         'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'name': 'Peter Gibbons',
         'title': 'Unmotivated Programmer',
-        'profile_picture_url': 'http://example.com/profile.jpg'
+        'profile_picture_url': 'http://example.com/profile.jpg',
+        'skills': [{
+            'name': 'Accounting Software',
+            'level': 2
+        }, {
+            'name': 'Excel spreadsheet creation',
+            'level': 3
+        }, {
+            'name': 'Machine Learning',
+            'level': 1
+        }],
+        'skills_to_acquire': [{
+            'name': 'Python programming',
+            'level': 1
+        }]
     }
     """
     try:
@@ -86,6 +122,14 @@ def update_user_handler(event, context):
 
     if event.get('profile_picture_url', '') != '':
         user.profile.picture_url = event['profile_picture_url']
+
+    if event.get('skills', '') != '':
+        User.validate_skills(event['skills'])
+        user.profile.skills = event['skills']
+
+    if event.get('skills_to_acquire', '') != '':
+        User.validate_skills(event['skills_to_acquire'])
+        user.profile.skills_to_acquire = event['skills_to_acquire']
 
     user.save()
     return user.as_dict()

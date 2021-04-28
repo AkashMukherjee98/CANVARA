@@ -193,7 +193,9 @@ paths:
             "user_id": $input.json('user_id'),
             "name": $input.json('name'),
             "title": $input.json('title'),
-            "profile_picture_url": $input.json('profile_picture_url')
+            "profile_picture_url": $input.json('profile_picture_url'),
+            "skills": $input.json('skills'),
+            "skills_to_acquire": $input.json('skills_to_acquire')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -211,6 +213,14 @@ paths:
                   type: string
                 profile_picture_url:
                   type: string
+                skills:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserSkill'
+                skills_to_acquire:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserSkill'
               required:
                 - user_id
                 - name
@@ -673,6 +683,14 @@ paths:
                   type: string
                 profile_picture_url:
                   type: string
+                skills:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserSkill'
+                skills_to_acquire:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserSkill'
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
@@ -687,7 +705,9 @@ paths:
             "user_id" : "$input.params('user_id')",
             "name": $input.json('name'),
             "title": $input.json('title'),
-            "profile_picture_url": $input.json('profile_picture_url')
+            "profile_picture_url": $input.json('profile_picture_url'),
+            "skills": $input.json('skills'),
+            "skills_to_acquire": $input.json('skills_to_acquire')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -721,6 +741,14 @@ components:
           type: string
         customer_name:
           type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSkill'
+        skills_to_acquire:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSkill'
       required:
         - customer_id
         - user_id
@@ -766,6 +794,14 @@ components:
         application_id:
           type: string
         summary:
+          type: string
+    UserSkill:
+      title: UserSkill
+      type: object
+      properties:
+        name:
+          type: string
+        level:
           type: string
   securitySchemes:
     CanvaraPrototype:

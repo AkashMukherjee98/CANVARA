@@ -12,6 +12,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -30,6 +40,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
     post:
@@ -40,6 +62,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -53,6 +85,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
       requestBody:
@@ -65,6 +109,46 @@ paths:
                   type: string
               required:
                 - name
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   '/customers/{customer_id}':
     parameters:
       - schema:
@@ -79,6 +163,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -93,6 +187,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -109,6 +215,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
       security:
         - CanvaraPrototype: []
       x-amazon-apigateway-integration:
@@ -118,6 +234,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -126,6 +254,46 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   '/customers/{customer_id}/users':
     parameters:
       - schema:
@@ -140,6 +308,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -156,6 +334,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -172,6 +362,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -185,6 +385,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -224,6 +436,46 @@ paths:
               required:
                 - user_id
                 - name
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   /posts:
     get:
       summary: List all posts
@@ -232,6 +484,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -248,6 +510,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($hasPostOwnerId = $input.params('post_owner_id') != "")
@@ -270,6 +544,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -283,6 +567,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -313,6 +609,46 @@ paths:
                   type: string
               required:
                 - summary
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   '/posts/{post_id}':
     parameters:
       - schema:
@@ -327,6 +663,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -341,6 +687,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -358,6 +716,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -371,6 +739,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -408,6 +788,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
       security:
         - CanvaraPrototype: []
       x-amazon-apigateway-integration:
@@ -417,6 +807,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -426,6 +828,46 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   '/posts/{post_id}/applications':
     get:
       summary: List all applications for a post
@@ -433,6 +875,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -449,6 +901,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -463,6 +927,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -476,6 +950,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -494,6 +980,46 @@ paths:
               properties:
                 summary:
                   type: string
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, POST, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
     parameters: []
   /applications:
     get:
@@ -502,6 +1028,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -518,6 +1054,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -526,6 +1074,46 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   '/applications/{application_id}':
     parameters:
       - schema:
@@ -539,6 +1127,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -553,6 +1151,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -567,6 +1177,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -580,6 +1200,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -603,6 +1235,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
       security:
         - CanvaraPrototype: []
       x-amazon-apigateway-integration:
@@ -612,6 +1254,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -621,6 +1275,46 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, DELETE, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
   '/users/{user_id}':
     parameters:
       - schema:
@@ -636,6 +1330,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -649,6 +1353,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -665,6 +1381,16 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -698,6 +1424,18 @@ paths:
         responses:
           default:
             statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
         requestTemplates:
           application/json: |-
             #set($inputRoot = $input.path('$'))
@@ -711,6 +1449,46 @@ paths:
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
+    options:
+      summary: Enable CORS
+      tags:
+        - CORS
+      responses:
+        '200':
+          description: OK
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+              method.response.header.Access-Control-Allow-Methods: '''GET, PUT, OPTIONS'''
+              method.response.header.Access-Control-Allow-Origin: ''''''
+            responseTemplates:
+              application/json: |
+                $input.json("$")
+                #set($allowedDomains = ["http://proto.canvara.com.s3-website-us-west-2.amazonaws.com"])
+                #set($origin = $input.params("origin"))
+                #if($allowedDomains.contains($origin))
+                #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                #end
 components:
   schemas:
     Customer:

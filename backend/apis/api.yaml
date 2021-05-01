@@ -1580,7 +1580,9 @@ components:
         name:
           type: string
         level:
-          type: string
+          type: integer
+          minimum: 1
+          maximum: 3
   securitySchemes:
     CanvaraPrototype:
       type: apiKey

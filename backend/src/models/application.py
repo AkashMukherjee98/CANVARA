@@ -41,7 +41,7 @@ class Application(pynamodb.models.Model):
     post_id = UnicodeAttribute(hash_key=True)
     applicant_id = UnicodeAttribute(range_key=True)
     application_id = UnicodeAttribute()
-    summary = UnicodeAttribute()
+    description = UnicodeAttribute()
 
     # TODO: (sunil) Convert this to enum attribute
     status = UnicodeAttribute()
@@ -74,6 +74,6 @@ class Application(pynamodb.models.Model):
             'post_id': self.post_id,
             'applicant_id': self.applicant_id,
             'application_id': self.application_id,
-            'summary': self.summary,
+            'description': self.description,
             'status': self.status,
         }

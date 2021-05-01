@@ -968,7 +968,7 @@ paths:
             {
             "post_id" : "$input.params('post_id')",
             "applicant_id": "$context.authorizer.claims['sub']",
-            "summary": $input.json('summary')
+            "description": $input.json('description')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -978,7 +978,7 @@ paths:
             schema:
               type: object
               properties:
-                summary:
+                description:
                   type: string
     options:
       summary: Enable CORS
@@ -1217,7 +1217,7 @@ paths:
             #set($inputRoot = $input.path('$'))
             {
             "application_id" : "$input.params('application_id')",
-            "summary": $input.json('summary')
+            "description": $input.json('description')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1227,7 +1227,7 @@ paths:
             schema:
               type: object
               properties:
-                summary:
+                description:
                   type: string
     delete:
       summary: Delete an application
@@ -1571,7 +1571,7 @@ components:
           type: string
         application_id:
           type: string
-        summary:
+        description:
           type: string
     UserSkill:
       title: UserSkill

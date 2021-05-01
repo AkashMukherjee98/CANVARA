@@ -14,7 +14,7 @@ def create_application_handler(event, context):
     {
         'post_id': 'c9028558-e464-44ba-ab8d-bc8e37f4f7d1',
         'applicant_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
-        'summary': 'Additional information for this application'
+        'description': 'Additional information for this application'
     }
     """
     # Make sure the user and the post exist
@@ -31,7 +31,7 @@ def create_application_handler(event, context):
         post.post_id,
         applicant.user_id,
         application_id=application_id,
-        summary=event['summary']
+        description=event['description']
     )
     application.save()
     return application.as_dict()
@@ -74,7 +74,7 @@ def update_application_handler(event, context):
     {
         'user_id': '1cfa6354-580e-464e-b350-74d2c7b7793b',
         'application_id': '527d334d-8f99-4e73-bcd9-96cd4ff388d4',
-        'summary': 'Updated information for this application',
+        'description': 'Updated information for this application',
         'status': 'approved'
     }
     """
@@ -85,7 +85,7 @@ def update_application_handler(event, context):
     #   Only the manager of the applicant can change status to approved or denied
     #   Only the applicant can update other values
 
-    application.summary = event.get('summary', application.summary)
+    application.description = event.get('description', application.description)
     application.save()
     return application.as_dict()
 

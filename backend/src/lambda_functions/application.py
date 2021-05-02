@@ -31,7 +31,8 @@ def create_application_handler(event, context):
         post.post_id,
         applicant.user_id,
         application_id=application_id,
-        description=event['description']
+        description=event['description'],
+        status=Application.Status.NEW.value
     )
     application.save()
     return application.as_dict()

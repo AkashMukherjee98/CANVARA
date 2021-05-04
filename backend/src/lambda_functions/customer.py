@@ -3,9 +3,33 @@
 import uuid
 
 import pynamodb.exceptions
-from common.exceptions import DoesNotExistError
+from common.decorators import register
+from common.exceptions import DoesNotExistError, InvalidOperationError
 from models.customer import Customer
 
+OPERATIONS_REGISTRY = {}
+
+def customer_operations_handler(event, context):
+    """Handle customer-related operations
+
+    Sample payload:
+    {
+        'action': 'create_customer',
+        'payload': {
+            'name': 'Initech Corporation'
+        }
+    }
+    """
+    if 'action' not in event:
+        raise InvalidOperationError(f"No action found in the request")
+
+    action = event['action']
+    if action not in OPERATIONS_REGISTRY:
+        raise InvalidOperationError(f"Invalid action: '{action}'")
+
+    return OPERATIONS_REGISTRY[action](event.get('payload', {}), context)
+
+@register(OPERATIONS_REGISTRY, 'create_customer')
 def create_customer_handler(event, context):
     """Create a new customer.
 
@@ -25,11 +49,13 @@ def create_customer_handler(event, context):
     customer.save()
     return customer.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'list_customers')
 def list_customers_handler(event, context):
     """Return all customers."""
     customers = [customer.as_dict() for customer in Customer.scan()]
     return customers
 
+@register(OPERATIONS_REGISTRY, 'get_customer')
 def get_customer_handler(event, context):
     """Return details of a single customer.
 
@@ -44,6 +70,7 @@ def get_customer_handler(event, context):
         raise DoesNotExistError("Customer does not exist")
     return customer.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'update_customer')
 def update_customer_handler(event, context):
     """Update details of a single customer.
 
@@ -62,6 +89,7 @@ def update_customer_handler(event, context):
     customer.save()
     return customer.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'delete_customer')
 def delete_customer_handler(event, context):
     """Delete a single customer.
 

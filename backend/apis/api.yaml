@@ -36,7 +36,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_customers/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:customer_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -52,6 +52,12 @@ paths:
                 #if($allowedDomains.contains($origin))
                 #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
                 #end
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+              "action": "list_customers"
+            }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
     post:
@@ -81,7 +87,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_customer/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:customer_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -97,6 +103,15 @@ paths:
                 #if($allowedDomains.contains($origin))
                 #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
                 #end
+        requestTemplates:
+          application/json: |-
+            #set($inputRoot = $input.path('$'))
+            {
+              "action": "create_customer",
+              "payload": {
+                "name": $input.json('name')
+              }
+            }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
       requestBody:
@@ -183,7 +198,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_customer/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:customer_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -203,7 +218,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "customer_id" : "$input.params('customer_id')"
+              "action": "get_customer",
+              "payload": {
+                "customer_id" : "$input.params('customer_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -230,7 +248,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:delete_customer/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:customer_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -250,7 +268,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "customer_id" : "$input.params('customer_id')"
+              "action": "delete_customer",
+              "payload": {
+                "customer_id" : "$input.params('customer_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT

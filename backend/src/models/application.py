@@ -4,7 +4,7 @@ from pynamodb.attributes import UnicodeAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pynamodb.exceptions
 import pynamodb.models
-from common.exceptions import DoesNotExistError
+from common.exceptions import DoesNotExistError, InvalidArgumentError
 
 class ApplicantIdIndex(GlobalSecondaryIndex):
     class Meta:
@@ -68,6 +68,13 @@ class Application(pynamodb.models.Model):
             applications = Application.applicant_id_index.query(applicant_id)
 
         return [application.as_dict() for application in applications]
+
+    @classmethod
+    def validate_status(cls, status):
+        try:
+            _ = Application.Status(status).value
+        except ValueError:
+            raise InvalidArgumentError(f"Invalid application status: {status}")
 
     def as_dict(self):
         return {

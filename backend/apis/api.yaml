@@ -1217,7 +1217,8 @@ paths:
             #set($inputRoot = $input.path('$'))
             {
             "application_id" : "$input.params('application_id')",
-            "description": $input.json('description')
+            "description": $input.json('description'),
+            "status": $input.json('status')
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT

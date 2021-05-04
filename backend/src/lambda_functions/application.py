@@ -86,7 +86,14 @@ def update_application_handler(event, context):
     #   Only the manager of the applicant can change status to approved or denied
     #   Only the applicant can update other values
 
-    application.description = event.get('description', application.description)
+    if event.get('description', '') != '':
+        application.description = event['description']
+
+    # TODO: (sunil) enforce correct state transitions
+    if event.get('status', '') != '':
+        Application.validate_status(event['status'])
+        application.status = event['status']
+
     application.save()
     return application.as_dict()
 

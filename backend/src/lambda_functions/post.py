@@ -3,10 +3,19 @@
 from datetime import datetime
 import uuid
 
+from base import registered_operations_handler
+from common.decorators import register
 from common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
 from models.post import Post
 from models.user import User
 
+OPERATIONS_REGISTRY = {}
+
+def post_operations_handler(event, context):
+    """Handle post-related operations"""
+    return registered_operations_handler(OPERATIONS_REGISTRY, event, context)
+
+@register(OPERATIONS_REGISTRY, 'create_post')
 def create_post_handler(event, context):
     """Create a new post.
 
@@ -59,6 +68,7 @@ def create_post_handler(event, context):
     post.save()
     return post.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'list_posts')
 def list_posts_handler(event, context):
     """Return all posts based on given criteria.
 
@@ -80,6 +90,7 @@ def list_posts_handler(event, context):
         query=event.get('query')
         )
 
+@register(OPERATIONS_REGISTRY, 'get_post')
 def get_post_handler(event, context):
     """Get details of a single post.
 
@@ -93,6 +104,7 @@ def get_post_handler(event, context):
     post = Post.lookup(user.customer_id, event['post_id'])
     return post.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'update_post')
 def update_post_handler(event, context):
     """Update details of a single post.
 
@@ -137,6 +149,7 @@ def update_post_handler(event, context):
     post.save()
     return post.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'delete_post')
 def delete_post_handler(event, context):
     """Delete a single post.
 

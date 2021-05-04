@@ -533,7 +533,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_posts/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:post_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -556,10 +556,13 @@ paths:
             #set($hasQuery = $input.params('q') != "")
             #set($inputRoot = $input.path('$'))
             {
-            "user_id": "$context.authorizer.claims['sub']"
-            #if($hasPostOwnerId), "post_owner_id": "$input.params('post_owner_id')"#end
-            #if($hasTaskOwnerId), "task_owner_id": "$input.params('task_owner_id')"#end
-            #if($hasQuery), "query": "$input.params('q')"#end
+              "action": "list_posts",
+              "payload": {
+                "user_id": "$context.authorizer.claims['sub']"
+                #if($hasPostOwnerId), "post_owner_id": "$input.params('post_owner_id')"#end
+                #if($hasTaskOwnerId), "task_owner_id": "$input.params('task_owner_id')"#end
+                #if($hasQuery), "query": "$input.params('q')"#end
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -590,7 +593,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_post/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:post_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -610,11 +613,14 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "post_owner_id": "$context.authorizer.claims['sub']",
-            "summary": $input.json('summary'),
-            "description": $input.json('description'),
-            "size": $input.json('size'),
-            "target_date": $input.json('target_date')
+              "action": "create_post",
+              "payload": {
+                "post_owner_id": "$context.authorizer.claims['sub']",
+                "summary": $input.json('summary'),
+                "description": $input.json('description'),
+                "size": $input.json('size'),
+                "target_date": $input.json('target_date')
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -710,7 +716,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_post/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:post_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -730,8 +736,11 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "user_id": "$context.authorizer.claims['sub']",
-            "post_id" : "$input.params('post_id')"
+              "action": "get_post",
+              "payload": {
+                "user_id": "$context.authorizer.claims['sub']",
+                "post_id" : "$input.params('post_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -762,7 +771,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:update_post/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:post_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -782,12 +791,15 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "user_id": "$context.authorizer.claims['sub']",
-            "post_id" : "$input.params('post_id')",
-            "summary": $input.json('summary'),
-            "description": $input.json('description'),
-            "size": $input.json('size'),
-            "target_date": $input.json('target_date')
+              "action": "update_post",
+              "payload": {
+                "user_id": "$context.authorizer.claims['sub']",
+                "post_id" : "$input.params('post_id')",
+                "summary": $input.json('summary'),
+                "description": $input.json('description'),
+                "size": $input.json('size'),
+                "target_date": $input.json('target_date')
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -830,7 +842,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:delete_post/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:post_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -850,8 +862,11 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "user_id": "$context.authorizer.claims['sub']",
-            "post_id" : "$input.params('post_id')"
+              "action": "delete_post",
+              "payload": {
+                "user_id": "$context.authorizer.claims['sub']",
+                "post_id" : "$input.params('post_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT

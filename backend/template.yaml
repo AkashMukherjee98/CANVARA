@@ -3,66 +3,14 @@ Transform: AWS::Serverless-2016-10-31
 Description: SAM template for Canvara Lambda functions.
 
 Resources:
-  CreatePost:
+  PostOperations:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: create_post
+      FunctionName: post_operations
       PackageType: Image
       ImageConfig:
         Command:
-          - post.create_post_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  ListPosts:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: list_posts
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - post.list_posts_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  GetPost:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: get_post
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - post.get_post_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  UpdatePost:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: update_post
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - post.update_post_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  DeletePost:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: delete_post
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - post.delete_post_handler
+          - post.post_operations_handler
       Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
     Metadata:
       Dockerfile: deploy/Dockerfile

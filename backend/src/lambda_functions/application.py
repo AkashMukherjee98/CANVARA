@@ -2,11 +2,20 @@
 
 import uuid
 
+from base import registered_operations_handler
+from common.decorators import register
 from common.exceptions import NotAllowedError
 from models.application import Application
 from models.post import Post
 from models.user import User
 
+OPERATIONS_REGISTRY = {}
+
+def application_operations_handler(event, context):
+    """Handle application-related operations"""
+    return registered_operations_handler(OPERATIONS_REGISTRY, event, context)
+
+@register(OPERATIONS_REGISTRY, 'create_application')
 def create_application_handler(event, context):
     """Create a new application for a post.
 
@@ -37,6 +46,7 @@ def create_application_handler(event, context):
     application.save()
     return application.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'list_applications_by_post')
 def list_applications_by_post_handler(event, context):
     """Return all applications for a post.
 
@@ -47,6 +57,7 @@ def list_applications_by_post_handler(event, context):
     """
     return Application.lookup_multiple(post_id=event['post_id'])
 
+@register(OPERATIONS_REGISTRY, 'list_applications_by_applicant')
 def list_applications_by_applicant_handler(event, context):
     """Return all applications for an applicant.
 
@@ -57,6 +68,7 @@ def list_applications_by_applicant_handler(event, context):
     """
     return Application.lookup_multiple(applicant_id=event['applicant_id'])
 
+@register(OPERATIONS_REGISTRY, 'get_application')
 def get_application_handler(event, context):
     """Return details of a single application.
 
@@ -68,6 +80,7 @@ def get_application_handler(event, context):
     application = Application.lookup(event['application_id'])
     return application.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'update_application')
 def update_application_handler(event, context):
     """Update details of a single application.
 
@@ -97,6 +110,7 @@ def update_application_handler(event, context):
     application.save()
     return application.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'delete_application')
 def delete_application_handler(event, context):
     """Delete a single application.
 

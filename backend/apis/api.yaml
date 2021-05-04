@@ -939,7 +939,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_applications_by_post/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:application_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -959,7 +959,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "post_id" : "$input.params('post_id')"
+              "action": "list_applications_by_post",
+              "payload": {
+                "post_id" : "$input.params('post_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -988,7 +991,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_application/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:application_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1008,9 +1011,12 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "post_id" : "$input.params('post_id')",
-            "applicant_id": "$context.authorizer.claims['sub']",
-            "description": $input.json('description')
+              "action": "create_application",
+              "payload": {
+                "post_id" : "$input.params('post_id')",
+                "applicant_id": "$context.authorizer.claims['sub']",
+                "description": $input.json('description')
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1092,7 +1098,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_applications_by_applicant/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:application_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1112,7 +1118,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "applicant_id": "$context.authorizer.claims['sub']"
+              "action": "list_applications_by_applicant",
+              "payload": {
+                "applicant_id": "$context.authorizer.claims['sub']"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1189,7 +1198,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_application/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:application_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1209,7 +1218,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "application_id" : "$input.params('application_id')"
+              "action": "get_application",
+              "payload": {
+                "application_id" : "$input.params('application_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1238,7 +1250,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:update_application/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:application_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1258,9 +1270,12 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "application_id" : "$input.params('application_id')",
-            "description": $input.json('description'),
-            "status": $input.json('status')
+              "action": "update_application",
+              "payload": {
+                "application_id" : "$input.params('application_id')",
+                "description": $input.json('description'),
+                "status": $input.json('status')
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1293,7 +1308,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:delete_application/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:application_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1313,8 +1328,11 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "user_id": "$context.authorizer.claims['sub']",
-            "application_id" : "$input.params('application_id')"
+              "action": "delete_application",
+              "payload": {
+                "user_id": "$context.authorizer.claims['sub']",
+                "application_id" : "$input.params('application_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT

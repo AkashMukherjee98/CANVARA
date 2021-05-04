@@ -1,10 +1,19 @@
 """AWS Lambda functions related to users"""
 
 import pynamodb.exceptions
-from common.exceptions import DoesNotExistError
+from base import registered_operations_handler
+from common.decorators import register
+from common.exceptions import DoesNotExistError, InvalidOperationError
 from models.customer import Customer
 from models.user import User, UserProfile
 
+OPERATIONS_REGISTRY = {}
+
+def user_operations_handler(event, context):
+    """Handle user-related operations"""
+    return registered_operations_handler(OPERATIONS_REGISTRY, event, context)
+
+@register(OPERATIONS_REGISTRY, 'create_user')
 def create_user_handler(event, context):
     """Create a new user within the given customer.
 
@@ -52,6 +61,7 @@ def create_user_handler(event, context):
     user.save()
     return user.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'list_users')
 def list_users_handler(event, context):
     """Return all users. If a customer is specified, return all users for that customer.
 
@@ -64,6 +74,7 @@ def list_users_handler(event, context):
         return [user.as_dict() for user in User.scan()]
     return [user.as_dict() for user in User.query(event['customer_id'])]
 
+@register(OPERATIONS_REGISTRY, 'get_user')
 def get_user_handler(event, context):
     """Return details of a single user.
 
@@ -83,6 +94,7 @@ def get_user_handler(event, context):
     user_details['customer_name'] = customer.name
     return user_details
 
+@register(OPERATIONS_REGISTRY, 'update_user')
 def update_user_handler(event, context):
     """Update details of a single user.
 
@@ -134,6 +146,7 @@ def update_user_handler(event, context):
     user.save()
     return user.as_dict()
 
+@register(OPERATIONS_REGISTRY, 'delete_user')
 def delete_user_handler(event, context):
     """Delete a single user.
 

@@ -351,7 +351,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:list_users/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:user_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -371,7 +371,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "customer_id" : "$input.params('customer_id')"
+              "action": "list_users",
+              "payload": {
+                "customer_id" : "$input.params('customer_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -402,7 +405,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:create_user/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:user_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -422,13 +425,16 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "customer_id": "$input.params('customer_id')",
-            "user_id": $input.json('user_id'),
-            "name": $input.json('name'),
-            "title": $input.json('title'),
-            "profile_picture_url": $input.json('profile_picture_url'),
-            "skills": $input.json('skills'),
-            "skills_to_acquire": $input.json('skills_to_acquire')
+              "action": "create_user",
+              "payload": {
+                "customer_id": "$input.params('customer_id')",
+                "user_id": $input.json('user_id'),
+                "name": $input.json('name'),
+                "title": $input.json('title'),
+                "profile_picture_url": $input.json('profile_picture_url'),
+                "skills": $input.json('skills'),
+                "skills_to_acquire": $input.json('skills_to_acquire')
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1371,7 +1377,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:get_user/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:user_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1391,7 +1397,10 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "user_id" : "$input.params('user_id')"
+              "action": "get_user",
+              "payload": {
+                "user_id" : "$input.params('user_id')"
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT
@@ -1442,7 +1451,7 @@ paths:
       x-amazon-apigateway-integration:
         type: aws
         httpMethod: POST
-        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:update_user/invocations'
+        uri: 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:423429615815:function:user_operations/invocations'
         responses:
           default:
             statusCode: '200'
@@ -1462,12 +1471,15 @@ paths:
           application/json: |-
             #set($inputRoot = $input.path('$'))
             {
-            "user_id" : "$input.params('user_id')",
-            "name": $input.json('name'),
-            "title": $input.json('title'),
-            "profile_picture_url": $input.json('profile_picture_url'),
-            "skills": $input.json('skills'),
-            "skills_to_acquire": $input.json('skills_to_acquire')
+              "action": "update_user",
+              "payload": {
+                "user_id" : "$input.params('user_id')",
+                "name": $input.json('name'),
+                "title": $input.json('title'),
+                "profile_picture_url": $input.json('profile_picture_url'),
+                "skills": $input.json('skills'),
+                "skills_to_acquire": $input.json('skills_to_acquire')
+              }
             }
         passthroughBehavior: when_no_templates
         contentHandling: CONVERT_TO_TEXT

@@ -3,6 +3,7 @@
 import uuid
 
 import pynamodb.exceptions
+from base import registered_operations_handler
 from common.decorators import register
 from common.exceptions import DoesNotExistError, InvalidOperationError
 from models.customer import Customer
@@ -10,24 +11,8 @@ from models.customer import Customer
 OPERATIONS_REGISTRY = {}
 
 def customer_operations_handler(event, context):
-    """Handle customer-related operations
-
-    Sample payload:
-    {
-        'action': 'create_customer',
-        'payload': {
-            'name': 'Initech Corporation'
-        }
-    }
-    """
-    if 'action' not in event:
-        raise InvalidOperationError(f"No action found in the request")
-
-    action = event['action']
-    if action not in OPERATIONS_REGISTRY:
-        raise InvalidOperationError(f"Invalid action: '{action}'")
-
-    return OPERATIONS_REGISTRY[action](event.get('payload', {}), context)
+    """Handle customer-related operations"""
+    return registered_operations_handler(OPERATIONS_REGISTRY, event, context)
 
 @register(OPERATIONS_REGISTRY, 'create_customer')
 def create_customer_handler(event, context):

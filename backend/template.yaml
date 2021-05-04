@@ -81,66 +81,14 @@ Resources:
       Dockerfile: deploy/Dockerfile
       DockerContext: .
       DockerTag: v1
-  CreateUser:
+  UserOperations:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: create_user
+      FunctionName: user_operations
       PackageType: Image
       ImageConfig:
         Command:
-          - user.create_user_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  ListUsers:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: list_users
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - user.list_users_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  GetUser:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: get_user
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - user.get_user_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  UpdateUser:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: update_user
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - user.update_user_handler
-      Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
-    Metadata:
-      Dockerfile: deploy/Dockerfile
-      DockerContext: .
-      DockerTag: v1
-  DeleteUser:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: delete_user
-      PackageType: Image
-      ImageConfig:
-        Command:
-          - user.delete_user_handler
+          - user.user_operations_handler
       Role: arn:aws:iam::423429615815:role/service-role/lambda_basic_execution
     Metadata:
       Dockerfile: deploy/Dockerfile

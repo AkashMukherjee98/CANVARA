@@ -15,3 +15,4 @@ app.config.update({
 CognitoAuth(app)
 
 import views.customer
+import views.user

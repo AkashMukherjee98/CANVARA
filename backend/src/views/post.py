@@ -113,7 +113,7 @@ def delete_post_handler(post_id):
 
     if post is None:
         # Noop if the post does not exist
-        return
+        return {}
 
     # For now, only the post owner is allowed to delete the post
     if post.post_owner_id != user.user_id:

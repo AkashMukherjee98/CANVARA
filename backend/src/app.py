@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cognito import CognitoAuth
+import common.exceptions
 
 app = Flask(__name__)
 
@@ -13,6 +14,9 @@ app.config.update({
 })
 
 CognitoAuth(app)
+
+for exception_type, exception_handler in common.exceptions.APP_ERROR_HANDLERS.items():
+    app.register_error_handler(exception_type, exception_handler)
 
 import views.customer
 import views.user

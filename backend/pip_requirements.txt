@@ -6,6 +6,7 @@ cognitojwt==1.3.0
 ecdsa==0.14.1
 Flask==2.0.0
 Flask-Cognito==1.17
+Flask-Cors==3.0.10
 idna==2.10
 itsdangerous==2.0.0
 Jinja2==3.0.0

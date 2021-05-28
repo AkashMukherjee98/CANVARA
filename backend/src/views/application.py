@@ -79,7 +79,7 @@ def delete_application_handler(application_id):
 
     if application is None:
         # Noop if the application does not exist
-        return
+        return {}
 
     # For now, only the applicant is allowed to delete the application
     user_id = current_cognito_jwt['sub']

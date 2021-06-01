@@ -1,8 +1,13 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.1.0
+  version: 0.1.1
 servers: []
+tags:
+  - name: applications
+  - name: customers
+  - name: posts
+  - name: users
 paths:
   /customers:
     get:
@@ -273,7 +278,8 @@ paths:
   '/posts/{post_id}/applications':
     get:
       summary: List all applications for a post
-      tags: []
+      tags:
+        - applications
       responses:
         '200':
           description: OK
@@ -306,11 +312,19 @@ paths:
               properties:
                 description:
                   type: string
-    parameters: []
+      tags:
+        - applications
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
   /applications:
     get:
       summary: List all applications
-      tags: []
+      tags:
+        - applications
       responses:
         '200':
           description: OK
@@ -332,7 +346,8 @@ paths:
         required: true
     get:
       summary: Get details of an application
-      tags: []
+      tags:
+        - applications
       responses:
         '200':
           description: OK
@@ -363,6 +378,8 @@ paths:
               properties:
                 description:
                   type: string
+      tags:
+        - applications
     delete:
       summary: Delete an application
       operationId: delete_application
@@ -371,6 +388,8 @@ paths:
           description: OK
       security:
         - AWSCognitoCanvaraPrototype: []
+      tags:
+        - applications
   '/users/{user_id}':
     parameters:
       - schema:

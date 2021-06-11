@@ -1,0 +1,2 @@
+database:
+  sqlalchemy.url: postgresql://postgres:r6anEjALVBuzHCPjRc3K@canvara-prod.cf7xk0rdpve8.us-west-2.rds.amazonaws.com:5432/postgres

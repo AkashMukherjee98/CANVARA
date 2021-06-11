@@ -1,57 +1,22 @@
-from pynamodb.attributes import ListAttribute, MapAttribute, NumberAttribute, UnicodeAttribute
-from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
-import pynamodb.exceptions
-import pynamodb.models
+from sqlalchemy.orm import relationship
+
 from common.exceptions import DoesNotExistError, InvalidArgumentError
+from .db import db, ModelBase
 
-class UserIdIndex(GlobalSecondaryIndex):
-    class Meta:
-        index_name = 'user_id-index'
-        read_capacity_units = 1
-        write_capacity_units = 1
-        projection = AllProjection()
+class User(ModelBase):
+    # Note: 'user' is a reserved keyword in PostgreSQL so we use 'canvara_user' instead
+    __table__ = db.metadata.tables['canvara_user']
 
-    user_id = UnicodeAttribute(hash_key=True)
-
-class UserSkill(MapAttribute):
-    name = UnicodeAttribute()
-    level = NumberAttribute(default=1)
-
-class UserProfile(MapAttribute):
-    name = UnicodeAttribute()
-    title = UnicodeAttribute(null=True)
-    picture_url = UnicodeAttribute(null=True)
-    skills = ListAttribute(null=True, of=UserSkill)
-    skills_to_acquire = ListAttribute(null=True, of=UserSkill)
-
-class User(pynamodb.models.Model):
-    class Meta:
-        table_name = 'user'
-        region = 'us-west-2'
-
-    customer_id = UnicodeAttribute(hash_key=True)
-    user_id = UnicodeAttribute(range_key=True)
-    profile = UserProfile(default={})
-    user_id_index = UserIdIndex()
+    customer = relationship("Customer", back_populates="users")
+    posts = relationship("Post", back_populates="owner")
+    applications = relationship("Application", back_populates="applicant")
 
     @classmethod
-    def lookup(cls, user_id, customer_id=None):
-        if customer_id is None:
-            try:
-                return next(User.user_id_index.query(user_id))
-            except StopIteration:
-                raise DoesNotExistError(f"User '{user_id}' does not exist")
-
-        try:
-            return User.get(customer_id, user_id)
-        except pynamodb.exceptions.DoesNotExist:
-            raise DoesNotExistError(f"User '{user_id}' does not exist")
-
-    @classmethod
-    def exists(cls, user_id, customer_id=None):
-        if customer_id is None:
-            return User.user_id_index.count(user_id) > 0
-        return User.count(customer_id, user_id) > 0
+    def lookup(cls, tx, id):
+        user = tx.get(cls, id)
+        if user is None:
+            raise DoesNotExistError(f"User '{id}' does not exist")
+        return user
 
     @classmethod
     def validate_skills(cls, skills):
@@ -69,24 +34,21 @@ class User(pynamodb.models.Model):
     def as_dict(self):
         user = {
             'customer_id': self.customer_id,
-            'user_id': self.user_id,
-            'name': self.profile.name,
+            'user_id': self.id,
+            'name': self.name,
         }
 
         def add_if_not_none(key, value):
             if value is not None:
                 user[key] = value
 
-        profile = self.profile.as_dict()
-        add_if_not_none('title', profile.get('title'))
-        add_if_not_none('profile_picture_url', profile.get('picture_url'))
+        add_if_not_none('title', self.profile.get('title'))
+        add_if_not_none('profile_picture_url', self.profile.get('profile_picture_url'))
 
-        # TODO: (sunil) See how to automatically serialize the list correctly
-        serialize_skills = lambda skills: [s.as_dict() if isinstance(s, MapAttribute) else s for s in skills]
-        if profile.get('skills'):
-            user['skills'] = serialize_skills(profile['skills'])
+        if self.profile.get('skills'):
+            user['skills'] = self.profile['skills']
 
-        if profile.get('skills_to_acquire'):
-            user['skills_to_acquire'] = serialize_skills(profile['skills_to_acquire'])
+        if self.profile.get('skills_to_acquire'):
+            user['skills_to_acquire'] = self.profile['skills_to_acquire']
 
         return user

@@ -1,103 +1,55 @@
-from pynamodb.attributes import MapAttribute, UnicodeAttribute
-from pynamodb.expressions.condition import Condition
-from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
-import pynamodb.models
-import pynamodb.exceptions
+from sqlalchemy import or_
+from sqlalchemy.orm import relationship
 
 from common.exceptions import DoesNotExistError
+from .db import db, ModelBase
+from .user import User
 
-class PostOwnerIdIndex(GlobalSecondaryIndex):
-    class Meta:
-        index_name = 'post_owner_id-index'
-        read_capacity_units = 1
-        write_capacity_units = 1
-        projection = AllProjection()
+class Post(ModelBase):
+    __table__ = db.metadata.tables['post']
 
-    customer_id = UnicodeAttribute(hash_key=True)
-    post_owner_id = UnicodeAttribute(range_key=True)
-
-class TaskOwnerIdIndex(GlobalSecondaryIndex):
-    class Meta:
-        index_name = 'task_owner_id-index'
-        read_capacity_units = 1
-        write_capacity_units = 1
-        projection = AllProjection()
-
-    customer_id = UnicodeAttribute(hash_key=True)
-    task_owner_id = UnicodeAttribute(range_key=True)
-
-class PostDetails(MapAttribute):
-    target_date = UnicodeAttribute(null=True)
-    size = UnicodeAttribute(null=True)
-
-class Post(pynamodb.models.Model):
-    class Meta:
-        table_name = 'post'
-        region = 'us-west-2'
-
-    customer_id = UnicodeAttribute(hash_key=True)
-    post_id = UnicodeAttribute(range_key=True)
-    post_owner_id = UnicodeAttribute()
-    task_owner_id = UnicodeAttribute()
-    summary = UnicodeAttribute()
-    description = UnicodeAttribute(null=True)
-    details = PostDetails(default={})
-
-    created_at = UnicodeAttribute()
-    last_updated_at = UnicodeAttribute()
-
-    # Secondary Indexes
-    post_owner_id_index = PostOwnerIdIndex()
-    task_owner_id_index = TaskOwnerIdIndex()
+    owner = relationship("User", back_populates="posts")
+    applications = relationship("Application", back_populates="post")
 
     @classmethod
-    def lookup(cls, customer_id, post_id, must_exist=True):
-        try:
-            return Post.get(customer_id, post_id)
-        except pynamodb.exceptions.DoesNotExist:
-            if must_exist:
-                raise DoesNotExistError(f"Post '{post_id}' does not exist")
-        return None
+    def lookup(cls, tx, id, must_exist=True):
+        post = tx.get(cls, id)
+        if post is None and must_exist:
+            raise DoesNotExistError(f"Post '{id}' does not exist")
+        return post
 
     @classmethod
-    def search(cls, customer_id, post_owner_id=None, task_owner_id=None, query=None):
-        posts = []
-        index_name = None
-        filter_condition = None
+    def search(cls, tx, customer_id, owner_id=None, query=None):
+        posts = tx.query(cls).join(Post.owner).where(User.customer_id == customer_id)
+        if owner_id is not None:
+            posts = posts.where(Post.owner_id == owner_id)
 
-        if post_owner_id is not None:
-            index_name = Post.post_owner_id_index.Meta.index_name
-            filter_condition &= (Post.task_owner_id == post_owner_id)
-
-        if task_owner_id is not None:
-            index_name = Post.task_owner_id_index.Meta.index_name
-            filter_condition &= (Post.task_owner_id == task_owner_id)
-
+        # TODO: (sunil) Use full text search instead
         if query is not None:
-            filter_condition &= (Post.summary.contains(query) | Post.description.contains(query))
+            posts = posts.where(or_(
+                Post.details['summary'].as_string().like(f'%{query}%'),
+                Post.details['description'].as_string().like(f'%{query}%')
+            ))
 
-        posts = Post.query(customer_id, filter_condition=filter_condition, index_name=index_name)
         return [post.as_dict() for post in posts]
 
     def as_dict(self):
         post = {
-            'customer_id': self.customer_id,
-            'post_id': self.post_id,
-            'post_owner_id': self.post_owner_id,
-            'task_owner_id': self.task_owner_id,
-            'summary': self.summary,
-            'created_at': self.created_at,
-            'last_updated_at': self.last_updated_at,
+            'customer_id': self.owner.customer_id,
+            'post_id': self.id,
+            'post_owner_id': self.owner_id,
+            'created_at': self.created_at.isoformat(),
+            'last_updated_at': self.last_updated_at.isoformat(),
         }
 
         def add_if_not_none(key, value):
             if value is not None:
                 post[key] = value
 
-        add_if_not_none('description', self.description)
+        add_if_not_none('summary', self.details.get('summary'))
+        add_if_not_none('description', self.details.get('description'))
 
-        details = self.details.as_dict()
-        add_if_not_none('size', details.get('size'))
-        add_if_not_none('target_date', details.get('target_date'))
+        add_if_not_none('size', self.details.get('size'))
+        add_if_not_none('target_date', self.details.get('target_date'))
 
         return post

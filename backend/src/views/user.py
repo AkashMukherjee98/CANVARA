@@ -1,87 +1,93 @@
+import copy
+
 from flask import jsonify, request
 from flask_cognito import cognito_auth_required
 
-import pynamodb.exceptions
-from common.exceptions import DoesNotExistError
-from models.customer import Customer
-from models.user import User, UserProfile
+from sqlalchemy import select
+
+from models.db import transaction
+from models.user import User
 from app import app
 
 @app.route('/customers/<customer_id>/users', methods=['POST'])
 @cognito_auth_required
 def create_user_handler(customer_id):
     payload = request.json
-    profile = UserProfile()
-    profile.name = payload['name']
-    profile.title = payload.get('title')
-    profile.picture_url = payload.get('profile_picture_url')
+    profile = {}
+    if payload.get('title'):
+        profile['title'] = payload['title']
+
+    if payload.get('profile_picture_url'):
+        profile['profile_picture_url'] = payload.get('profile_picture_url')
 
     if payload.get('skills'):
         User.validate_skills(payload['skills'])
-        profile.skills = payload['skills']
+        profile['skills'] = payload['skills']
 
     if payload.get('skills_to_acquire'):
         User.validate_skills(payload['skills_to_acquire'])
-        profile.skills_to_acquire = payload['skills_to_acquire']
+        profile['skills_to_acquire'] = payload['skills_to_acquire']
 
     user = User(
-        customer_id,
-        payload['user_id'],
+        id=payload['user_id'],
+        customer_id=customer_id,
+        name=payload['name'],
         profile=profile,
     )
-    user.save()
+    with transaction() as tx:
+        tx.add(user)
     return user.as_dict()
 
 @app.route('/customers/<customer_id>/users')
 @cognito_auth_required
 def list_users_handler(customer_id):
-    return jsonify([user.as_dict() for user in User.query(customer_id)])
+    with transaction() as tx:
+        users = tx.execute(select(User).where(User.customer_id == customer_id)).scalars().all()
+    return jsonify([user.as_dict() for user in users])
 
 @app.route('/users/<user_id>')
 @cognito_auth_required
 def get_user_handler(user_id):
-    try:
-        user = User.lookup(user_id)
-        customer = Customer.get(user.customer_id)
-    except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError(f"User '{user_id}' does not exist")
-
-    user_details = user.as_dict()
-    user_details['customer_name'] = customer.name
+    with transaction() as tx:
+        user = User.lookup(tx, user_id)
+        user_details = user.as_dict()
+        user_details['customer_name'] = user.customer.name
     return user_details
 
 @app.route('/users/<user_id>', methods=['PUT'])
 @cognito_auth_required
 def update_user_handler(user_id):
-    payload = request.json
-    try:
-        user = User.lookup(user_id)
-    except pynamodb.exceptions.DoesNotExist:
-        raise DoesNotExistError(f"User '{user_id}' does not exist")
+    with transaction() as tx:
+        user = User.lookup(tx, user_id)
 
-    if payload.get('name'):
-        user.profile.name = payload['name']
+        payload = request.json
+        if payload.get('name'):
+            user.name = payload['name']
 
-    if payload.get('title'):
-        user.profile.title = payload['title']
+        profile = copy.deepcopy(user.profile)
+        if payload.get('title'):
+            profile['title'] = payload['title']
 
-    if payload.get('profile_picture_url'):
-        user.profile.picture_url = payload['profile_picture_url']
+        if payload.get('profile_picture_url'):
+            profile['profile_picture_url'] = payload['profile_picture_url']
 
-    if payload.get('skills'):
-        User.validate_skills(payload['skills'])
-        user.profile.skills = payload['skills']
+        if payload.get('skills'):
+            User.validate_skills(payload['skills'])
+            profile['skills'] = payload['skills']
 
-    if payload.get('skills_to_acquire'):
-        User.validate_skills(payload['skills_to_acquire'])
-        user.profile.skills_to_acquire = payload['skills_to_acquire']
-
-    user.save()
+        if payload.get('skills_to_acquire'):
+            User.validate_skills(payload['skills_to_acquire'])
+            profile['skills_to_acquire'] = payload['skills_to_acquire']
+        user.profile = profile
     return user.as_dict()
-
 
 # @app.route('/users/<user_id>', methods=['DELETE'])
 # @cognito_auth_required
 # def delete_user_handler(user_id):
-#     user.delete_user(user_id)
+#     with transaction() as tx:
+#         user = tx.get(User, user_id)
+#         if user is None:
+#             # Noop if the user does not exist
+#             return {}
+#         tx.delete(user)
 #     return {}

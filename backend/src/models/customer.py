@@ -1,16 +1,21 @@
-from pynamodb.attributes import UnicodeAttribute
-import pynamodb.models
+from sqlalchemy.orm import relationship
+from common.exceptions import DoesNotExistError
+from .db import db, ModelBase
 
-class Customer(pynamodb.models.Model):
-    class Meta:
-        table_name = 'customer'
-        region = 'us-west-2'
+class Customer(ModelBase):
+    __table__ = db.metadata.tables['customer']
 
-    customer_id = UnicodeAttribute(hash_key=True)
-    name = UnicodeAttribute()
+    users = relationship("User", back_populates="customer")
+
+    @classmethod
+    def lookup(cls, tx, id, must_exist=True):
+        customer = tx.get(cls, id)
+        if customer is None and must_exist:
+            raise DoesNotExistError(f"Customer '{id}' does not exist")
+        return customer
 
     def as_dict(self):
         return {
-            'customer_id': self.customer_id,
+            'customer_id': self.id,
             'name': self.name,
         }

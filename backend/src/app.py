@@ -24,3 +24,4 @@ import views.customer
 import views.user
 import views.post
 import views.application
+import views.onboarding

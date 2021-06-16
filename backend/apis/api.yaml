@@ -6,6 +6,7 @@ servers: []
 tags:
   - name: applications
   - name: customers
+  - name: onboarding
   - name: posts
   - name: users
 paths:
@@ -445,6 +446,41 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/UserSkill'
+  /onboarding/product_preferences:
+    get:
+      summary: List all products that user can select
+      operationId: list_products
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductPreference'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - onboarding
+    post:
+      summary: Set product preferences during onboarding
+      responses:
+        '204':
+          description: No Content
+      operationId: set_product_preferences
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductPreference'
+      tags:
+        - onboarding
+    parameters: []
 components:
   schemas:
     Customer:
@@ -475,6 +511,10 @@ components:
           type: string
         customer_name:
           type: string
+        product_preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPreference'
         skills:
           type: array
           items:
@@ -539,6 +579,17 @@ components:
           type: integer
           minimum: 1
           maximum: 3
+    ProductPreference:
+      title: ProductPreference
+      type: object
+      properties:
+        product_id:
+          type: string
+        name:
+          type: string
+      required:
+        - product_id
+        - name
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

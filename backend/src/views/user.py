@@ -36,14 +36,16 @@ def create_user_handler(customer_id):
     )
     with transaction() as tx:
         tx.add(user)
-    return user.as_dict()
+        user_details = user.as_dict()
+    return user_details
 
 @app.route('/customers/<customer_id>/users')
 @cognito_auth_required
 def list_users_handler(customer_id):
     with transaction() as tx:
         users = tx.execute(select(User).where(User.customer_id == customer_id)).scalars().all()
-    return jsonify([user.as_dict() for user in users])
+        user_details = jsonify([user.as_dict() for user in users])
+    return user_details
 
 @app.route('/users/<user_id>')
 @cognito_auth_required
@@ -79,7 +81,8 @@ def update_user_handler(user_id):
             User.validate_skills(payload['skills_to_acquire'])
             profile['skills_to_acquire'] = payload['skills_to_acquire']
         user.profile = profile
-    return user.as_dict()
+        user_details = user.as_dict()
+    return user_details
 
 # @app.route('/users/<user_id>', methods=['DELETE'])
 # @cognito_auth_required

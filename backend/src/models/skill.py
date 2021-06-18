@@ -22,6 +22,11 @@ class Skill(ModelBase):
         # If no id was given, add this as a new custom skill
         return Skill(id=str(uuid.uuid4()), name=name, is_custom=True)
 
+    @classmethod
+    def search(cls, tx, query=None):
+        skills = tx.query(Skill).where(Skill.name.startswith(query, autoescape=True))
+        return [skill.as_dict() for skill in skills]
+
     def as_dict(self):
         return {
             'skill_id': self.id,

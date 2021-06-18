@@ -6,7 +6,7 @@ from flask_cognito import cognito_auth_required
 from sqlalchemy import select
 
 from models.db import transaction
-from models.user import User
+from models.user import User, SkillType
 from app import app
 
 @app.route('/customers/<customer_id>/users', methods=['POST'])
@@ -30,11 +30,11 @@ def create_user_handler(customer_id):
         tx.add(user)
 
         if payload.get('skills'):
-            User.validate_skills(payload['skills'])
+            User.validate_skills(payload['skills'], SkillType.SKILL)
             user.set_skills(tx, payload['skills'])
 
         if payload.get('desired_skills'):
-            User.validate_skills(payload['desired_skills'])
+            User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
             user.set_desired_skills(tx, payload['desired_skills'])
 
         user_details = user.as_dict()
@@ -68,11 +68,11 @@ def update_user_handler(user_id):
             user.name = payload['name']
 
         if payload.get('skills'):
-            User.validate_skills(payload['skills'])
+            User.validate_skills(payload['skills'], SkillType.SKILL)
             user.set_skills(tx, payload['skills'])
 
         if payload.get('desired_skills'):
-            User.validate_skills(payload['desired_skills'])
+            User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
             user.set_desired_skills(tx, payload['desired_skills'])
 
         profile = copy.deepcopy(user.profile)

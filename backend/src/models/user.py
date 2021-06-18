@@ -1,11 +1,15 @@
 import copy
+import enum
 
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.expression import update
 
 from common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .skill import Skill
+
+class SkillType(enum.Enum):
+    SKILL = 'skill'
+    DESIRED_SKILL = 'desired_skill'
 
 class UserSkill(ModelBase):
     __table__ = db.metadata.tables['user_skill']
@@ -42,6 +46,9 @@ class User(ModelBase):
     skills = relationship("UserSkill")
     desired_skills = relationship("UserDesiredSkill")
 
+    MIN_SKILLS = 3
+    MAX_SKILLS = 10
+    MAX_DESIRED_SKILLS = 10
     MIN_SKILL_LEVEL = 1
     MAX_SKILL_LEVEL = 10
 
@@ -53,7 +60,20 @@ class User(ModelBase):
         return user
 
     @classmethod
-    def validate_skills(cls, skills):
+    def validate_skills(cls, skills, skill_type):
+        num_skills_selected = len(skills)
+        if skill_type == SkillType.SKILL:
+            if num_skills_selected < cls.MIN_SKILLS or num_skills_selected > cls.MAX_SKILLS:
+                raise InvalidArgumentError(
+                    f"Invalid number of skills: {num_skills_selected}. "
+                    f"At least {cls.MIN_SKILLS} and no more than {cls.MAX_SKILLS} skills must be selected.")
+        else:
+            # No minimum limit for desired skills
+            if num_skills_selected > cls.MAX_DESIRED_SKILLS:
+                raise InvalidArgumentError(
+                    f"Invalid number of skills: {num_skills_selected}. "
+                    f"No more than {cls.MAX_DESIRED_SKILLS} skills may be selected.")
+
         skill_names_seen = set()
         for skill in skills:
             # Make sure there are no duplicate entries
@@ -62,10 +82,13 @@ class User(ModelBase):
                 raise InvalidArgumentError(f"Multiple entries found for skill '{name}'.")
             skill_names_seen.add(name)
 
-            # Validate the level if it's specified
+            if skill_type == SkillType.DESIRED_SKILL:
+                # Ignore level even if it's specified
+                continue
+
             level = skill.get('level')
             if level is None:
-                continue
+                raise InvalidArgumentError(f"Level is required for skill '{name}'.")
 
             if level < cls.MIN_SKILL_LEVEL or level > cls.MAX_SKILL_LEVEL:
                 raise InvalidArgumentError(

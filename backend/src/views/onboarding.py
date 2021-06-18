@@ -9,7 +9,7 @@ from common.exceptions import InvalidArgumentError
 from common.http import make_no_content_response
 from models.db import transaction
 from models.product_preference import ProductPreference
-from models.user import User
+from models.user import User, SkillType
 
 class OnboardingStep(enum.Enum):
     CHOOSE_PRODUCTS = 100
@@ -62,7 +62,7 @@ def set_product_preferences_handler():
 @app.route('/onboarding/skills', methods=['POST'])
 @cognito_auth_required
 def onboarding_set_skills_handler():
-    User.validate_skills(request.json)
+    User.validate_skills(request.json, SkillType.SKILL)
     with transaction() as tx:
         user = User.lookup(tx, current_cognito_jwt['sub'])
         user.set_skills(tx, request.json)
@@ -77,7 +77,7 @@ def onboarding_set_skills_handler():
 @app.route('/onboarding/desired_skills', methods=['POST'])
 @cognito_auth_required
 def onboarding_set_desired_skills_handler():
-    User.validate_skills(request.json)
+    User.validate_skills(request.json, SkillType.DESIRED_SKILL)
     with transaction() as tx:
         user = User.lookup(tx, current_cognito_jwt['sub'])
         user.set_desired_skills(tx, request.json)

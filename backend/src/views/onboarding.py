@@ -17,6 +17,7 @@ class OnboardingStep(enum.Enum):
     SET_PROFILE_PICTURE = 300
     ADD_SKILLS = 400
     ADD_DESIRED_SKILLS = 500
+    ONBOARDING_COMPLETE = 999
 
 @app.route('/onboarding/product_preferences')
 @cognito_auth_required
@@ -39,6 +40,8 @@ def set_product_preferences_handler():
         # Lookup the products and make sure they all exist in the database
         products_selected = ProductPreference.lookup_multiple(tx, product_ids)
 
+        # TODO: (sunil) Need to lock the user here so no other thread can make updates
+
         # User may have already selected some products,
         # remove any product that's not in the new list, then add the rest
         products_to_remove = set(user.product_preferences) - set(products_selected)
@@ -53,5 +56,35 @@ def set_product_preferences_handler():
         profile = user.profile_copy
         onboarding = profile.setdefault('onboarding_steps', {})
         onboarding['current'] = OnboardingStep.CONNECT_LINKEDIN_ACCOUNT.value
+        user.profile = profile
+    return make_no_content_response()
+
+@app.route('/onboarding/skills', methods=['POST'])
+@cognito_auth_required
+def onboarding_set_skills_handler():
+    User.validate_skills(request.json)
+    with transaction() as tx:
+        user = User.lookup(tx, current_cognito_jwt['sub'])
+        user.set_skills(tx, request.json)
+
+        # Move the onboarding workflow to the next step
+        profile = user.profile_copy
+        onboarding = profile.setdefault('onboarding_steps', {})
+        onboarding['current'] = OnboardingStep.ADD_DESIRED_SKILLS.value
+        user.profile = profile
+    return make_no_content_response()
+
+@app.route('/onboarding/desired_skills', methods=['POST'])
+@cognito_auth_required
+def onboarding_set_desired_skills_handler():
+    User.validate_skills(request.json)
+    with transaction() as tx:
+        user = User.lookup(tx, current_cognito_jwt['sub'])
+        user.set_desired_skills(tx, request.json)
+
+        # Move the onboarding workflow to the next step
+        profile = user.profile_copy
+        onboarding = profile.setdefault('onboarding_steps', {})
+        onboarding['current'] = OnboardingStep.ONBOARDING_COMPLETE.value
         user.profile = profile
     return make_no_content_response()

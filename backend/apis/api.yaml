@@ -138,11 +138,11 @@ paths:
                 skills:
                   type: array
                   items:
-                    $ref: '#/components/schemas/UserSkill'
-                skills_to_acquire:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                desired_skills:
                   type: array
                   items:
-                    $ref: '#/components/schemas/UserSkill'
+                    $ref: '#/components/schemas/Skill'
               required:
                 - user_id
                 - name
@@ -441,14 +441,16 @@ paths:
                 skills:
                   type: array
                   items:
-                    $ref: '#/components/schemas/UserSkill'
-                skills_to_acquire:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                desired_skills:
                   type: array
                   items:
-                    $ref: '#/components/schemas/UserSkill'
+                    $ref: '#/components/schemas/Skill'
   /onboarding/product_preferences:
     get:
       summary: List all products that user can select
+      tags:
+        - onboarding
       operationId: list_products
       responses:
         '200':
@@ -461,14 +463,14 @@ paths:
                   $ref: '#/components/schemas/ProductPreference'
       security:
         - AWSCognitoCanvaraPrototype: []
-      tags:
-        - onboarding
     post:
       summary: Set product preferences during onboarding
+      tags:
+        - onboarding
+      operationId: set_product_preferences
       responses:
         '204':
           description: No Content
-      operationId: set_product_preferences
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:
@@ -478,9 +480,42 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/ProductPreference'
+  /onboarding/skills:
+    post:
+      summary: Set skills during onboarding
       tags:
         - onboarding
-    parameters: []
+      operationId: set_skills
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SkillWithLevel'
+  /onboarding/desired_skills:
+    post:
+      summary: Set desired skills during onboarding
+      tags:
+        - onboarding
+      operationId: set_desired_skills
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Skill'
 components:
   schemas:
     Customer:
@@ -518,11 +553,11 @@ components:
         skills:
           type: array
           items:
-            $ref: '#/components/schemas/UserSkill'
-        skills_to_acquire:
+            $ref: '#/components/schemas/SkillWithLevel'
+        desired_skills:
           type: array
           items:
-            $ref: '#/components/schemas/UserSkill'
+            $ref: '#/components/schemas/Skill'
       required:
         - customer_id
         - user_id
@@ -569,16 +604,26 @@ components:
           type: string
         description:
           type: string
-    UserSkill:
-      title: UserSkill
+    Skill:
+      title: Skill
       type: object
       properties:
+        skill_id:
+          type: string
         name:
           type: string
-        level:
-          type: integer
-          minimum: 1
-          maximum: 3
+        custom:
+          type: boolean
+      required:
+        - skill_id
+    SkillWithLevel:
+      title: SkillWithLevel
+      allOf:
+        - $ref: '#/components/schemas/Skill'
+        - type: object
+          properties:
+            level:
+              type: integer
     ProductPreference:
       title: ProductPreference
       type: object

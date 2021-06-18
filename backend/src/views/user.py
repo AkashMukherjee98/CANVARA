@@ -20,14 +20,6 @@ def create_user_handler(customer_id):
     if payload.get('profile_picture_url'):
         profile['profile_picture_url'] = payload.get('profile_picture_url')
 
-    if payload.get('skills'):
-        User.validate_skills(payload['skills'])
-        profile['skills'] = payload['skills']
-
-    if payload.get('skills_to_acquire'):
-        User.validate_skills(payload['skills_to_acquire'])
-        profile['skills_to_acquire'] = payload['skills_to_acquire']
-
     user = User(
         id=payload['user_id'],
         customer_id=customer_id,
@@ -36,6 +28,15 @@ def create_user_handler(customer_id):
     )
     with transaction() as tx:
         tx.add(user)
+
+        if payload.get('skills'):
+            User.validate_skills(payload['skills'])
+            user.set_skills(tx, payload['skills'])
+
+        if payload.get('desired_skills'):
+            User.validate_skills(payload['desired_skills'])
+            user.set_desired_skills(tx, payload['desired_skills'])
+
         user_details = user.as_dict()
     return user_details
 
@@ -66,6 +67,14 @@ def update_user_handler(user_id):
         if payload.get('name'):
             user.name = payload['name']
 
+        if payload.get('skills'):
+            User.validate_skills(payload['skills'])
+            user.set_skills(tx, payload['skills'])
+
+        if payload.get('desired_skills'):
+            User.validate_skills(payload['desired_skills'])
+            user.set_desired_skills(tx, payload['desired_skills'])
+
         profile = copy.deepcopy(user.profile)
         if payload.get('title'):
             profile['title'] = payload['title']
@@ -73,14 +82,11 @@ def update_user_handler(user_id):
         if payload.get('profile_picture_url'):
             profile['profile_picture_url'] = payload['profile_picture_url']
 
-        if payload.get('skills'):
-            User.validate_skills(payload['skills'])
-            profile['skills'] = payload['skills']
-
-        if payload.get('skills_to_acquire'):
-            User.validate_skills(payload['skills_to_acquire'])
-            profile['skills_to_acquire'] = payload['skills_to_acquire']
         user.profile = profile
+
+    # Fetch the user again from the database so the updates made above are reflected in the response
+    with transaction() as tx:
+        user = User.lookup(tx, user_id)
         user_details = user.as_dict()
     return user_details
 

@@ -12,10 +12,10 @@ class Post(ModelBase):
     applications = relationship("Application", back_populates="post")
 
     @classmethod
-    def lookup(cls, tx, id, must_exist=True):
-        post = tx.get(cls, id)
+    def lookup(cls, tx, post_id, must_exist=True):
+        post = tx.get(cls, post_id)
         if post is None and must_exist:
-            raise DoesNotExistError(f"Post '{id}' does not exist")
+            raise DoesNotExistError(f"Post '{post_id}' does not exist")
         return post
 
     @classmethod

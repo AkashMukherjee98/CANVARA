@@ -2,10 +2,10 @@ from datetime import datetime
 import copy
 import uuid
 
+from flask import current_app as app
 from flask import jsonify, request
 from flask_cognito import cognito_auth_required, current_cognito_jwt
 
-from backend import app
 from backend.common.exceptions import NotAllowedError
 from backend.models.application import Application
 from backend.models.db import transaction

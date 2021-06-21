@@ -20,9 +20,9 @@ class UserCurrentSkill(ModelBase):
         return self.skill.id
 
     def as_dict(self):
-        d = self.skill.as_dict()
-        d['level'] = self.level
-        return d
+        user_skill_details = self.skill.as_dict()
+        user_skill_details['level'] = self.level
+        return user_skill_details
 
 class UserDesiredSkill(ModelBase):
     __table__ = db.metadata.tables['user_desired_skill']
@@ -53,10 +53,10 @@ class User(ModelBase):
     MAX_SKILL_LEVEL = 100
 
     @classmethod
-    def lookup(cls, tx, id):
-        user = tx.get(cls, id)
+    def lookup(cls, tx, user_id):
+        user = tx.get(cls, user_id)
         if user is None:
-            raise DoesNotExistError(f"User '{id}' does not exist")
+            raise DoesNotExistError(f"User '{user_id}' does not exist")
         return user
 
     @classmethod
@@ -101,7 +101,11 @@ class User(ModelBase):
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
             # Lookup the skill based on id or name, or add a new one
-            skill = Skill.lookup(tx, id=skill_data.get('skill_id'), name=skill_data.get('name'), must_exist=False)
+            skill = Skill.lookup(
+                tx,
+                skill_id=skill_data.get('skill_id'),
+                name=skill_data.get('name'),
+                must_exist=False)
             if skill is None:
                 skill = Skill.add_custom_skill(name=skill_data['name'])
 
@@ -133,7 +137,11 @@ class User(ModelBase):
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
             # Lookup the skill based on id or name, or add a new one
-            skill = Skill.lookup(tx, id=skill_data.get('skill_id'), name=skill_data.get('name'), must_exist=False)
+            skill = Skill.lookup(
+                tx,
+                skill_id=skill_data.get('skill_id'),
+                name=skill_data.get('name'),
+                must_exist=False)
             if skill is None:
                 skill = Skill.add_custom_skill(name=skill_data['name'])
 

@@ -8,15 +8,15 @@ class Skill(ModelBase):
     __table__ = db.metadata.tables['skill']
 
     @classmethod
-    def lookup(cls, tx, id=None, name=None, must_exist=True):
-        if id is None and name is None:
+    def lookup(cls, tx, skill_id=None, name=None, must_exist=True):
+        if skill_id is None and name is None:
             raise InvalidArgumentError("Either skill id or name is required for lookup")
 
-        if id is not None:
+        if skill_id is not None:
             # TODO: (sunil) if name was also given, make sure it matches
-            skill = tx.get(cls, id)
+            skill = tx.get(cls, skill_id)
             if skill is None and must_exist:
-                raise DoesNotExistError(f"Skill '{id}' does not exist")
+                raise DoesNotExistError(f"Skill '{skill_id}' does not exist")
         else:
             skill = tx.query(Skill).where(Skill.name.ilike(name)).first()
             if skill is None and must_exist:

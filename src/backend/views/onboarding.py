@@ -1,10 +1,10 @@
 import enum
 
+from flask import current_app as app
 from flask import jsonify, request
 from flask_cognito import cognito_auth_required, current_cognito_jwt
 from sqlalchemy import select
 
-from backend import app
 from backend.common.exceptions import InvalidArgumentError
 from backend.common.http import make_no_content_response
 from backend.models.db import transaction
@@ -34,8 +34,8 @@ def set_product_preferences_handler():
 
         try:
             product_ids = [product['product_id'] for product in request.json]
-        except KeyError:
-            raise InvalidArgumentError("Invalid format: product_id is missing")
+        except KeyError as ex:
+            raise InvalidArgumentError("Invalid format: product_id is missing") from ex
 
         # Lookup the products and make sure they all exist in the database
         products_selected = ProductPreference.lookup_multiple(tx, product_ids)

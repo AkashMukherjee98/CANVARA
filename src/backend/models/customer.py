@@ -8,10 +8,10 @@ class Customer(ModelBase):
     users = relationship("User", back_populates="customer")
 
     @classmethod
-    def lookup(cls, tx, id, must_exist=True):
-        customer = tx.get(cls, id)
+    def lookup(cls, tx, customer_id, must_exist=True):
+        customer = tx.get(cls, customer_id)
         if customer is None and must_exist:
-            raise DoesNotExistError(f"Customer '{id}' does not exist")
+            raise DoesNotExistError(f"Customer '{customer_id}' does not exist")
         return customer
 
     def as_dict(self):

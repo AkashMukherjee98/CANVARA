@@ -23,10 +23,10 @@ class Application(ModelBase):
         SELECTED = 'selected'
 
     @classmethod
-    def lookup(cls, tx, id, must_exist=True):
-        application = tx.get(cls, id)
+    def lookup(cls, tx, application_id, must_exist=True):
+        application = tx.get(cls, application_id)
         if application is None and must_exist:
-            raise DoesNotExistError(f"Application '{id}' does not exist")
+            raise DoesNotExistError(f"Application '{application_id}' does not exist")
         return application
 
     @classmethod
@@ -43,8 +43,8 @@ class Application(ModelBase):
     def validate_status(cls, status):
         try:
             _ = Application.Status(status).value
-        except ValueError:
-            raise InvalidArgumentError(f"Invalid application status: {status}")
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Invalid application status: {status}") from ex
 
     def as_dict(self):
         return {

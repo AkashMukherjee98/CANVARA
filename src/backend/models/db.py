@@ -7,7 +7,7 @@ import backend.common.config
 
 ModelBase = declarative_base()
 
-class CanvaraDB:
+class CanvaraDB:  # pylint: disable=too-few-public-methods
     def __init__(self):
         canvara_config = backend.common.config.get_canvara_config()
         self.engine = engine_from_config(canvara_config['database'], prefix="sqlalchemy.")

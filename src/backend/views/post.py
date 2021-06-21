@@ -2,10 +2,10 @@ from datetime import datetime
 import copy
 import uuid
 
+from flask import current_app as app
 from flask import jsonify, request
 from flask_cognito import cognito_auth_required, current_cognito_jwt
 
-from backend import app
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.post import Post
@@ -22,8 +22,8 @@ def create_post_handler():
         try:
             target_date = datetime.fromisoformat(payload['target_date'])
             details['target_date'] = target_date.date().isoformat()
-        except ValueError:
-            raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}")
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
 
     if payload.get('summary'):
         details['summary'] = payload['summary']
@@ -89,8 +89,8 @@ def update_post_handler(post_id):
             try:
                 target_date = datetime.fromisoformat(payload['target_date'])
                 details['target_date'] = target_date.date().isoformat()
-            except ValueError:
-                raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}")
+            except ValueError as ex:
+                raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
 
         if 'size' in payload:
             details['size'] = payload['size']

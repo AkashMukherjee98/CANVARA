@@ -1,6 +1,5 @@
 from sqlalchemy import select
 from sqlalchemy.exc import StatementError
-from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import InvalidArgumentError
 from .db import db, ModelBase
@@ -12,13 +11,13 @@ class ProductPreference(ModelBase):
     def lookup_multiple(cls, tx, ids, must_exist=True):
         try:
             products = tx.execute(select(cls).where(cls.id.in_(ids))).scalars().all()
-        except StatementError:
+        except StatementError as ex:
             # TODO: (sunil) log the original exception
             # This can happen, for example, if the given id is not a valid UUID
-            raise InvalidArgumentError("Product preference lookup failed")
+            raise InvalidArgumentError("Product preference lookup failed") from ex
 
         if must_exist:
-            unknown_ids = set(ids) - set([product.id for product in products])
+            unknown_ids = set(ids) - set([product.id for product in products])  # pylint: disable=consider-using-set-comprehension
             if unknown_ids:
                 raise InvalidArgumentError(f"Product preference lookup failed: {', '.join(unknown_ids)}")
         return products

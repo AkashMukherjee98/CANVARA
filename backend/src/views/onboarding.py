@@ -15,7 +15,7 @@ class OnboardingStep(enum.Enum):
     CHOOSE_PRODUCTS = 100
     CONNECT_LINKEDIN_ACCOUNT = 200
     SET_PROFILE_PICTURE = 300
-    ADD_SKILLS = 400
+    ADD_CURRENT_SKILLS = 400
     ADD_DESIRED_SKILLS = 500
     ONBOARDING_COMPLETE = 999
 
@@ -59,13 +59,13 @@ def set_product_preferences_handler():
         user.profile = profile
     return make_no_content_response()
 
-@app.route('/onboarding/skills', methods=['POST'])
+@app.route('/onboarding/current_skills', methods=['POST'])
 @cognito_auth_required
-def onboarding_set_skills_handler():
-    User.validate_skills(request.json, SkillType.SKILL)
+def onboarding_set_current_skills_handler():
+    User.validate_skills(request.json, SkillType.CURRENT_SKILL)
     with transaction() as tx:
         user = User.lookup(tx, current_cognito_jwt['sub'])
-        user.set_skills(tx, request.json)
+        user.set_current_skills(tx, request.json)
 
         # Move the onboarding workflow to the next step
         profile = user.profile_copy

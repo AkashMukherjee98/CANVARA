@@ -8,11 +8,11 @@ from .db import db, ModelBase
 from .skill import Skill
 
 class SkillType(enum.Enum):
-    SKILL = 'skill'
+    CURRENT_SKILL = 'current_skill'
     DESIRED_SKILL = 'desired_skill'
 
-class UserSkill(ModelBase):
-    __table__ = db.metadata.tables['user_skill']
+class UserCurrentSkill(ModelBase):
+    __table__ = db.metadata.tables['user_current_skill']
     skill = relationship("Skill")
 
     @property
@@ -43,11 +43,11 @@ class User(ModelBase):
     posts = relationship("Post", back_populates="owner")
     applications = relationship("Application", back_populates="applicant")
     product_preferences = relationship("ProductPreference", secondary=db.metadata.tables['user_product_preference'])
-    skills = relationship("UserSkill")
+    current_skills = relationship("UserCurrentSkill")
     desired_skills = relationship("UserDesiredSkill")
 
-    MIN_SKILLS = 3
-    MAX_SKILLS = 10
+    MIN_CURRENT_SKILLS = 3
+    MAX_CURRENT_SKILLS = 10
     MAX_DESIRED_SKILLS = 10
     MIN_SKILL_LEVEL = 1
     MAX_SKILL_LEVEL = 10
@@ -62,11 +62,12 @@ class User(ModelBase):
     @classmethod
     def validate_skills(cls, skills, skill_type):
         num_skills_selected = len(skills)
-        if skill_type == SkillType.SKILL:
-            if num_skills_selected < cls.MIN_SKILLS or num_skills_selected > cls.MAX_SKILLS:
+        if skill_type == SkillType.CURRENT_SKILL:
+            if num_skills_selected < cls.MIN_CURRENT_SKILLS or num_skills_selected > cls.MAX_CURRENT_SKILLS:
                 raise InvalidArgumentError(
                     f"Invalid number of skills: {num_skills_selected}. "
-                    f"At least {cls.MIN_SKILLS} and no more than {cls.MAX_SKILLS} skills must be selected.")
+                    f"At least {cls.MIN_CURRENT_SKILLS} and "
+                    f"no more than {cls.MAX_CURRENT_SKILLS} skills must be selected.")
         else:
             # No minimum limit for desired skills
             if num_skills_selected > cls.MAX_DESIRED_SKILLS:
@@ -95,23 +96,23 @@ class User(ModelBase):
                     f"Skill '{name}' has invalid level: {level}. "
                     f"Skill levels must be between {cls.MIN_SKILL_LEVEL} and {cls.MAX_SKILL_LEVEL}.")
 
-    def set_skills(self, tx, skills):
+    def set_current_skills(self, tx, skills):
         selected_skills = []
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
             skill = Skill.lookup_or_add(tx, skill_data.get('skill_id'), skill_data['name'])
 
-            user_skill = UserSkill(level=skill_data['level'])
+            user_skill = UserCurrentSkill(level=skill_data['level'])
             user_skill.skill = skill
             selected_skills.append(user_skill)
 
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
 
-        existing_skill_ids = [skill.id for skill in self.skills]
+        existing_skill_ids = [skill.id for skill in self.current_skills]
         selected_skill_ids = [skill.id for skill in selected_skills]
 
         # Remove or update the existing skills
-        for existing_skill in self.skills:
+        for existing_skill in self.current_skills:
             if existing_skill.id not in selected_skill_ids:
                 tx.delete(existing_skill)
                 continue
@@ -122,7 +123,7 @@ class User(ModelBase):
         # Now add any new ones
         for selected_skill in selected_skills:
             if selected_skill.id not in existing_skill_ids:
-                self.skills.append(selected_skill)
+                self.current_skills.append(selected_skill)
 
     def set_desired_skills(self, tx, skills):
         selected_skills = []
@@ -160,7 +161,7 @@ class User(ModelBase):
             'name': self.name,
         }
         user['product_preferences'] = [pref.as_dict() for pref in self.product_preferences]
-        user['skills'] = [skill.as_dict() for skill in self.skills]
+        user['current_skills'] = [skill.as_dict() for skill in self.current_skills]
         user['desired_skills'] = [skill.as_dict() for skill in self.desired_skills]
 
         def add_if_not_none(key, value):

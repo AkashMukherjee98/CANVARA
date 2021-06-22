@@ -135,7 +135,7 @@ paths:
                   type: string
                 profile_picture_url:
                   type: string
-                skills:
+                current_skills:
                   type: array
                   items:
                     $ref: '#/components/schemas/SkillWithLevel'
@@ -438,7 +438,7 @@ paths:
                   type: string
                 profile_picture_url:
                   type: string
-                skills:
+                current_skills:
                   type: array
                   items:
                     $ref: '#/components/schemas/SkillWithLevel'
@@ -480,12 +480,12 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/ProductPreference'
-  /onboarding/skills:
+  /onboarding/current_skills:
     post:
-      summary: Set skills during onboarding
+      summary: Set current skills during onboarding
       tags:
         - onboarding
-      operationId: set_skills
+      operationId: set_current_skills
       responses:
         '204':
           description: No Content
@@ -574,7 +574,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProductPreference'
-        skills:
+        current_skills:
           type: array
           items:
             $ref: '#/components/schemas/SkillWithLevel'

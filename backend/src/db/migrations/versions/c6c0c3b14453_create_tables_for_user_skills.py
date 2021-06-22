@@ -27,7 +27,7 @@ def upgrade():
     )
 
     op.create_table(
-        'user_skill',
+        'user_current_skill',
         sa.Column('user_id', UUID, ForeignKey('canvara_user.id'), primary_key=True),
         sa.Column('skill_id', UUID, ForeignKey('skill.id'), primary_key=True),
         sa.Column('level', sa.Integer, nullable=False),

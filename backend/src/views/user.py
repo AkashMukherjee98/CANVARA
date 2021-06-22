@@ -29,9 +29,9 @@ def create_user_handler(customer_id):
     with transaction() as tx:
         tx.add(user)
 
-        if payload.get('skills'):
-            User.validate_skills(payload['skills'], SkillType.SKILL)
-            user.set_skills(tx, payload['skills'])
+        if payload.get('current_skills'):
+            User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
+            user.set_current_skills(tx, payload['current_skills'])
 
         if payload.get('desired_skills'):
             User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
@@ -67,9 +67,9 @@ def update_user_handler(user_id):
         if payload.get('name'):
             user.name = payload['name']
 
-        if payload.get('skills'):
-            User.validate_skills(payload['skills'], SkillType.SKILL)
-            user.set_skills(tx, payload['skills'])
+        if payload.get('current_skills'):
+            User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
+            user.set_current_skills(tx, payload['current_skills'])
 
         if payload.get('desired_skills'):
             User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)

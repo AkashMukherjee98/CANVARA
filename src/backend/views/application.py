@@ -5,12 +5,12 @@ import uuid
 from flask import jsonify, request
 from flask_cognito import cognito_auth_required, current_cognito_jwt
 
-from common.exceptions import NotAllowedError
-from models.application import Application
-from models.db import transaction
-from models.post import Post
-from models.user import User
-from app import app
+from backend import app
+from backend.common.exceptions import NotAllowedError
+from backend.models.application import Application
+from backend.models.db import transaction
+from backend.models.post import Post
+from backend.models.user import User
 
 @app.route('/posts/<post_id>/applications', methods=['POST'])
 @cognito_auth_required

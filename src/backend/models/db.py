@@ -3,13 +3,13 @@ from contextlib import contextmanager
 from sqlalchemy import engine_from_config, MetaData
 from sqlalchemy.orm import declarative_base, Session
 
-import common.config
+import backend.common.config
 
 ModelBase = declarative_base()
 
 class CanvaraDB:
     def __init__(self):
-        canvara_config = common.config.get_canvara_config()
+        canvara_config = backend.common.config.get_canvara_config()
         self.engine = engine_from_config(canvara_config['database'], prefix="sqlalchemy.")
 
         self.metadata = MetaData(self.engine)

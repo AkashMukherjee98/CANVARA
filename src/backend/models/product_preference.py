@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import StatementError
 from sqlalchemy.orm import relationship
 
-from common.exceptions import InvalidArgumentError
+from backend.common.exceptions import InvalidArgumentError
 from .db import db, ModelBase
 
 class ProductPreference(ModelBase):

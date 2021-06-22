@@ -4,12 +4,12 @@ from flask import jsonify, request
 from flask_cognito import cognito_auth_required, current_cognito_jwt
 from sqlalchemy import select
 
-from app import app
-from common.exceptions import InvalidArgumentError
-from common.http import make_no_content_response
-from models.db import transaction
-from models.product_preference import ProductPreference
-from models.user import User, SkillType
+from backend import app
+from backend.common.exceptions import InvalidArgumentError
+from backend.common.http import make_no_content_response
+from backend.models.db import transaction
+from backend.models.product_preference import ProductPreference
+from backend.models.user import User, SkillType
 
 class OnboardingStep(enum.Enum):
     CHOOSE_PRODUCTS = 100

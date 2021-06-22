@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from common.exceptions import DoesNotExistError
+from backend.common.exceptions import DoesNotExistError
 from .db import db, ModelBase
 
 class Customer(ModelBase):

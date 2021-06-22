@@ -5,9 +5,9 @@ from flask_cognito import cognito_auth_required
 
 from sqlalchemy import select
 
-from models.db import transaction
-from models.user import User, SkillType
-from app import app
+from backend import app
+from backend.models.db import transaction
+from backend.models.user import User, SkillType
 
 @app.route('/customers/<customer_id>/users', methods=['POST'])
 @cognito_auth_required

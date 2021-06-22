@@ -3,7 +3,7 @@ import enum
 
 from sqlalchemy.orm import relationship
 
-from common.exceptions import DoesNotExistError, InvalidArgumentError
+from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .skill import Skill
 

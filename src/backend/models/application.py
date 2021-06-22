@@ -2,7 +2,7 @@ from enum import Enum
 
 from sqlalchemy.orm import relationship
 
-from common.exceptions import DoesNotExistError, InvalidArgumentError
+from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .post import Post
 from .user import User

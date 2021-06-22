@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cognito import CognitoAuth
 from flask_cors import CORS
-import common.exceptions
+import backend.common.exceptions
 
 app = Flask(__name__)
 
@@ -17,12 +17,12 @@ app.config.update({
 CognitoAuth(app)
 CORS(app)
 
-for exception_type, exception_handler in common.exceptions.APP_ERROR_HANDLERS.items():
+for exception_type, exception_handler in backend.common.exceptions.APP_ERROR_HANDLERS.items():
     app.register_error_handler(exception_type, exception_handler)
 
-import views.customer
-import views.user
-import views.post
-import views.application
-import views.onboarding
-import views.skill
+import backend.views.customer
+import backend.views.user
+import backend.views.post
+import backend.views.application
+import backend.views.onboarding
+import backend.views.skill

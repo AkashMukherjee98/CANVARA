@@ -1,9 +1,9 @@
 from flask import jsonify, request
 from flask_cognito import cognito_auth_required
 
-from app import app
-from models.db import transaction
-from models.skill import Skill
+from backend import app
+from backend.models.db import transaction
+from backend.models.skill import Skill
 
 @app.route('/skills')
 @cognito_auth_required

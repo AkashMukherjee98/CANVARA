@@ -42,5 +42,5 @@ def upgrade():
 
 def downgrade():
     op.drop_table('user_desired_skill')
-    op.drop_table('user_skill')
+    op.drop_table('user_current_skill')
     op.drop_table('skill')

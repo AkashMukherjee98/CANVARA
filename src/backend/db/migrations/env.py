@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-import common.config
+from backend.common.config import get_canvara_config
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,7 +25,7 @@ target_metadata = None
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-canvara_config = common.config.get_canvara_config()
+canvara_config = get_canvara_config()
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.

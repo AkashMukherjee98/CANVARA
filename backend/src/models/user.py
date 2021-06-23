@@ -50,7 +50,7 @@ class User(ModelBase):
     MAX_CURRENT_SKILLS = 10
     MAX_DESIRED_SKILLS = 10
     MIN_SKILL_LEVEL = 1
-    MAX_SKILL_LEVEL = 10
+    MAX_SKILL_LEVEL = 100
 
     @classmethod
     def lookup(cls, tx, id):
@@ -78,9 +78,9 @@ class User(ModelBase):
         skill_names_seen = set()
         for skill in skills:
             # Make sure there are no duplicate entries
-            name = skill['name']
+            name = skill['name'].lower()
             if name in skill_names_seen:
-                raise InvalidArgumentError(f"Multiple entries found for skill '{name}'.")
+                raise InvalidArgumentError(f"Multiple entries found for skill '{skill['name']}'.")
             skill_names_seen.add(name)
 
             if skill_type == SkillType.DESIRED_SKILL:
@@ -89,18 +89,21 @@ class User(ModelBase):
 
             level = skill.get('level')
             if level is None:
-                raise InvalidArgumentError(f"Level is required for skill '{name}'.")
+                raise InvalidArgumentError(f"Level is required for skill '{skill['name']}'.")
 
             if level < cls.MIN_SKILL_LEVEL or level > cls.MAX_SKILL_LEVEL:
                 raise InvalidArgumentError(
-                    f"Skill '{name}' has invalid level: {level}. "
+                    f"Skill '{skill['name']}' has invalid level: {level}. "
                     f"Skill levels must be between {cls.MIN_SKILL_LEVEL} and {cls.MAX_SKILL_LEVEL}.")
 
     def set_current_skills(self, tx, skills):
         selected_skills = []
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
-            skill = Skill.lookup_or_add(tx, skill_data.get('skill_id'), skill_data['name'])
+            # Lookup the skill based on id or name, or add a new one
+            skill = Skill.lookup(tx, id=skill_data.get('skill_id'), name=skill_data.get('name'), must_exist=False)
+            if skill is None:
+                skill = Skill.add_custom_skill(name=skill_data['name'])
 
             user_skill = UserCurrentSkill(level=skill_data['level'])
             user_skill.skill = skill
@@ -129,7 +132,10 @@ class User(ModelBase):
         selected_skills = []
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
-            skill = Skill.lookup_or_add(tx, skill_data.get('skill_id'), skill_data['name'])
+            # Lookup the skill based on id or name, or add a new one
+            skill = Skill.lookup(tx, id=skill_data.get('skill_id'), name=skill_data.get('name'), must_exist=False)
+            if skill is None:
+                skill = Skill.add_custom_skill(name=skill_data['name'])
 
             user_desired_skill = UserDesiredSkill()
             user_desired_skill.skill = skill

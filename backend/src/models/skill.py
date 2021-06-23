@@ -1,6 +1,6 @@
 import uuid
 
-from common.exceptions import DoesNotExistError
+from common.exceptions import DoesNotExistError, InvalidArgumentError
 
 from .db import db, ModelBase
 
@@ -8,18 +8,23 @@ class Skill(ModelBase):
     __table__ = db.metadata.tables['skill']
 
     @classmethod
-    def lookup(cls, tx, id):
-        skill = tx.get(cls, id)
-        if skill is None:
-            raise DoesNotExistError(f"Skill '{id}' does not exist")
+    def lookup(cls, tx, id=None, name=None, must_exist=True):
+        if id is None and name is None:
+            raise InvalidArgumentError("Either skill id or name is required for lookup")
+
+        if id is not None:
+            # TODO: (sunil) if name was also given, make sure it matches
+            skill = tx.get(cls, id)
+            if skill is None and must_exist:
+                raise DoesNotExistError(f"Skill '{id}' does not exist")
+        else:
+            skill = tx.query(Skill).where(Skill.name.ilike(name)).first()
+            if skill is None and must_exist:
+                raise DoesNotExistError(f"Skill '{name}' does not exist")
         return skill
 
     @classmethod
-    def lookup_or_add(cls, tx, id, name):
-        if id is not None:
-            return Skill.lookup(tx, id)
-
-        # If no id was given, add this as a new custom skill
+    def add_custom_skill(cls, name):
         return Skill(id=str(uuid.uuid4()), name=name, is_custom=True)
 
     @classmethod

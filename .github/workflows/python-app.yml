@@ -34,7 +34,7 @@ jobs:
     - name: Test with pylint
       run: |
         if [ -f pip_test_requirements.txt ]; then pip install -r pip_test_requirements.txt; fi
-        pylint **/*.py
+        find . -name '*.py' -exec pylint {} \;
     - name: Test with pytest
       run: |
         #pytest

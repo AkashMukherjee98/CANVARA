@@ -9,6 +9,7 @@ from sqlalchemy import select
 from backend.models.customer import Customer
 from backend.models.db import transaction
 
+
 @app.route('/customers', methods=['POST'])
 @cognito_auth_required
 def create_customer_handler():
@@ -24,12 +25,14 @@ def create_customer_handler():
         tx.add(customer)
     return customer.as_dict()
 
+
 @app.route('/customers')
 @cognito_auth_required
 def list_customers_handler():
     with transaction() as tx:
         customers = tx.execute(select(Customer)).scalars().all()
     return jsonify([customer.as_dict() for customer in customers])
+
 
 @app.route('/customers/<customer_id>')
 @cognito_auth_required
@@ -38,6 +41,7 @@ def get_customer_handler(customer_id):
         customer = Customer.lookup(tx, customer_id)
     return customer.as_dict()
 
+
 @app.route('/customers/<customer_id>', methods=['PUT'])
 @cognito_auth_required
 def update_customer_handler(customer_id):
@@ -45,6 +49,7 @@ def update_customer_handler(customer_id):
         customer = Customer.lookup(tx, customer_id)
         customer.name = request.json.get('name', customer.name)
     return customer.as_dict()
+
 
 @app.route('/customers/<customer_id>', methods=['DELETE'])
 @cognito_auth_required

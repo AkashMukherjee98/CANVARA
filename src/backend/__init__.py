@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cognito import CognitoAuth
 from flask_cors import CORS
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -28,7 +29,7 @@ def create_app():
         import backend.views.post
         import backend.views.application
         import backend.views.onboarding
-        import backend.views.skill
+        import backend.views.skill  # noqa: F401
         # pylint: enable=import-outside-toplevel, unused-import
 
     return app

@@ -7,6 +7,7 @@ from .db import db, ModelBase
 from .post import Post
 from .user import User
 
+
 class Application(ModelBase):
     __table__ = db.metadata.tables['application']
 

@@ -2,6 +2,7 @@ from sqlalchemy.orm import relationship
 from backend.common.exceptions import DoesNotExistError
 from .db import db, ModelBase
 
+
 class Customer(ModelBase):
     __table__ = db.metadata.tables['customer']
 

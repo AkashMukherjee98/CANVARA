@@ -5,6 +5,7 @@ from flask_cognito import cognito_auth_required
 from backend.models.db import transaction
 from backend.models.skill import Skill
 
+
 @app.route('/skills')
 @cognito_auth_required
 def search_skills_handler():

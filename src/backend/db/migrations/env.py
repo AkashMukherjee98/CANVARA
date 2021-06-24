@@ -27,6 +27,7 @@ target_metadata = None  # pylint: disable=invalid-name
 
 canvara_config = get_canvara_config()
 
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 

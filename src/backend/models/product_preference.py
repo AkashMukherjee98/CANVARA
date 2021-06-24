@@ -4,6 +4,7 @@ from sqlalchemy.exc import StatementError
 from backend.common.exceptions import InvalidArgumentError
 from .db import db, ModelBase
 
+
 class ProductPreference(ModelBase):
     __table__ = db.metadata.tables['product_preference']
 

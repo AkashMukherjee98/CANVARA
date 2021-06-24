@@ -57,6 +57,7 @@ def upgrade():
         sa.Column('details', JSONB)
     )
 
+
 def downgrade():
     # pylint: disable=no-member
     op.drop_table('application')

@@ -11,6 +11,7 @@ from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
 
+
 class OnboardingStep(enum.Enum):
     CHOOSE_PRODUCTS = 100
     CONNECT_LINKEDIN_ACCOUNT = 200
@@ -19,12 +20,14 @@ class OnboardingStep(enum.Enum):
     ADD_DESIRED_SKILLS = 500
     ONBOARDING_COMPLETE = 999
 
+
 @app.route('/onboarding/product_preferences')
 @cognito_auth_required
 def list_products_handler():
     with transaction() as tx:
         products = tx.execute(select(ProductPreference)).scalars().all()
     return jsonify([product.as_dict() for product in products])
+
 
 @app.route('/onboarding/product_preferences', methods=['POST'])
 @cognito_auth_required
@@ -59,6 +62,7 @@ def set_product_preferences_handler():
         user.profile = profile
     return make_no_content_response()
 
+
 @app.route('/onboarding/current_skills', methods=['POST'])
 @cognito_auth_required
 def onboarding_set_current_skills_handler():
@@ -73,6 +77,7 @@ def onboarding_set_current_skills_handler():
         onboarding['current'] = OnboardingStep.ADD_DESIRED_SKILLS.value
         user.profile = profile
     return make_no_content_response()
+
 
 @app.route('/onboarding/desired_skills', methods=['POST'])
 @cognito_auth_required

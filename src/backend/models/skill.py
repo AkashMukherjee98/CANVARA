@@ -4,6 +4,7 @@ from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 
 from .db import db, ModelBase
 
+
 class Skill(ModelBase):
     __table__ = db.metadata.tables['skill']
 

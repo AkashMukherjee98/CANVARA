@@ -7,9 +7,11 @@ from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .skill import Skill
 
+
 class SkillType(enum.Enum):
     CURRENT_SKILL = 'current_skill'
     DESIRED_SKILL = 'desired_skill'
+
 
 class UserCurrentSkill(ModelBase):
     __table__ = db.metadata.tables['user_current_skill']
@@ -24,6 +26,7 @@ class UserCurrentSkill(ModelBase):
         user_skill_details['level'] = self.level
         return user_skill_details
 
+
 class UserDesiredSkill(ModelBase):
     __table__ = db.metadata.tables['user_desired_skill']
     skill = relationship("Skill")
@@ -34,6 +37,7 @@ class UserDesiredSkill(ModelBase):
 
     def as_dict(self):
         return self.skill.as_dict()
+
 
 class User(ModelBase):
     # Note: 'user' is a reserved keyword in PostgreSQL so we use 'canvara_user' instead

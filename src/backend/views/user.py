@@ -9,6 +9,7 @@ from sqlalchemy import select
 from backend.models.db import transaction
 from backend.models.user import User, SkillType
 
+
 @app.route('/customers/<customer_id>/users', methods=['POST'])
 @cognito_auth_required
 def create_user_handler(customer_id):
@@ -40,6 +41,7 @@ def create_user_handler(customer_id):
         user_details = user.as_dict()
     return user_details
 
+
 @app.route('/customers/<customer_id>/users')
 @cognito_auth_required
 def list_users_handler(customer_id):
@@ -47,6 +49,7 @@ def list_users_handler(customer_id):
         users = tx.execute(select(User).where(User.customer_id == customer_id)).scalars().all()
         user_details = jsonify([user.as_dict() for user in users])
     return user_details
+
 
 @app.route('/users/<user_id>')
 @cognito_auth_required
@@ -56,6 +59,7 @@ def get_user_handler(user_id):
         user_details = user.as_dict()
         user_details['customer_name'] = user.customer.name
     return user_details
+
 
 @app.route('/users/<user_id>', methods=['PUT'])
 @cognito_auth_required

@@ -5,6 +5,7 @@ from backend.common.exceptions import DoesNotExistError
 from .db import db, ModelBase
 from .user import User
 
+
 class Post(ModelBase):
     __table__ = db.metadata.tables['post']
 

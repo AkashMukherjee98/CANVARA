@@ -12,6 +12,7 @@ from backend.models.db import transaction
 from backend.models.post import Post
 from backend.models.user import User
 
+
 @app.route('/posts/<post_id>/applications', methods=['POST'])
 @cognito_auth_required
 def create_application_handler(post_id):
@@ -44,11 +45,13 @@ def create_application_handler(post_id):
         tx.add(application)
     return application.as_dict()
 
+
 @app.route('/posts/<post_id>/applications')
 @cognito_auth_required
 def list_applications_by_post_handler(post_id):
     with transaction() as tx:
         return jsonify(Application.lookup_multiple(tx, post_id=post_id))
+
 
 @app.route('/applications')
 @cognito_auth_required
@@ -56,12 +59,14 @@ def list_applications_by_applicant_handler():
     with transaction() as tx:
         return jsonify(Application.lookup_multiple(tx, applicant_id=current_cognito_jwt['sub']))
 
+
 @app.route('/applications/<application_id>')
 @cognito_auth_required
 def get_application_handler(application_id):
     with transaction() as tx:
         application = Application.lookup(tx, application_id)
     return application.as_dict()
+
 
 @app.route('/applications/<application_id>', methods=['PUT'])
 @cognito_auth_required
@@ -86,6 +91,7 @@ def update_application_handler(application_id):
             application.status = payload['status']
         application.last_updated_at = datetime.utcnow()
     return application.as_dict()
+
 
 @app.route('/applications/<application_id>', methods=['DELETE'])
 @cognito_auth_required

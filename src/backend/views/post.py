@@ -11,6 +11,7 @@ from backend.models.db import transaction
 from backend.models.post import Post
 from backend.models.user import User
 
+
 @app.route('/posts', methods=['POST'])
 @cognito_auth_required
 def create_post_handler():
@@ -49,6 +50,7 @@ def create_post_handler():
         )
     return post.as_dict()
 
+
 @app.route('/posts')
 @cognito_auth_required
 def list_posts_handler():
@@ -63,12 +65,14 @@ def list_posts_handler():
         )
     return jsonify(posts)
 
+
 @app.route('/posts/<post_id>')
 @cognito_auth_required
 def get_post_handler(post_id):
     with transaction() as tx:
         post = Post.lookup(tx, post_id)
     return post.as_dict()
+
 
 @app.route('/posts/<post_id>', methods=['PUT'])
 @cognito_auth_required
@@ -104,6 +108,7 @@ def update_post_handler(post_id):
         post.details = details
         post.last_updated_at = datetime.utcnow()
     return post.as_dict()
+
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
 @cognito_auth_required

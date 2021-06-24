@@ -7,6 +7,7 @@ import backend.common.config
 
 ModelBase = declarative_base()
 
+
 class CanvaraDB:  # pylint: disable=too-few-public-methods
     def __init__(self):
         canvara_config = backend.common.config.get_canvara_config()
@@ -15,7 +16,9 @@ class CanvaraDB:  # pylint: disable=too-few-public-methods
         self.metadata = MetaData(self.engine)
         self.metadata.reflect()
 
+
 db = CanvaraDB()
+
 
 # Helpful context manager that manages the Session lifecycle
 @contextmanager
@@ -24,7 +27,7 @@ def transaction():
     try:
         yield session
         session.commit()
-    except:
+    except Exception:
         session.rollback()
         raise
     finally:

@@ -14,20 +14,22 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
+# pylint: disable=invalid-name
 revision = 'e63d316c4e6e'
 down_revision = 'abc8da851630'
 branch_labels = None
 depends_on = None
+# pylint: enable=invalid-name
 
 
 def upgrade():
-    product_preference_table = op.create_table(
+    product_preference_table = op.create_table(  # pylint: disable=no-member
         'product_preference',
         sa.Column('id', UUID, primary_key=True),
         sa.Column('name', sa.String(255), nullable=False, unique=True),
     )
 
-    op.bulk_insert(
+    op.bulk_insert(  # pylint: disable=no-member
         product_preference_table,
         [
             {'id': str(uuid.uuid4()), 'name': 'Find help with my projects'},
@@ -38,7 +40,7 @@ def upgrade():
         ]
     )
 
-    op.create_table(
+    op.create_table(  # pylint: disable=no-member
         'user_product_preference',
         sa.Column('user_id', UUID, ForeignKey('canvara_user.id'), primary_key=True),
         sa.Column('product_id', UUID, ForeignKey('product_preference.id'), primary_key=True),
@@ -46,5 +48,7 @@ def upgrade():
 
 
 def downgrade():
+    # pylint: disable=no-member
     op.drop_table('user_product_preference')
     op.drop_table('product_preference')
+    # pylint: enable=no-member

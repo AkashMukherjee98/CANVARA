@@ -17,7 +17,9 @@ class ProductPreference(ModelBase):
             raise InvalidArgumentError("Product preference lookup failed") from ex
 
         if must_exist:
-            unknown_ids = set(ids) - set([product.id for product in products])  # pylint: disable=consider-using-set-comprehension
+            # pylint: disable=consider-using-set-comprehension
+            unknown_ids = set(ids) - set([product.id for product in products])
+            # pylint: enable=consider-using-set-comprehension
             if unknown_ids:
                 raise InvalidArgumentError(f"Product preference lookup failed: {', '.join(unknown_ids)}")
         return products

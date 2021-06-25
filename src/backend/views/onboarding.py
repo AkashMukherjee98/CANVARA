@@ -63,6 +63,30 @@ def set_product_preferences_handler():
     return make_no_content_response()
 
 
+@app.route('/onboarding/linkedin', methods=['POST'])
+@cognito_auth_required
+def onboarding_set_linkedin_url_handler():
+    linkedin_url = request.json.get('linkedin_url')
+    if linkedin_url is None:
+        raise InvalidArgumentError('linkedin_url is missing')
+
+    with transaction() as tx:
+        user = User.lookup(tx, current_cognito_jwt['sub'])
+
+        profile = user.profile_copy
+        if linkedin_url:
+            profile['linkedin_url'] = linkedin_url
+        elif profile['linkedin_url']:
+            # If there was an existing value for LinkedIn URL, and it' now
+            # being set to empty string, remove it instead
+            del profile['linkedin_url']
+
+        onboarding = profile.setdefault('onboarding_steps', {})
+        onboarding['current'] = OnboardingStep.SET_PROFILE_PICTURE.value
+        user.profile = profile
+    return make_no_content_response()
+
+
 @app.route('/onboarding/current_skills', methods=['POST'])
 @cognito_auth_required
 def onboarding_set_current_skills_handler():

@@ -143,6 +143,8 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Skill'
+                linkedin_url:
+                  type: string
               required:
                 - user_id
                 - name
@@ -446,6 +448,8 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Skill'
+                linkedin_url:
+                  type: string
   /onboarding/product_preferences:
     get:
       summary: List all products that user can select
@@ -516,6 +520,27 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/Skill'
+  /onboarding/linkedin:
+    post:
+      summary: Set LinkedIn profile url during onboarding
+      tags:
+        - onboarding
+      responses:
+        '204':
+          description: No Content
+      operationId: set_linkedin_url
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                linkedin_url:
+                  type: string
+              required:
+                - linkedin_url
   /skills:
     get:
       summary: Search skills
@@ -582,6 +607,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Skill'
+        linkedin_url:
+          type: string
       required:
         - customer_id
         - user_id

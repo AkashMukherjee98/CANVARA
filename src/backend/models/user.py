@@ -188,5 +188,6 @@ class User(ModelBase):
 
         add_if_not_none('title', self.profile.get('title'))
         add_if_not_none('profile_picture_url', self.profile.get('profile_picture_url'))
+        add_if_not_none('linkedin_url', self.profile.get('linkedin_url'))
 
         return user

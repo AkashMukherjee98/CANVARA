@@ -21,6 +21,9 @@ def create_user_handler(customer_id):
     if payload.get('profile_picture_url'):
         profile['profile_picture_url'] = payload.get('profile_picture_url')
 
+    if payload.get('linkedin_url') is not None:
+        profile['linkedin_url'] = payload['linkedin_url']
+
     user = User(
         id=payload['user_id'],
         customer_id=customer_id,
@@ -71,10 +74,12 @@ def update_user_handler(user_id):
         if payload.get('name'):
             user.name = payload['name']
 
+        # TODO: (sunil) Error if current_skills was given but set to empty list
         if payload.get('current_skills'):
             User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
             user.set_current_skills(tx, payload['current_skills'])
 
+        # TODO: (sunil) Allow removing all desired_skills by setting to empty list
         if payload.get('desired_skills'):
             User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
             user.set_desired_skills(tx, payload['desired_skills'])
@@ -85,6 +90,14 @@ def update_user_handler(user_id):
 
         if payload.get('profile_picture_url'):
             profile['profile_picture_url'] = payload['profile_picture_url']
+
+        if payload.get('linkedin_url') is not None:
+            if payload['linkedin_url']:
+                profile['linkedin_url'] = payload['linkedin_url']
+            elif profile['linkedin_url']:
+                # If there was an existing value for LinkedIn URL, and it' now
+                # being set to empty string, remove it instead
+                del profile['linkedin_url']
 
         user.profile = profile
 

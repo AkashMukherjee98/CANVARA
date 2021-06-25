@@ -35,7 +35,7 @@ jobs:
       run: |
         if [ -f pip_test_requirements.txt ]; then pip install -r pip_test_requirements.txt; fi
         #find . -name '*.py' -exec pylint {} \;
-        pylint --rcfile .pylintrc src --threshold 10
+        pylint --rcfile .pylintrc src
     - name: Test with pytest
       run: |
         #pytest

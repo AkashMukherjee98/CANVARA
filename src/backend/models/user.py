@@ -107,11 +107,12 @@ class User(ModelBase):
             # Lookup the skill based on id or name, or add a new one
             skill = Skill.lookup(
                 tx,
+                self.customer_id,
                 skill_id=skill_data.get('skill_id'),
                 name=skill_data.get('name'),
                 must_exist=False)
             if skill is None:
-                skill = Skill.add_custom_skill(name=skill_data['name'])
+                skill = Skill.add_custom_skill(skill_data['name'], self.customer_id)
 
             user_skill = UserCurrentSkill(level=skill_data['level'])
             user_skill.skill = skill
@@ -125,6 +126,7 @@ class User(ModelBase):
         # Remove or update the existing skills
         for existing_skill in self.current_skills:
             if existing_skill.id not in selected_skill_ids:
+                existing_skill.skill.usage_count -= 1
                 tx.delete(existing_skill)
                 continue
 
@@ -134,6 +136,7 @@ class User(ModelBase):
         # Now add any new ones
         for selected_skill in selected_skills:
             if selected_skill.id not in existing_skill_ids:
+                selected_skill.skill.usage_count += 1
                 self.current_skills.append(selected_skill)
 
     def set_desired_skills(self, tx, skills):
@@ -143,11 +146,12 @@ class User(ModelBase):
             # Lookup the skill based on id or name, or add a new one
             skill = Skill.lookup(
                 tx,
+                self.customer_id,
                 skill_id=skill_data.get('skill_id'),
                 name=skill_data.get('name'),
                 must_exist=False)
             if skill is None:
-                skill = Skill.add_custom_skill(name=skill_data['name'])
+                skill = Skill.add_custom_skill(skill_data['name'], self.customer_id)
 
             user_desired_skill = UserDesiredSkill()
             user_desired_skill.skill = skill
@@ -161,11 +165,13 @@ class User(ModelBase):
         # Remove any skill that is not in the new list
         for existing_skill in self.desired_skills:
             if existing_skill.id not in selected_skill_ids:
+                existing_skill.skill.usage_count -= 1
                 tx.delete(existing_skill)
 
         # Now add any new ones
         for selected_skill in selected_skills:
             if selected_skill.id not in existing_skill_ids:
+                selected_skill.skill.usage_count += 1
                 self.desired_skills.append(selected_skill)
 
     @property

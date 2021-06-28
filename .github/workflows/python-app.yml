@@ -83,7 +83,7 @@ jobs:
 #          docker push $IMAGE_ID:$VERSION
 
     deploy:
-      needs: build
+#      needs: build
       runs-on: self-hosted
       steps:
         - name: Log in to the Container registry

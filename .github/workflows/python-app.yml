@@ -100,7 +100,6 @@ jobs:
           run: |
             sudo ls -lax
             sudo docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.CREATE_DOCKER_TOKEN }}
-#            sudo docker pull ghcr.io/canvarainc/prototype:main
             sudo docker images
             sudo docker run --rm -it --entrypoint /bin/bash --env CANVARA_ENV=prod ghcr.io/canvarainc/prototype:main
 

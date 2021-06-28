@@ -113,9 +113,9 @@ jobs:
           then
           sudo docker rmi $IMAGEID;
           fi
-          sudo docker pull $IMAGE_ID:$VERSION
+          sudo docker pull ghcr.io/canvarainc/prototype:main
 
 
       - name: Run the image
         run: |
-          sudo docker run --detach --env CANVARA_ENV=prod -p 8080:8080 $IMAGE_ID:$VERSION
+          sudo docker run --detach --env CANVARA_ENV=prod -p 8080:8080 ghcr.io/canvarainc/prototype:main

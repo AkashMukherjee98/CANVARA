@@ -2,7 +2,6 @@ from datetime import datetime
 import uuid
 
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import aliased
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
@@ -12,12 +11,11 @@ class Skill(ModelBase):
     __table__ = db.metadata.tables['skill']
 
     @classmethod
-    def lookup(cls, tx, customer_id, skill_id=None, name=None, must_exist=True):
+    def lookup(cls, tx, customer_id, skill_id=None, name=None, must_exist=True):  # pylint: disable=too-many-arguments
         if skill_id is None and name is None:
             raise InvalidArgumentError("Either skill id or name is required for lookup")
 
         internal_name = name.lower()
-        skill = None
         if skill_id is not None:
             # TODO: (sunil) if name was also given, make sure it matches
             skill = tx.get(cls, skill_id)
@@ -34,8 +32,9 @@ class Skill(ModelBase):
                 and_(
                     Skill.internal_name == internal_name,
                     or_(
-                        Skill.customer_id == None,
+                        Skill.customer_id.is_(None),
                         Skill.customer_id == customer_id)))
+            skill = None
             for skill in skills_query:
                 if skill.customer_id is None:
                     # We found a global skill. Stop looking!
@@ -58,7 +57,7 @@ class Skill(ModelBase):
     @classmethod
     def search(cls, tx, customer_id, query=None, limit=10):
         customer_id_clause = or_(
-            Skill.customer_id == None,
+            Skill.customer_id.is_(None),
             Skill.customer_id == customer_id)
 
         if not query:

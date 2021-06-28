@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.1.1
+  version: 0.1.2
 servers: []
 tags:
   - name: applications
@@ -563,7 +563,6 @@ paths:
             type: string
           in: query
           name: q
-          required: true
           description: The search query
 components:
   schemas:
@@ -663,10 +662,6 @@ components:
           type: string
         name:
           type: string
-        custom:
-          type: boolean
-      required:
-        - skill_id
     SkillWithLevel:
       title: SkillWithLevel
       allOf:

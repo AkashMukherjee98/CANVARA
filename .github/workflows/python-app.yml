@@ -95,5 +95,5 @@ jobs:
 
         - name: run commands
           run: |
-            ls -lax
-            docker pull ghcr.io/canvarainc/prototype:main
+            sudo ls -lax
+#            docker pull ghcr.io/canvarainc/prototype:main

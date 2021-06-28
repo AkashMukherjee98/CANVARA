@@ -44,7 +44,7 @@ jobs:
         pylint --rcfile .pylintrc src/backend
     - name: Test with pytest
       run: |
-        #pytest
+        pytest
 #
 #  build:
 #    needs: checkout

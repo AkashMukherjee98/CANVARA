@@ -105,6 +105,6 @@ jobs:
             sudo docker rmi $IMAGE_ID
             sudo docker pull $IMAGE_ID:$VERSION
 
-         -name: Run the image
+        - name: Run the image
           run: |
             sudo docker run --detach --env CANVARA_ENV=prod -p 8080:8080 $IMAGE_ID:$VERSION

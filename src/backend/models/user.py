@@ -56,6 +56,17 @@ class User(ModelBase):
     MIN_SKILL_LEVEL = 1
     MAX_SKILL_LEVEL = 100
 
+    # TODO: (sunil) Separate production from other stacks
+    USER_UPLOADS_BASE_URL = 'https://canvara.s3-us-west-2.amazonaws.com/prototype/user_uploads'
+    DEFAULT_PROFILE_PICTURE_URL = f'{USER_UPLOADS_BASE_URL}/blank_profile_picture.png'
+
+    @property
+    def profile_picture_url(self):
+        # TODO: (sunil) Review this logic after we add the feature to upload profile pictures
+        if self.profile.get('profile_picture_url'):
+            return self.profile['profile_picture_url']
+        return User.DEFAULT_PROFILE_PICTURE_URL
+
     @classmethod
     def lookup(cls, tx, user_id):
         user = tx.get(cls, user_id)

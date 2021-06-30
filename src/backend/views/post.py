@@ -1,5 +1,4 @@
 from datetime import datetime
-import copy
 import uuid
 
 from flask import current_app as app
@@ -8,7 +7,9 @@ from flask_cognito import cognito_auth_required, current_cognito_jwt
 
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
+from backend.models.location import Location
 from backend.models.post import Post
+from backend.models.post_type import PostType
 from backend.models.user import User
 
 
@@ -16,24 +17,21 @@ from backend.models.user import User
 @cognito_auth_required
 def create_post_handler():
     payload = request.json
-    details = {}
 
-    # If target_date was specified, it must be in ISO 8601 format (YYYY-MM-DD)
-    if payload.get('target_date'):
-        try:
-            target_date = datetime.fromisoformat(payload['target_date'])
-            details['target_date'] = target_date.date().isoformat()
-        except ValueError as ex:
-            raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
+    # TODO: (sunil) Need a better way to validate the request
+    required_fields = {'language', 'location_id', 'name', 'people_needed', 'post_type_id', 'size', 'target_date'}
+    missing_fields = required_fields - set(payload.keys())
+    if missing_fields:
+        raise InvalidArgumentError(f"Invalid request: {', '.join(missing_fields)} missing")
 
-    if payload.get('summary'):
-        details['summary'] = payload['summary']
+    # target_date must be in ISO 8601 format (YYYY-MM-DD)
+    try:
+        target_date = datetime.fromisoformat(payload['target_date']).date()
+        # target_date = target_date.date().isoformat()
+    except ValueError as ex:
+        raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
 
-    if payload.get('description'):
-        details['description'] = payload['description']
-
-    if payload.get('size'):
-        details['size'] = payload['size']
+    Post.validate_size(payload['size'])
 
     # Generate a unique id for this post
     post_id = str(uuid.uuid4())
@@ -41,12 +39,21 @@ def create_post_handler():
     now = datetime.utcnow()
     with transaction() as tx:
         owner = User.lookup(tx, current_cognito_jwt['sub'])
+        post_type = PostType.lookup(tx, payload['post_type_id'])
+        location = Location.lookup(tx, payload['location_id'])
         post = Post(
             id=post_id,
             owner=owner,
             created_at=now,
             last_updated_at=now,
-            details=details
+            name=payload['name'],
+            post_type=post_type,
+            description=payload.get('description'),
+            size=payload['size'].upper(),
+            language=payload['language'],
+            location=location,
+            people_needed=payload['people_needed'],
+            target_date=target_date
         )
     return post.as_dict()
 
@@ -71,13 +78,14 @@ def list_posts_handler():
 def get_post_handler(post_id):
     with transaction() as tx:
         post = Post.lookup(tx, post_id)
-    return post.as_dict()
+        return post.as_dict()
 
 
 @app.route('/posts/<post_id>', methods=['PUT'])
 @cognito_auth_required
 def update_post_handler(post_id):
     with transaction() as tx:
+        payload = request.json
         user = User.lookup(tx, current_cognito_jwt['sub'])
         post = Post.lookup(tx, post_id)
 
@@ -85,29 +93,30 @@ def update_post_handler(post_id):
         if post.owner_id != user.id:
             raise NotAllowedError(f"User '{user.id}' is not the post owner")
 
-        payload = request.json
-        details = copy.deepcopy(post.details)
-
         # If target_date was specified, it must be in ISO 8601 format (YYYY-MM-DD)
         if 'target_date' in payload:
             try:
-                target_date = datetime.fromisoformat(payload['target_date'])
-                details['target_date'] = target_date.date().isoformat()
+                post.target_date = datetime.fromisoformat(payload['target_date']).date()
             except ValueError as ex:
                 raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
 
+        if 'post_type_id' in payload:
+            post.post_type = PostType.lookup(tx, payload['post_type_id'])
+
+        if 'location_id' in payload:
+            post.location = PostType.lookup(tx, payload['location_id'])
+
         if 'size' in payload:
-            details['size'] = payload['size']
+            Post.validate_size(payload['size'])
+            post.size = payload['size'].upper()
 
-        if 'summary' in payload:
-            details['summary'] = payload['summary']
+        settables = ['description', 'language', 'name', 'people_needed']
+        for field in settables:
+            if field in payload:
+                setattr(post, field, payload[field])
 
-        if 'description' in payload:
-            details['description'] = payload['description']
-
-        post.details = details
         post.last_updated_at = datetime.utcnow()
-    return post.as_dict()
+        return post.as_dict()
 
 
 @app.route('/posts/<post_id>', methods=['DELETE'])

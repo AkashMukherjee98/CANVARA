@@ -7,6 +7,7 @@ from flask_cognito import cognito_auth_required, current_cognito_jwt
 
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
+from backend.models.language import Language
 from backend.models.location import Location
 from backend.models.post import Post
 from backend.models.post_type import PostType
@@ -24,14 +25,9 @@ def create_post_handler():
     if missing_fields:
         raise InvalidArgumentError(f"Invalid request: {', '.join(missing_fields)} missing")
 
-    # target_date must be in ISO 8601 format (YYYY-MM-DD)
-    try:
-        target_date = datetime.fromisoformat(payload['target_date']).date()
-        # target_date = target_date.date().isoformat()
-    except ValueError as ex:
-        raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
-
-    Post.validate_size(payload['size'])
+    target_date = Post.validate_and_convert_target_date(payload['target_date'])
+    size = Post.validate_and_convert_size(payload['size'])
+    language = Post.validate_and_convert_language(payload['language'])
 
     # Generate a unique id for this post
     post_id = str(uuid.uuid4())
@@ -49,8 +45,8 @@ def create_post_handler():
             name=payload['name'],
             post_type=post_type,
             description=payload.get('description'),
-            size=payload['size'].upper(),
-            language=payload['language'],
+            size=size,
+            language=language,
             location=location,
             people_needed=payload['people_needed'],
             target_date=target_date
@@ -61,6 +57,9 @@ def create_post_handler():
 @app.route('/posts')
 @cognito_auth_required
 def list_posts_handler():
+    # TODO: (sunil) Use filter arg to filter the query results
+    # filter = request.args.get('filter', 'curated').lower()
+
     with transaction() as tx:
         # This is the user making the request, for authorization purposes
         user = User.lookup(tx, current_cognito_jwt['sub'])
@@ -93,27 +92,34 @@ def update_post_handler(post_id):
         if post.owner_id != user.id:
             raise NotAllowedError(f"User '{user.id}' is not the post owner")
 
-        # If target_date was specified, it must be in ISO 8601 format (YYYY-MM-DD)
-        if 'target_date' in payload:
-            try:
-                post.target_date = datetime.fromisoformat(payload['target_date']).date()
-            except ValueError as ex:
-                raise InvalidArgumentError(f"Unable to parse target_date: {payload['target_date']}") from ex
-
         if 'post_type_id' in payload:
             post.post_type = PostType.lookup(tx, payload['post_type_id'])
 
         if 'location_id' in payload:
             post.location = PostType.lookup(tx, payload['location_id'])
 
-        if 'size' in payload:
-            Post.validate_size(payload['size'])
-            post.size = payload['size'].upper()
+        # TODO: (sunil) Move this to the Post model
+        settables = {
+            'description': {},
+            'language': {
+                'validate_and_convert': Post.validate_and_convert_language
+            },
+            'name': {},
+            'people_needed': {},
+            'size': {
+                'validate_and_convert': Post.validate_and_convert_size
+            },
+            'target_date': {
+                'validate_and_convert': Post.validate_and_convert_target_date
+            }
+        }
 
-        settables = ['description', 'language', 'name', 'people_needed']
         for field in settables:
             if field in payload:
-                setattr(post, field, payload[field])
+                value = payload[field]
+                if settables[field].get('validate_and_convert'):
+                    value = settables[field]['validate_and_convert'](value)
+                setattr(post, field, value)
 
         post.last_updated_at = datetime.utcnow()
         return post.as_dict()
@@ -135,3 +141,26 @@ def delete_post_handler(post_id):
             raise NotAllowedError(f"User '{user.id}' is not the post owner")
         tx.delete(post)
     return {}
+
+
+@app.route('/post_types')
+@cognito_auth_required
+def list_post_types_handler():
+    with transaction() as tx:
+        query = tx.query(PostType)
+        return jsonify([post_type.as_dict() for post_type in query])
+
+
+@app.route('/locations')
+@cognito_auth_required
+def list_locations_handler():
+    with transaction() as tx:
+        user = User.lookup(tx, current_cognito_jwt['sub'])
+        query = tx.query(Location).with_parent(user.customer)
+        return jsonify([location.as_dict() for location in query])
+
+
+@app.route('/languages')
+@cognito_auth_required
+def list_languages_handler():
+    return jsonify(Language.SUPPORTED_LANGUAGES)

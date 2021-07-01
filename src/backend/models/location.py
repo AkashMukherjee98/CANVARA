@@ -1,9 +1,13 @@
+from sqlalchemy.orm import relationship
+
 from backend.common.exceptions import DoesNotExistError
 from .db import db, ModelBase
 
 
 class Location(ModelBase):
     __table__ = db.metadata.tables['location']
+
+    customer = relationship('Customer', back_populates='locations')
 
     @classmethod
     def lookup(cls, tx, location_id, must_exist=True):

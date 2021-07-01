@@ -6,7 +6,8 @@ from .db import db, ModelBase
 class Customer(ModelBase):
     __table__ = db.metadata.tables['customer']
 
-    users = relationship("User", back_populates="customer")
+    users = relationship('User', back_populates='customer')
+    locations = relationship('Location', back_populates='customer')
 
     @classmethod
     def lookup(cls, tx, customer_id, must_exist=True):

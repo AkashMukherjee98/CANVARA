@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from sqlalchemy import or_
 from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
+from .language import Language
 from .location import Location
 from .post_type import PostType
 from .user import User
@@ -41,9 +44,23 @@ class Post(ModelBase):
         return [post.as_dict() for post in posts]
 
     @classmethod
-    def validate_size(cls, size):
+    def validate_and_convert_target_date(cls, target_date):
+        # target_date must be in ISO 8601 format (YYYY-MM-DD)
+        try:
+            return datetime.fromisoformat(target_date).date()
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unable to parse target_date: {target_date}") from ex
+
+    @classmethod
+    def validate_and_convert_size(cls, size):
         if size.upper() not in cls.VALID_SIZES:
             raise InvalidArgumentError(f"Invalid size: {size}.")
+        return size.upper()
+
+    @classmethod
+    def validate_and_convert_language(cls, language):
+        if language not in Language.SUPPORTED_LANGUAGES:
+            raise InvalidArgumentError(f"Unsupported language: {language}")
 
     def as_dict(self):
         post = {

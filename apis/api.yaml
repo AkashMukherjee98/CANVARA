@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.2.0
+  version: 0.2.1
 servers: []
 tags:
   - name: applications
@@ -211,6 +211,10 @@ paths:
                 post_type_id:
                   type: string
                   description: Unique identifier of the post type for this post.
+                status:
+                  type: string
+                  description: Current status of this post.
+                  default: active
                 description:
                   type: string
                   description: Description of this post.
@@ -223,7 +227,10 @@ paths:
                     - L
                 target_date:
                   type: string
-                  description: 'Target date of this post, in ISO 8601 format.'
+                  description: 'Target date for the completion of work described in this post, in ISO 8601 format.'
+                expiration_date:
+                  type: string
+                  description: ISO 8601 formatted Date on which this post expires if no candidate is selected.
                 language:
                   type: string
                   description: Language for this post.
@@ -233,6 +240,19 @@ paths:
                 people_needed:
                   type: integer
                   description: Number of people needed for this post.
+                required_skills:
+                  type: array
+                  description: Must-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                desired_skills:
+                  type: array
+                  description: Nice-to-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/Skill'
+                candidate_description:
+                  type: string
+                  description: Description of an ideal candidate for this post.
               required:
                 - name
                 - post_type_id
@@ -301,6 +321,9 @@ paths:
                 post_type_id:
                   type: string
                   description: Unique identifier of the post type for this post.
+                status:
+                  type: string
+                  description: Current status of this post.
                 description:
                   type: string
                   description: Description of this post.
@@ -313,7 +336,10 @@ paths:
                     - L
                 target_date:
                   type: string
-                  description: 'Target date of this post, in ISO 8601 format.'
+                  description: 'Target date for the completion of work described in this post, in ISO 8601 format.'
+                expiration_date:
+                  type: string
+                  description: ISO 8601 formatted Date on which this post expires if no candidate is selected.
                 language:
                   type: string
                   description: Language for this post.
@@ -323,6 +349,19 @@ paths:
                 people_needed:
                   type: integer
                   description: Number of people needed for this post.
+                required_skills:
+                  type: array
+                  description: Must-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                desired_skills:
+                  type: array
+                  description: Nice-to-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/Skill'
+                candidate_description:
+                  type: string
+                  description: Description of an ideal candidate for this post.
     delete:
       summary: Delete a post
       tags:
@@ -768,6 +807,9 @@ components:
         name:
           type: string
           description: Name of this post.
+        status:
+          type: string
+          description: Current status of this post.
         summary:
           type: string
           deprecated: true
@@ -775,6 +817,9 @@ components:
         description:
           type: string
           description: Description of this post.
+        video_url:
+          type: string
+          description: The URL of video description for this post.
         size:
           type: string
           description: T-shirt size of this post.
@@ -790,9 +835,28 @@ components:
         language:
           type: string
           description: Language for this post.
+        required_skills:
+          type: array
+          description: Must-have skills for this post.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        desired_skills:
+          type: array
+          description: Nice-to-have skills for this post.
+          items:
+            $ref: '#/components/schemas/Skill'
+        candidate_description:
+          type: string
+          description: Description of an ideal candidate for this post.
+        match_level:
+          type: number
+          description: A number between 1 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.
         target_date:
           type: string
-          description: 'Target date of this post, in ISO 8601 format.'
+          description: 'Target date for the completion of work described in this post, in ISO 8601 format.'
+        expiration_date:
+          type: string
+          description: ISO 8601 formatted Date on which this post expires if no candidate is selected.
         created_at:
           type: string
           description: 'Date and time when this post was created, in ISO 8601 format.'
@@ -801,10 +865,10 @@ components:
           description: 'Date and time when this post was last updated, in ISO 8601 format.'
       required:
         - post_id
-        - post_owner_id
         - post_owner
         - post_type
         - name
+        - status
         - size
         - location
         - people_needed

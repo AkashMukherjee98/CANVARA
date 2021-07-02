@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import partial
 import uuid
 
 from flask import current_app as app
@@ -29,6 +30,11 @@ def create_post_handler():
     size = Post.validate_and_convert_size(payload['size'])
     language = Post.validate_and_convert_language(payload['language'])
 
+    if payload.get('expiration_date'):
+        expiration_date = Post.validate_and_convert_expiration_date(payload['expiration_date'])
+    else:
+        expiration_date = None
+
     # Generate a unique id for this post
     post_id = str(uuid.uuid4())
 
@@ -44,13 +50,25 @@ def create_post_handler():
             last_updated_at=now,
             name=payload['name'],
             post_type=post_type,
+            status=Post.DEFAULT_INITIAL_POST_STATUS.value,
             description=payload.get('description'),
+            video_url=Post.DEFAULT_VIDEO_URL,  # TODO: (sunil) Remove this once video upload is supported
             size=size,
             language=language,
             location=location,
             people_needed=payload['people_needed'],
-            target_date=target_date
+            candidate_description=payload.get('candidate_description'),
+            target_date=target_date,
+            expiration_date=expiration_date
         )
+
+        if payload.get('required_skills'):
+            Post.validate_required_skills(payload['required_skills'])
+            post.set_required_skills(tx, payload['required_skills'])
+
+        if payload.get('desired_skills'):
+            Post.validate_desired_skills(payload['desired_skills'])
+            post.set_desired_skills(tx, payload['desired_skills'])
     return post.as_dict()
 
 
@@ -100,14 +118,29 @@ def update_post_handler(post_id):
 
         # TODO: (sunil) Move this to the Post model
         settables = {
+            'candidate_description': {},
             'description': {},
+            'desired_skills': {
+                'validate_and_convert': Post.validate_desired_skills,
+                'setter': partial(post.set_desired_skills, tx)
+            },
+            'expiration_date': {
+                'validate_and_convert': Post.validate_and_convert_expiration_date
+            },
             'language': {
                 'validate_and_convert': Post.validate_and_convert_language
             },
             'name': {},
             'people_needed': {},
+            'required_skills': {
+                'validate_and_convert': Post.validate_required_skills,
+                'setter': partial(post.set_required_skills, tx)
+            },
             'size': {
                 'validate_and_convert': Post.validate_and_convert_size
+            },
+            'status': {
+                'validate_and_convert': post.validate_and_convert_status
             },
             'target_date': {
                 'validate_and_convert': Post.validate_and_convert_target_date
@@ -119,9 +152,17 @@ def update_post_handler(post_id):
                 value = payload[field]
                 if settables[field].get('validate_and_convert'):
                     value = settables[field]['validate_and_convert'](value)
-                setattr(post, field, value)
+
+                if settables[field].get('setter'):
+                    settables[field]['setter'](value)
+                else:
+                    setattr(post, field, value)
 
         post.last_updated_at = datetime.utcnow()
+
+    # Fetch the post again from the database so the updates made above are reflected in the response
+    with transaction() as tx:
+        post = Post.lookup(tx, post_id)
         return post.as_dict()
 
 

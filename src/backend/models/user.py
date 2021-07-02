@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
-from .skill import Skill
+from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 
 
 class SkillType(enum.Enum):
@@ -13,30 +13,12 @@ class SkillType(enum.Enum):
     DESIRED_SKILL = 'desired_skill'
 
 
-class UserCurrentSkill(ModelBase):
+class UserCurrentSkill(ModelBase, SkillWithLevelMixin):
     __table__ = db.metadata.tables['user_current_skill']
-    skill = relationship("Skill")
-
-    @property
-    def id(self):
-        return self.skill.id
-
-    def as_dict(self):
-        user_skill_details = self.skill.as_dict()
-        user_skill_details['level'] = self.level
-        return user_skill_details
 
 
-class UserDesiredSkill(ModelBase):
+class UserDesiredSkill(ModelBase, SkillWithoutLevelMixin):
     __table__ = db.metadata.tables['user_desired_skill']
-    skill = relationship("Skill")
-
-    @property
-    def id(self):
-        return self.skill.id
-
-    def as_dict(self):
-        return self.skill.as_dict()
 
 
 class User(ModelBase):
@@ -53,8 +35,6 @@ class User(ModelBase):
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 10
     MAX_DESIRED_SKILLS = 10
-    MIN_SKILL_LEVEL = 1
-    MAX_SKILL_LEVEL = 100
 
     # TODO: (sunil) Separate production from other stacks
     USER_UPLOADS_BASE_URL = 'https://canvara.s3-us-west-2.amazonaws.com/prototype/user_uploads'
@@ -101,89 +81,15 @@ class User(ModelBase):
             if skill_type == SkillType.DESIRED_SKILL:
                 # Ignore level even if it's specified
                 continue
-
-            level = skill.get('level')
-            if level is None:
-                raise InvalidArgumentError(f"Level is required for skill '{skill['name']}'.")
-
-            if level < cls.MIN_SKILL_LEVEL or level > cls.MAX_SKILL_LEVEL:
-                raise InvalidArgumentError(
-                    f"Skill '{skill['name']}' has invalid level: {level}. "
-                    f"Skill levels must be between {cls.MIN_SKILL_LEVEL} and {cls.MAX_SKILL_LEVEL}.")
+            UserCurrentSkill.validate_skill_level(skill['name'], skill.get('level'))
 
     def set_current_skills(self, tx, skills):
-        selected_skills = []
-        for skill_data in skills:
-            # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
-            # Lookup the skill based on id or name, or add a new one
-            skill = Skill.lookup(
-                tx,
-                self.customer_id,
-                skill_id=skill_data.get('skill_id'),
-                name=skill_data.get('name'),
-                must_exist=False)
-            if skill is None:
-                skill = Skill.add_custom_skill(skill_data['name'], self.customer_id)
-
-            user_skill = UserCurrentSkill(level=skill_data['level'])
-            user_skill.skill = skill
-            selected_skills.append(user_skill)
-
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
-
-        existing_skill_ids = [skill.id for skill in self.current_skills]
-        selected_skill_ids = [skill.id for skill in selected_skills]
-
-        # Remove or update the existing skills
-        for existing_skill in self.current_skills:
-            if existing_skill.id not in selected_skill_ids:
-                existing_skill.skill.usage_count -= 1
-                tx.delete(existing_skill)
-                continue
-
-            selected_skill = next(skill for skill in selected_skills if skill.id == existing_skill.id)
-            existing_skill.level = selected_skill.level
-
-        # Now add any new ones
-        for selected_skill in selected_skills:
-            if selected_skill.id not in existing_skill_ids:
-                selected_skill.skill.usage_count += 1
-                self.current_skills.append(selected_skill)
+        UserCurrentSkill.update_skills(tx, self.customer_id, self.current_skills, skills)
 
     def set_desired_skills(self, tx, skills):
-        selected_skills = []
-        for skill_data in skills:
-            # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
-            # Lookup the skill based on id or name, or add a new one
-            skill = Skill.lookup(
-                tx,
-                self.customer_id,
-                skill_id=skill_data.get('skill_id'),
-                name=skill_data.get('name'),
-                must_exist=False)
-            if skill is None:
-                skill = Skill.add_custom_skill(skill_data['name'], self.customer_id)
-
-            user_desired_skill = UserDesiredSkill()
-            user_desired_skill.skill = skill
-            selected_skills.append(user_desired_skill)
-
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
-
-        existing_skill_ids = [skill.id for skill in self.desired_skills]
-        selected_skill_ids = [skill.id for skill in selected_skills]
-
-        # Remove any skill that is not in the new list
-        for existing_skill in self.desired_skills:
-            if existing_skill.id not in selected_skill_ids:
-                existing_skill.skill.usage_count -= 1
-                tx.delete(existing_skill)
-
-        # Now add any new ones
-        for selected_skill in selected_skills:
-            if selected_skill.id not in existing_skill_ids:
-                selected_skill.skill.usage_count += 1
-                self.desired_skills.append(selected_skill)
+        UserDesiredSkill.update_skills(tx, self.customer_id, self.desired_skills, skills)
 
     @property
     def profile_copy(self):

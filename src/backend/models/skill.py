@@ -2,6 +2,8 @@ from datetime import datetime
 import uuid
 
 from sqlalchemy import and_, or_
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
@@ -9,6 +11,7 @@ from .db import db, ModelBase
 
 class Skill(ModelBase):
     __table__ = db.metadata.tables['skill']
+    # TODO: (sunil) Remove internal_name, instead put a functional index on name, like location table
 
     @classmethod
     def lookup(cls, tx, customer_id, skill_id=None, name=None, must_exist=True):  # pylint: disable=too-many-arguments
@@ -55,6 +58,14 @@ class Skill(ModelBase):
             usage_count=0)
 
     @classmethod
+    def lookup_or_add(cls, tx, customer_id, skill_id=None, name=None):
+        # Lookup the skill based on id or name, or add a new custom skill
+        skill = Skill.lookup(tx, customer_id, skill_id=skill_id, name=name, must_exist=False)
+        if skill is None:
+            skill = Skill.add_custom_skill(name, customer_id)
+        return skill
+
+    @classmethod
     def search(cls, tx, customer_id, query=None, limit=10):
         customer_id_clause = or_(
             Skill.customer_id.is_(None),
@@ -90,3 +101,86 @@ class Skill(ModelBase):
             'skill_id': self.id,
             'name': self.display_name
         }
+
+
+class SkillWithoutLevelMixin:
+    @declared_attr
+    def skill(self):
+        return relationship("Skill")
+
+    @property
+    def id(self):
+        return self.skill.id
+
+    def as_dict(self):
+        return self.skill.as_dict()
+
+    @classmethod
+    def update_skills(cls, tx, customer_id, existing_skills, skills):
+        selected_skills = []
+        for skill_data in skills:
+            # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
+            skill = Skill.lookup_or_add(tx, customer_id, skill_id=skill_data.get('skill_id'), name=skill_data.get('name'))
+            selected_skills.append(cls(skill=skill))
+
+        existing_skill_ids = [skill.id for skill in existing_skills]
+        selected_skill_ids = [skill.id for skill in selected_skills]
+
+        # Remove any skill that is not in the new list
+        for existing_skill in existing_skills:
+            if existing_skill.id not in selected_skill_ids:
+                existing_skill.skill.usage_count -= 1
+                tx.delete(existing_skill)
+
+        # Now add any new ones
+        for selected_skill in selected_skills:
+            if selected_skill.id not in existing_skill_ids:
+                selected_skill.skill.usage_count += 1
+                existing_skills.append(selected_skill)
+
+
+class SkillWithLevelMixin(SkillWithoutLevelMixin):
+    MIN_SKILL_LEVEL = 1
+    MAX_SKILL_LEVEL = 100
+
+    def as_dict(self):
+        details = self.skill.as_dict()
+        details['level'] = self.level
+        return details
+
+    @classmethod
+    def validate_skill_level(cls, name, level):
+        if level is None:
+            raise InvalidArgumentError(f"Level is required for skill '{name}'.")
+
+        if level < cls.MIN_SKILL_LEVEL or level > cls.MAX_SKILL_LEVEL:
+            raise InvalidArgumentError(
+                f"Skill '{name}' has invalid level: {level}. "
+                f"Skill levels must be between {cls.MIN_SKILL_LEVEL} and {cls.MAX_SKILL_LEVEL}.")
+
+    @classmethod
+    def update_skills(cls, tx, customer_id, existing_skills, skills):
+        selected_skills = []
+        for skill_data in skills:
+            # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
+            skill = Skill.lookup_or_add(tx, customer_id, skill_id=skill_data.get('skill_id'), name=skill_data.get('name'))
+            selected_skills.append(cls(level=skill_data['level'], skill=skill))
+
+        existing_skill_ids = [skill.id for skill in existing_skills]
+        selected_skill_ids = [skill.id for skill in selected_skills]
+
+        # Remove or update the existing skills
+        for existing_skill in existing_skills:
+            if existing_skill.id not in selected_skill_ids:
+                existing_skill.skill.usage_count -= 1
+                tx.delete(existing_skill)
+                continue
+
+            selected_skill = next(skill for skill in selected_skills if skill.id == existing_skill.id)
+            existing_skill.level = selected_skill.level
+
+        # Now add any new ones
+        for selected_skill in selected_skills:
+            if selected_skill.id not in existing_skill_ids:
+                selected_skill.skill.usage_count += 1
+                existing_skills.append(selected_skill)

@@ -111,7 +111,7 @@ class Post(ModelBase):
     def validate_and_convert_status(status):
         try:
             # TODO: (sunil) Make sure the transition from current status to this new status is allowed
-            return PostStatus(status.lower())
+            return PostStatus(status.lower()).value
         except ValueError as ex:
             raise InvalidArgumentError(f"Invalid status: {status}.") from ex
 

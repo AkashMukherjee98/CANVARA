@@ -211,10 +211,6 @@ paths:
                 post_type_id:
                   type: string
                   description: Unique identifier of the post type for this post.
-                status:
-                  type: string
-                  description: Current status of this post.
-                  default: active
                 description:
                   type: string
                   description: Description of this post.
@@ -850,7 +846,7 @@ components:
           description: Description of an ideal candidate for this post.
         match_level:
           type: number
-          description: A number between 1 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.
+          description: A number between 0 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.
         target_date:
           type: string
           description: 'Target date for the completion of work described in this post, in ISO 8601 format.'

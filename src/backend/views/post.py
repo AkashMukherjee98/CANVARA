@@ -140,7 +140,7 @@ def update_post_handler(post_id):
                 'validate_and_convert': Post.validate_and_convert_size
             },
             'status': {
-                'validate_and_convert': post.validate_and_convert_status
+                'validate_and_convert': Post.validate_and_convert_status
             },
             'target_date': {
                 'validate_and_convert': Post.validate_and_convert_target_date

@@ -2,7 +2,7 @@ import copy
 
 from flask import current_app as app
 from flask import jsonify, request
-from flask_cognito import cognito_auth_required
+from flask_cognito import cognito_auth_required, current_cognito_jwt
 
 from sqlalchemy import select
 
@@ -51,6 +51,16 @@ def list_users_handler(customer_id):
     with transaction() as tx:
         users = tx.execute(select(User).where(User.customer_id == customer_id)).scalars().all()
         user_details = jsonify([user.as_dict() for user in users])
+    return user_details
+
+
+@app.route('/users/me')
+@cognito_auth_required
+def get_current_user_handler():
+    with transaction() as tx:
+        user = User.lookup(tx, current_cognito_jwt['sub'])
+        user_details = user.as_dict()
+        user_details['customer_name'] = user.customer.name
     return user_details
 
 

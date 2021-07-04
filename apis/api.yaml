@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.2.1
+  version: 0.2.2
 servers: []
 tags:
   - name: applications
@@ -550,6 +550,21 @@ paths:
                     $ref: '#/components/schemas/Skill'
                 linkedin_url:
                   type: string
+  /users/me:
+    get:
+      summary: Get details of the current authenticated user
+      tags:
+        - users
+      operationId: get_current_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /onboarding/product_preferences:
     get:
       summary: List all products that user can select

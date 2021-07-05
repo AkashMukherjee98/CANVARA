@@ -1,8 +1,8 @@
 import enum
 
-from flask import current_app as app
 from flask import jsonify, request
-from flask_cognito import cognito_auth_required, current_cognito_jwt
+from flask.views import MethodView
+from flask_cognito import current_cognito_jwt
 from sqlalchemy import select
 
 from backend.common.exceptions import InvalidArgumentError
@@ -21,99 +21,97 @@ class OnboardingStep(enum.Enum):
     ONBOARDING_COMPLETE = 999
 
 
-@app.route('/onboarding/product_preferences')
-@cognito_auth_required
-def list_products_handler():
-    with transaction() as tx:
-        products = tx.execute(select(ProductPreference)).scalars().all()
-    return jsonify([product.as_dict() for product in products])
+class ProductPreferenceAPI(MethodView):
+    @staticmethod
+    def get():
+        with transaction() as tx:
+            products = tx.execute(select(ProductPreference)).scalars().all()
+        return jsonify([product.as_dict() for product in products])
+
+    @staticmethod
+    def post():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            try:
+                product_ids = [product['product_id'] for product in request.json]
+            except KeyError as ex:
+                raise InvalidArgumentError("Invalid format: product_id is missing") from ex
+
+            # Lookup the products and make sure they all exist in the database
+            products_selected = ProductPreference.lookup_multiple(tx, product_ids)
+
+            # TODO: (sunil) Need to lock the user here so no other thread can make updates
+
+            # User may have already selected some products,
+            # remove any product that's not in the new list, then add the rest
+            products_to_remove = set(user.product_preferences) - set(products_selected)
+            for product in products_to_remove:
+                user.product_preferences.remove(product)
+
+            products_to_add = set(products_selected) - set(user.product_preferences)
+            for product in products_to_add:
+                user.product_preferences.append(product)
+
+            # Move the onboarding workflow to the next step
+            profile = user.profile_copy
+            onboarding = profile.setdefault('onboarding_steps', {})
+            onboarding['current'] = OnboardingStep.CONNECT_LINKEDIN_ACCOUNT.value
+            user.profile = profile
+        return make_no_content_response()
 
 
-@app.route('/onboarding/product_preferences', methods=['POST'])
-@cognito_auth_required
-def set_product_preferences_handler():
-    with transaction() as tx:
-        user = User.lookup(tx, current_cognito_jwt['sub'])
+class LinkedInAPI(MethodView):
+    @staticmethod
+    def post():
+        linkedin_url = request.json.get('linkedin_url')
+        if linkedin_url is None:
+            raise InvalidArgumentError('linkedin_url is missing')
 
-        try:
-            product_ids = [product['product_id'] for product in request.json]
-        except KeyError as ex:
-            raise InvalidArgumentError("Invalid format: product_id is missing") from ex
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
 
-        # Lookup the products and make sure they all exist in the database
-        products_selected = ProductPreference.lookup_multiple(tx, product_ids)
+            profile = user.profile_copy
+            if linkedin_url:
+                profile['linkedin_url'] = linkedin_url
+            elif profile['linkedin_url']:
+                # If there was an existing value for LinkedIn URL, and it' now
+                # being set to empty string, remove it instead
+                del profile['linkedin_url']
 
-        # TODO: (sunil) Need to lock the user here so no other thread can make updates
-
-        # User may have already selected some products,
-        # remove any product that's not in the new list, then add the rest
-        products_to_remove = set(user.product_preferences) - set(products_selected)
-        for product in products_to_remove:
-            user.product_preferences.remove(product)
-
-        products_to_add = set(products_selected) - set(user.product_preferences)
-        for product in products_to_add:
-            user.product_preferences.append(product)
-
-        # Move the onboarding workflow to the next step
-        profile = user.profile_copy
-        onboarding = profile.setdefault('onboarding_steps', {})
-        onboarding['current'] = OnboardingStep.CONNECT_LINKEDIN_ACCOUNT.value
-        user.profile = profile
-    return make_no_content_response()
+            onboarding = profile.setdefault('onboarding_steps', {})
+            onboarding['current'] = OnboardingStep.SET_PROFILE_PICTURE.value
+            user.profile = profile
+        return make_no_content_response()
 
 
-@app.route('/onboarding/linkedin', methods=['POST'])
-@cognito_auth_required
-def onboarding_set_linkedin_url_handler():
-    linkedin_url = request.json.get('linkedin_url')
-    if linkedin_url is None:
-        raise InvalidArgumentError('linkedin_url is missing')
+class CurrentSkillAPI(MethodView):
+    @staticmethod
+    def post():
+        User.validate_skills(request.json, SkillType.CURRENT_SKILL)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user.set_current_skills(tx, request.json)
 
-    with transaction() as tx:
-        user = User.lookup(tx, current_cognito_jwt['sub'])
-
-        profile = user.profile_copy
-        if linkedin_url:
-            profile['linkedin_url'] = linkedin_url
-        elif profile['linkedin_url']:
-            # If there was an existing value for LinkedIn URL, and it' now
-            # being set to empty string, remove it instead
-            del profile['linkedin_url']
-
-        onboarding = profile.setdefault('onboarding_steps', {})
-        onboarding['current'] = OnboardingStep.SET_PROFILE_PICTURE.value
-        user.profile = profile
-    return make_no_content_response()
+            # Move the onboarding workflow to the next step
+            profile = user.profile_copy
+            onboarding = profile.setdefault('onboarding_steps', {})
+            onboarding['current'] = OnboardingStep.ADD_DESIRED_SKILLS.value
+            user.profile = profile
+        return make_no_content_response()
 
 
-@app.route('/onboarding/current_skills', methods=['POST'])
-@cognito_auth_required
-def onboarding_set_current_skills_handler():
-    User.validate_skills(request.json, SkillType.CURRENT_SKILL)
-    with transaction() as tx:
-        user = User.lookup(tx, current_cognito_jwt['sub'])
-        user.set_current_skills(tx, request.json)
+class DesiredSkillAPI(MethodView):
+    @staticmethod
+    def post():
+        User.validate_skills(request.json, SkillType.DESIRED_SKILL)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user.set_desired_skills(tx, request.json)
 
-        # Move the onboarding workflow to the next step
-        profile = user.profile_copy
-        onboarding = profile.setdefault('onboarding_steps', {})
-        onboarding['current'] = OnboardingStep.ADD_DESIRED_SKILLS.value
-        user.profile = profile
-    return make_no_content_response()
-
-
-@app.route('/onboarding/desired_skills', methods=['POST'])
-@cognito_auth_required
-def onboarding_set_desired_skills_handler():
-    User.validate_skills(request.json, SkillType.DESIRED_SKILL)
-    with transaction() as tx:
-        user = User.lookup(tx, current_cognito_jwt['sub'])
-        user.set_desired_skills(tx, request.json)
-
-        # Move the onboarding workflow to the next step
-        profile = user.profile_copy
-        onboarding = profile.setdefault('onboarding_steps', {})
-        onboarding['current'] = OnboardingStep.ONBOARDING_COMPLETE.value
-        user.profile = profile
-    return make_no_content_response()
+            # Move the onboarding workflow to the next step
+            profile = user.profile_copy
+            onboarding = profile.setdefault('onboarding_steps', {})
+            onboarding['current'] = OnboardingStep.ONBOARDING_COMPLETE.value
+            user.profile = profile
+        return make_no_content_response()

@@ -2,20 +2,13 @@ from flask import Flask
 from flask_cognito import CognitoAuth, cognito_auth_required
 from flask_cors import CORS
 
-from backend.views.application import ApplicationAPI, PostApplicationAPI
-from backend.views.customer import CustomerAPI
-from backend.views.onboarding import CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI
-from backend.views.post import LanguageAPI, LocationAPI, PostAPI, PostTypeAPI
-from backend.views.skill import SkillAPI
-from backend.views.user import CustomerUserAPI, UserAPI
-
 
 def register_api(app, view, endpoint, url, methods):
     view_func = cognito_auth_required(view.as_view(endpoint))
     app.add_url_rule(url, view_func=view_func, methods=methods)
 
 
-def create_app():
+def create_app():  # pylint: disable=too-many-locals
     app = Flask(__name__)
 
     app.config.update({
@@ -33,6 +26,15 @@ def create_app():
     from backend.common.exceptions import APP_ERROR_HANDLERS  # pylint: disable=import-outside-toplevel
     for exception_type, exception_handler in APP_ERROR_HANDLERS.items():
         app.register_error_handler(exception_type, exception_handler)
+
+    # pylint: disable=import-outside-toplevel
+    from backend.views.application import ApplicationAPI, PostApplicationAPI
+    from backend.views.customer import CustomerAPI
+    from backend.views.onboarding import CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI
+    from backend.views.post import LanguageAPI, LocationAPI, PostAPI, PostTypeAPI
+    from backend.views.skill import SkillAPI
+    from backend.views.user import CustomerUserAPI, UserAPI
+    # pylint: enable=import-outside-toplevel
 
     customer_view = cognito_auth_required(CustomerAPI.as_view('customer_api'))
     app.add_url_rule('/customers', view_func=customer_view, methods=['GET', 'POST'])

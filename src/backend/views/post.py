@@ -28,7 +28,8 @@ class PostAPI(MethodView):
                 tx,
                 user.customer_id,
                 owner_id=request.args.get('post_owner_id'),
-                query=request.args.get('q')
+                query=request.args.get('q'),
+                post_type_id=request.args.get('type')
             )
         return jsonify(posts)
 
@@ -97,7 +98,7 @@ class PostAPI(MethodView):
             if payload.get('desired_skills'):
                 Post.validate_desired_skills(payload['desired_skills'])
                 post.set_desired_skills(tx, payload['desired_skills'])
-        return post.as_dict()
+            return post.as_dict()
 
     @staticmethod
     def put(post_id):

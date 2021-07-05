@@ -65,10 +65,13 @@ class Post(ModelBase):
         return post
 
     @classmethod
-    def search(cls, tx, customer_id, owner_id=None, query=None):
+    def search(cls, tx, customer_id, owner_id=None, query=None, post_type_id=None):
         posts = tx.query(cls).join(Post.owner).where(User.customer_id == customer_id)
         if owner_id is not None:
             posts = posts.where(Post.owner_id == owner_id)
+
+        if post_type_id is not None:
+            posts = posts.where(Post.post_type_id == post_type_id)
 
         # TODO: (sunil) Use full text search instead
         if query is not None:

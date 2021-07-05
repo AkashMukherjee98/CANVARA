@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.2.2
+  version: 0.2.3
 servers: []
 tags:
   - name: applications
@@ -170,18 +170,23 @@ paths:
             type: string
           in: query
           name: post_owner_id
-          description: Unique identifier of the post owner
+          description: Unique identifier of the post owner.
         - schema:
             type: string
           in: query
           name: q
-          description: The search query
+          description: The search query.
         - schema:
             type: string
             default: curated
           in: query
           name: filter
-          description: Filter for the results
+          description: Filter for the results.
+        - schema:
+            type: string
+          in: query
+          name: type
+          description: 'Unique identifier of the post type for search for. If absent, return posts of all types.'
     post:
       summary: Add a new post
       tags:

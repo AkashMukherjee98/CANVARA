@@ -10,7 +10,7 @@ from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.location import Location
-from backend.models.post import Post
+from backend.models.post import Post, PostFilter
 from backend.models.post_type import PostType
 from backend.models.user import User
 
@@ -18,18 +18,18 @@ from backend.models.user import User
 class PostAPI(MethodView):
     @staticmethod
     def __list_posts():
-        # TODO: (sunil) Use filter arg to filter the query results
-        # filter = request.args.get('filter', 'curated').lower()
+        post_filter = PostFilter.lookup(request.args.get('filter'))
 
         with transaction() as tx:
             # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
             posts = Post.search(
                 tx,
-                user.customer_id,
+                user,
                 owner_id=request.args.get('post_owner_id'),
                 query=request.args.get('q'),
-                post_type_id=request.args.get('type')
+                post_type_id=request.args.get('type'),
+                post_filter=post_filter
             )
         return jsonify(posts)
 

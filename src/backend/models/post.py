@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -11,6 +11,36 @@ from .location import Location
 from .post_type import PostType
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user import User
+
+
+class PostFilter(Enum):
+    # Latest posts available to the current user
+    LATEST = 'latest'
+
+    # Active posts owned by the current user
+    YOUR = 'your'
+
+    # Posts saved by the current user
+    SAVED = 'saved'
+
+    # Posts owned by the current user with work currently underway
+    UNDERWAY = 'underway'
+
+    # Posts relevant to the current user
+    CURATED = 'curated'
+
+    # Deactivated posts owned by the current user
+    DEACTIVATED = 'deactivated'
+
+    @classmethod
+    def lookup(cls, name):
+        if name is None:
+            return None
+
+        try:
+            return PostFilter(name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported filter: {name}.") from ex
 
 
 class PostStatus(Enum):
@@ -55,6 +85,8 @@ class Post(ModelBase):
     # TODO: (sunil) Separate production from other stacks
     DEFAULT_VIDEO_URL = 'https://canvara.s3.us-west-2.amazonaws.com/prototype/user_uploads/post-video-stock.mp4'
 
+    DEFAULT_FILTER = PostFilter.CURATED
+
     MAX_SKILLS = 5
 
     @classmethod
@@ -65,8 +97,13 @@ class Post(ModelBase):
         return post
 
     @classmethod
-    def search(cls, tx, customer_id, owner_id=None, query=None, post_type_id=None):
-        posts = tx.query(cls).join(Post.owner).where(User.customer_id == customer_id)
+    def search(
+        cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None
+    ):  # pylint: disable=too-many-arguments
+        if post_filter is None:
+            post_filter = cls.DEFAULT_FILTER
+
+        posts = tx.query(cls).join(Post.owner).where(User.customer_id == user.customer_id)
         if owner_id is not None:
             posts = posts.where(Post.owner_id == owner_id)
 
@@ -79,6 +116,20 @@ class Post(ModelBase):
                 Post.name.ilike(f'%{query}%'),
                 Post.description.ilike(f'%{query}%')
             ))
+
+        # TODO: (sunil) Implement filtering by remaining criteria
+        if post_filter == PostFilter.DEACTIVATED:
+            posts = posts.where(and_(
+                Post.owner_id == user.id,
+                Post.status == PostStatus.DEACTIVED.value
+            ))
+        elif post_filter == PostFilter.LATEST:
+            posts = posts.order_by(Post.created_at.desc())
+        elif post_filter == PostFilter.YOUR:
+            posts = posts.where(Post.owner_id == user.id)
+        # elif post_filter == PostFilter.CURATED:
+        # elif post_filter == PostFilter.SAVED:
+        # elif post_filter == PostFilter.UNDERWAY:
 
         return [post.as_dict() for post in posts]
 

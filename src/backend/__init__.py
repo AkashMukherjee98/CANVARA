@@ -30,6 +30,7 @@ def create_app():  # pylint: disable=too-many-locals
     # pylint: disable=import-outside-toplevel
     from backend.views.application import ApplicationAPI, PostApplicationAPI
     from backend.views.customer import CustomerAPI
+    from backend.views.match import MatchAPI
     from backend.views.onboarding import CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI
     from backend.views.post import LanguageAPI, LocationAPI, PostAPI, PostTypeAPI
     from backend.views.skill import SkillAPI
@@ -39,6 +40,10 @@ def create_app():  # pylint: disable=too-many-locals
     customer_view = cognito_auth_required(CustomerAPI.as_view('customer_api'))
     app.add_url_rule('/customers', view_func=customer_view, methods=['GET', 'POST'])
     app.add_url_rule('/customers/<customer_id>', view_func=customer_view, methods=['GET', 'PUT', 'DELETE'])
+
+    match_view = cognito_auth_required(MatchAPI.as_view('match_api'))
+    app.add_url_rule('/matches', view_func=match_view, methods=['GET', 'POST'])
+    app.add_url_rule('/matches/<match_id>', view_func=match_view, methods=['GET', 'PUT', 'DELETE'])
 
     register_api(app, CurrentSkillAPI, 'current_skill_api', '/onboarding/current_skills', ['POST', ])
     register_api(app, DesiredSkillAPI, 'desired_skill_api', '/onboarding/desired_skills', ['POST', ])

@@ -78,6 +78,7 @@ class Post(ModelBase):
     location = relationship(Location)
     required_skills = relationship("PostRequiredSkill")
     desired_skills = relationship("PostDesiredSkill")
+    user_matches = relationship("UserPostMatch", back_populates="post")
 
     DEFAULT_INITIAL_POST_STATUS = PostStatus.ACTIVE
     VALID_SIZES = {'S', 'M', 'L'}
@@ -131,7 +132,7 @@ class Post(ModelBase):
         # elif post_filter == PostFilter.SAVED:
         # elif post_filter == PostFilter.UNDERWAY:
 
-        return [post.as_dict() for post in posts]
+        return posts
 
     @classmethod
     def __validate_and_convert_isoformat_date(cls, date, fieldname):
@@ -206,7 +207,7 @@ class Post(ModelBase):
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
         PostDesiredSkill.update_skills(tx, self.owner.customer_id, self.desired_skills, skills)
 
-    def as_dict(self):
+    def as_dict(self, match_user_id=None):
         post = {
             'post_id': self.id,
             'name': self.name,
@@ -237,8 +238,12 @@ class Post(ModelBase):
             if value is not None:
                 post[field] = value
 
-        # TODO: (sunil) Implement match calculation
-        post['match_level'] = 75
+        # TODO: (sunil) See if this can be done at lookup time
+        if match_user_id is not None:
+            for match in self.user_matches:
+                if match.user_id == match_user_id:
+                    post['match_level'] = match.confidence_level
+                    break
 
         # TODO: (sunil) Remove summary, customer_id and post_owner_id once Frontend has been updated
         post['summary'] = self.name

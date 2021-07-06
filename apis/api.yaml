@@ -1,11 +1,12 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.2.3
+  version: 0.3.0
 servers: []
 tags:
   - name: applications
   - name: customers
+  - name: matches
   - name: onboarding
   - name: posts
   - name: users
@@ -735,6 +736,112 @@ paths:
       operationId: list_languages
       security:
         - AWSCognitoCanvaraPrototype: []
+  /matches:
+    post:
+      summary: Add a new match between a user and a post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPostMatch'
+      operationId: create_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                post_id:
+                  type: string
+                match_level:
+                  type: integer
+              required:
+                - user_id
+                - post_id
+                - match_level
+      tags:
+        - matches
+    get:
+      summary: List all matches based on given criteria
+      operationId: list_matches
+      responses:
+        '200':
+          description: OK
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: user_id
+        - schema:
+            type: string
+          in: query
+          name: post_id
+      tags:
+        - matches
+  '/matches/{match_id}':
+    parameters:
+      - schema:
+          type: string
+        name: match_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a match
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPostMatch'
+      operationId: get_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters: []
+      tags:
+        - matches
+    put:
+      summary: Update details of a match
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPostMatch'
+      operationId: update_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                match_level:
+                  type: integer
+              required:
+                - match_level
+      tags:
+        - matches
+    delete:
+      summary: Delete a match
+      responses:
+        '204':
+          description: No Content
+      operationId: delete_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - matches
 components:
   schemas:
     Customer:
@@ -953,6 +1060,23 @@ components:
       required:
         - post_type_id
         - name
+    UserPostMatch:
+      title: UserPostMatch
+      type: object
+      properties:
+        match_id:
+          type: string
+        user_id:
+          type: string
+        post_id:
+          type: string
+        match_level:
+          type: string
+      required:
+        - match_id
+        - user_id
+        - post_id
+        - match_level
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

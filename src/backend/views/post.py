@@ -31,13 +31,15 @@ class PostAPI(MethodView):
                 post_type_id=request.args.get('type'),
                 post_filter=post_filter
             )
+            posts = [post.as_dict(match_user_id=user.id) for post in posts]
         return jsonify(posts)
 
     @staticmethod
     def __get_post(post_id):
         with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
             post = Post.lookup(tx, post_id)
-            return post.as_dict()
+            return post.as_dict(match_user_id=user.id)
 
     @staticmethod
     def get(post_id=None):

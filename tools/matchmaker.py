@@ -6,12 +6,12 @@ from sqlalchemy import or_
 
 # TODO: (sunil) Clean up the db mappers so we don't need to import these models unnecessarily
 from backend.models.db import transaction
-from backend.models.application import Application
-from backend.models.customer import Customer
-from backend.models.location import Location
+from backend.models.application import Application  # noqa: F401
+from backend.models.customer import Customer  # noqa: F401
+from backend.models.location import Location  # noqa: F401
 from backend.models.match import UserPostMatch
 from backend.models.post import Post
-from backend.models.product_preference import ProductPreference
+from backend.models.product_preference import ProductPreference  # noqa: F401
 from backend.models.user import User, UserCurrentSkill
 
 
@@ -111,6 +111,7 @@ def main():
         end_time = time.time()
         print(f"Finished analysis in {(end_time - start_time)*1000:.2f} ms")
         time.sleep(SLEEP_INTERVAL_SECONDS)
+
 
 if __name__ == '__main__':
     main()

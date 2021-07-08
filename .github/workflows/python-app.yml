@@ -136,12 +136,12 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f backend/pip_test_requirements.txt ]; then pip install -r backend/pip_test_requirements.txt; fi
 
-    - name: Kill gunicorn3
-      run: |
-        whoami
-        killall gunicorn3
-        exit 1
-      if: ${{ failure() }}
+#    - name: Kill gunicorn3
+#      run: |
+#        whoami
+#        killall gunicorn3
+#        exit 1
+#      if: ${{ failure() }}
     - name: start gunicorn3
       run : |
         cd /home/ubuntu/actions-runner/canvara/prototype/prototype/src

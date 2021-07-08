@@ -134,7 +134,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f pip_test_requirements.txt ]; then pip install -r pip_test_requirements.txt; fi
+        if [ -f backend/pip_test_requirements.txt ]; then pip install -r backend/pip_test_requirements.txt; fi
     - name: Kill gunicorn3
       run: |
         whoami

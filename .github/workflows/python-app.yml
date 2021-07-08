@@ -188,7 +188,11 @@ jobs:
         export AWS_COGNITO_APPLICANT2_USER=${{ secrets.AWS_COGNITO_APPLICANT2_USER }}
         export AWS_COGNITO_APPLICANT2_PASSWORD=${{ secrets.AWS_COGNITO_APPLICANT2_PASSWORD }}
         export BASE_API_URL=${{ secrets.BASE_API_URL }}
-        printenv
+        export RDS_HOST=${{ RDS_STAGE_HOST }}
+        export RDS_USERNAME=${{ RDS_USERNAME }}
+        export RDS_PASSWORD=${{ RDS_PASSWORD }}
+        export RDS_DB_NAME=${{ RDS_DB_NAME }}
+        export RDS_PORT = '5432'
         pytest
 #    - name: Running test with pytest
 #      run: |

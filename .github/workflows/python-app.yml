@@ -188,12 +188,11 @@ jobs:
         export AWS_COGNITO_APPLICANT2_USER=${{ secrets.AWS_COGNITO_APPLICANT2_USER }}
         export AWS_COGNITO_APPLICANT2_PASSWORD=${{ secrets.AWS_COGNITO_APPLICANT2_PASSWORD }}
         export BASE_API_URL=${{ secrets.BASE_API_URL }}
-
-    - name: Running test with pytest
-      run: |
-        pwd
-        ls
+        printenv
         pytest
+#    - name: Running test with pytest
+#      run: |
+#        pytest
 
 
 

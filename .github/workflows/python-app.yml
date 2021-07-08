@@ -138,15 +138,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f pip_requirements.txt ]; then pip install -r pip_requirements.txt; fi
-
-#    - name: Kill gunicorn3
-#      run: |
-#        whoami
-#        killall gunicorn3
-#        exit 1
-#      if: ${{ failure() }}
-    - name: start gunicorn3
-      run : |
         export AWS_CLIENT_ID=${{ secrets.AWS_CLIENT_ID }}
         export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
         export PYTHONPATH=/home/ubuntu/actions-runner/canvara/prototype/prototype/src

@@ -137,6 +137,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        ls
+        pwd
         if [ -f backend/pip_test_requirements.txt ]; then pip install -r backend/pip_test_requirements.txt; fi
 
 #    - name: Kill gunicorn3
@@ -152,7 +154,6 @@ jobs:
         sudo gunicorn3 --daemon --access-logfile /home/ubuntu/logs/api_access.log --error-logfile /home/ubuntu/logs/api_error.log --env CANVARA_CONFIGS_DIR=/home/ubuntu/actions-runner/canvara/prototype/prototype/configs --env CANVARA_ENV=stage --env PYTHONPATH=/home/ubuntu/actions-runner/canvara/prototype/prototype/src 'backend:create_app()'
         sleep 30s
         ps -ef | grep gunicorn3
-        cat /home/ubuntu/logs/api_error.log
         pwd
       shell: bash
   integration_test:

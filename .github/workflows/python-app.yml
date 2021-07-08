@@ -192,7 +192,6 @@ jobs:
         export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
         export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
         export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
-        export RDS_PORT = '5432'
         pytest
 #    - name: Running test with pytest
 #      run: |

@@ -147,8 +147,10 @@ jobs:
         cd /home/ubuntu/actions-runner/canvara/prototype/prototype/src
         pwd
         gunicorn3 --daemon --access-logfile /home/ubuntu/logs/api_access.log --error-logfile /home/ubuntu/logs/api_error.log --env CANVARA_CONFIGS_DIR=/home/ubuntu/actions-runner/canvara/prototype/prototype/configs --env CANVARA_ENV=stage --env PYTHONPATH=/home/ubuntu/actions-runner/canvara/prototype/prototype/src 'backend:create_app()'
+        sleep 30s
         ps -ef | grep gunicorn3
         pwd
+      shell: bash
   integration_test:
     needs: deploy
     runs-on: ubuntu-latest

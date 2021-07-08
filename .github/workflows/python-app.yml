@@ -139,6 +139,7 @@ jobs:
       run: |
         whoami
         killall gunicorn3
+        exit 1
 
     - name: start gunicorn3
       if: ${{ failure() }}

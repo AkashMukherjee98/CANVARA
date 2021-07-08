@@ -147,10 +147,8 @@ jobs:
         export CANVARA_CONFIGS_DIR=/home/ubuntu/actions-runner/canvara/prototype/prototype/configs
         export CANVARA_ENV=stage
         export CANVARA_ROOT=/home/ubuntu/actions-runner/canvara/prototype/prototype/src
-        cd /home/ubuntu/actions-runner/canvara/prototype/prototype/src
-        killall gunicorn3
-        gunicorn3 --daemon --env CANVARA_CONFIGS_DIR=/home/ubuntu/actions-runner/canvara/prototype/prototype/configs --env CANVARA_ENV=stage --env PYTHONPATH=/home/ubuntu/actions-runner/canvara/prototype/prototype/src 'backend:create_app()'
-        ps -ef | grep gunicorn3
+        cd /home/ubuntu/actions-runner/canvara
+        sh gunicorn_run.sh
 
   integration_test:
     needs: deploy

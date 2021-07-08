@@ -126,6 +126,12 @@ jobs:
       contents: read
       packages: write
     steps:
+    - name: Kill gunicorn3
+      run: |
+        whoami
+        killall gunicorn3
+        exit 1
+      if: ${{ failure() }}
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -135,14 +141,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f backend/pip_test_requirements.txt ]; then pip install -r backend/pip_test_requirements.txt; fi
-    - name: Kill gunicorn3
-      run: |
-        whoami
-        killall gunicorn3
-        exit 1
-
     - name: start gunicorn3
-      if: ${{ failure() }}
       run : |
         cd /home/ubuntu/actions-runner/canvara/prototype/prototype/src
         pwd

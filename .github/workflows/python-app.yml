@@ -192,10 +192,10 @@ jobs:
         export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
         export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
         export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
-        pytest
-#    - name: Running test with pytest
-#      run: |
 #        pytest
+    - name: Running test with pytest
+      run: |
+        pytest
 
 
 

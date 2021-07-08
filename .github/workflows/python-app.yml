@@ -127,11 +127,13 @@ jobs:
       packages: write
     steps:
     - uses: actions/checkout@v2
+      with:
+        clean: false
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-        clean: false
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

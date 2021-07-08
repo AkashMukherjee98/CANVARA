@@ -148,9 +148,9 @@ jobs:
         export CANVARA_ENV=stage
         export CANVARA_ROOT=/home/ubuntu/actions-runner/canvara/prototype/prototype/src
         cd /home/ubuntu/actions-runner/canvara
-        chmod +x gunicorn.sh.sh
-        ls -ltr gunicorn.sh.sh
-        sh gunicorn_run.sh
+        chmod +x gunicorn.sh
+        ls -ltr gunicorn.sh
+        sh gunicorn.sh
 
   integration_test:
     needs: deploy

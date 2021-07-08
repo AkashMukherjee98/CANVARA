@@ -191,6 +191,7 @@ jobs:
 
     - name: Running test with pytest
       run: |
+        pwd
         ls
         pytest
 

@@ -11,6 +11,7 @@ from .location import Location
 from .post_type import PostType
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user import User
+from .user_upload import UserUpload
 
 
 class PostFilter(Enum):
@@ -79,12 +80,10 @@ class Post(ModelBase):
     required_skills = relationship("PostRequiredSkill")
     desired_skills = relationship("PostDesiredSkill")
     user_matches = relationship("UserPostMatch", back_populates="post")
+    description_video = relationship(UserUpload)
 
     DEFAULT_INITIAL_POST_STATUS = PostStatus.ACTIVE
     VALID_SIZES = {'S', 'M', 'L'}
-
-    # TODO: (sunil) Separate production from other stacks
-    DEFAULT_VIDEO_URL = 'https://canvara.s3.us-west-2.amazonaws.com/prototype/user_uploads/post-video-stock.mp4'
 
     DEFAULT_FILTER = PostFilter.CURATED
 
@@ -232,11 +231,14 @@ class Post(ModelBase):
         if self.expiration_date:
             post['expiration_date'] = self.expiration_date.isoformat()
 
-        optional_fields = ['candidate_description', 'video_url']
+        optional_fields = ['candidate_description']
         for field in optional_fields:
             value = getattr(self, field)
             if value is not None:
                 post[field] = value
+
+        if self.description_video:
+            post['video_url'] = self.description_video.generate_presigned_get()
 
         # TODO: (sunil) See if this can be done at lookup time
         if match_user_id is not None:

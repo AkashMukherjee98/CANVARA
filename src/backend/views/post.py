@@ -13,6 +13,7 @@ from backend.models.location import Location
 from backend.models.post import Post, PostFilter
 from backend.models.post_type import PostType
 from backend.models.user import User
+from backend.models.user_upload import UserUpload, UserUploadStatus
 
 
 class PostAPI(MethodView):
@@ -83,7 +84,6 @@ class PostAPI(MethodView):
                 post_type=post_type,
                 status=Post.DEFAULT_INITIAL_POST_STATUS.value,
                 description=payload.get('description'),
-                video_url=Post.DEFAULT_VIDEO_URL,  # TODO: (sunil) Remove this once video upload is supported
                 size=size,
                 language=language,
                 location=location,
@@ -183,6 +183,62 @@ class PostAPI(MethodView):
                 raise NotAllowedError(f"User '{user.id}' is not the post owner")
             tx.delete(post)
         return {}
+
+
+class PostVideoAPI(MethodView):
+    @staticmethod
+    def put(post_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            customer_id = user.customer_id
+
+        original_filename = request.json['filename']
+        bucket = UserUpload.get_bucket_name()
+        path = UserUpload.generate_upload_path(customer_id, 'posts', original_filename)
+        presigned_url = UserUpload.generate_presigned_put(bucket, path)
+
+        now = datetime.utcnow()
+        with transaction() as tx:
+            user_upload = UserUpload(
+                id=str(uuid.uuid4()),
+                customer_id=customer_id,
+                bucket=bucket,
+                path=path,
+                status=UserUploadStatus.CREATED.value,
+                metadata={
+                    'user_id': user.id,
+                    'original_filename': original_filename,
+                    'content_type': request.json['content_type'],
+                    'resource': 'post',
+                    'resource_id': post_id,
+                    'type': 'video',
+                },
+                created_at=now
+            )
+            tx.add(user_upload)
+
+        return {
+            'upload_id': user_upload.id,
+            'url': presigned_url,
+        }
+
+
+class PostVideoByIdAPI(MethodView):
+    @staticmethod
+    def put(post_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            post = Post.lookup(tx, post_id)
+            if status == UserUploadStatus.UPLOADED:
+                post.description_video = user_upload
+                user_upload.status = status.value
+            # TODO: (sunil) return an error if this status transition is not supported
+
+        return {
+            'status': user_upload.status,
+        }
 
 
 class PostTypeAPI(MethodView):

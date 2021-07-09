@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.0
+  version: 0.3.1
 servers: []
 tags:
   - name: applications
@@ -429,6 +429,79 @@ paths:
         name: post_id
         in: path
         required: true
+  '/posts/{post_id}/video':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a post video upload
+      operationId: upload_post_video
+      responses:
+        '200':
+          description: OK
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                  description: Name of the file being uploaded.
+                content_type:
+                  type: string
+                upload_id:
+                  type: string
+                status:
+                  type: string
+  '/posts/{post_id}/video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload
+    put:
+      summary: Finalize post video upload
+      operationId: finalize_post_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+              required:
+                - status
   /applications:
     get:
       summary: List all applications

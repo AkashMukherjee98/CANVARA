@@ -436,12 +436,27 @@ paths:
         name: post_id
         in: path
         required: true
+        description: Unique identifier of the post.
     put:
       summary: Create request for a post video upload
       operationId: upload_post_video
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upload_id:
+                    type: string
+                    description: Unique identifier of this upload.
+                  url:
+                    type: string
+                    description: Url where the file should be uploaded to.
+                required:
+                  - upload_id
+                  - url
       tags:
         - posts
       security:
@@ -457,10 +472,8 @@ paths:
                   description: Name of the file being uploaded.
                 content_type:
                   type: string
-                upload_id:
-                  type: string
-                status:
-                  type: string
+                  description: Content type of the file being uploaded.
+                  example: video/mp4
   '/posts/{post_id}/video/{upload_id}':
     parameters:
       - schema:
@@ -468,13 +481,13 @@ paths:
         name: post_id
         in: path
         required: true
-        description: Unique identifier of the post
+        description: Unique identifier of the post.
       - schema:
           type: string
         name: upload_id
         in: path
         required: true
-        description: Unique identifier of the file upload
+        description: Unique identifier of the file upload.
     put:
       summary: Finalize post video upload
       operationId: finalize_post_video_upload

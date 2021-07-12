@@ -56,12 +56,16 @@ class UserUpload(ModelBase):
         return UserUpload.__generate_presigned_url(self.bucket, self.path, 'get_object')
 
     @classmethod
-    def generate_presigned_put(cls, bucket, path):
-        return cls.__generate_presigned_url(bucket, path, 'put_object')
+    def generate_presigned_put(cls, bucket, path, content_type):
+        return cls.__generate_presigned_url(bucket, path, 'put_object', content_type=content_type)
 
     @classmethod
-    def __generate_presigned_url(cls, bucket, path, method):
+    def __generate_presigned_url(cls, bucket, path, method, content_type=None):
+        params = {'Bucket': bucket, 'Key': path}
+        if content_type is not None:
+            params['ContentType'] = content_type
+
         return boto3.client('s3').generate_presigned_url(
             ClientMethod=method,
-            Params={'Bucket': bucket, 'Key': path}
+            Params=params
         )

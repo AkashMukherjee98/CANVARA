@@ -7,10 +7,11 @@ from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
+from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.location import Location
-from backend.models.post import Post, PostFilter
+from backend.models.post import Post, PostFilter, UserPostBookmark, UserPostLike
 from backend.models.post_type import PostType
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -32,7 +33,7 @@ class PostAPI(MethodView):
                 post_type_id=request.args.get('type'),
                 post_filter=post_filter
             )
-            posts = [post.as_dict(match_user_id=user.id) for post in posts]
+            posts = [post.as_dict(user_id=user.id) for post in posts]
         return jsonify(posts)
 
     @staticmethod
@@ -40,7 +41,7 @@ class PostAPI(MethodView):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             post = Post.lookup(tx, post_id)
-            return post.as_dict(match_user_id=user.id)
+            return post.as_dict(user_id=user.id)
 
     @staticmethod
     def get(post_id=None):
@@ -239,6 +240,54 @@ class PostVideoByIdAPI(MethodView):
         return {
             'status': user_upload.status,
         }
+
+
+class PostBookmarkAPI(MethodView):
+    @staticmethod
+    def put(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            # noop if the bookmark already exists, otherwise add one
+            # TODO: (sunil) may need to acquire a mutex to handle concurrent requests
+            bookmark = UserPostBookmark.lookup(tx, user.id, post.id, must_exist=False)
+            if bookmark is None:
+                UserPostBookmark(user=user, post=post, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
+            tx.delete(bookmark)
+        return make_no_content_response()
+
+
+class PostLikeAPI(MethodView):
+    @staticmethod
+    def put(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            # noop if the like already exists, otherwise add one
+            # TODO: (sunil) may need to acquire a mutex to handle concurrent requests
+            like = UserPostLike.lookup(tx, user.id, post.id, must_exist=False)
+            if like is None:
+                UserPostLike(user=user, post=post, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            like = UserPostLike.lookup(tx, user.id, post.id)
+            tx.delete(like)
+        return make_no_content_response()
 
 
 class PostTypeAPI(MethodView):

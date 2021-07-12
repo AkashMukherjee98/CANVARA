@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.1
+  version: 0.3.2
 servers: []
 tags:
   - name: applications
@@ -517,6 +517,62 @@ paths:
                   type: string
               required:
                 - status
+  '/posts/{post_id}/like':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post.
+    put:
+      summary: Add like for a post
+      operationId: add_post_like
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove like for a post
+      operationId: delete_post_like
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/posts/{post_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post.
+    put:
+      summary: Bookmark a post
+      operationId: add_post_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a post
+      operationId: delete_post_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /applications:
     get:
       summary: List all applications
@@ -1062,6 +1118,12 @@ components:
         match_level:
           type: number
           description: A number between 0 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.
+        is_bookmarked:
+          type: boolean
+          description: Whether this post has been bookmarked by the current user or not.
+        is_liked:
+          type: boolean
+          description: Whether this post has been liked by the current user or not.
         target_date:
           type: string
           description: 'Target date for the completion of work described in this post, in ISO 8601 format.'

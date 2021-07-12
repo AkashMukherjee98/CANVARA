@@ -32,7 +32,8 @@ def create_app():  # pylint: disable=too-many-locals
     from backend.views.customer import CustomerAPI
     from backend.views.match import MatchAPI
     from backend.views.onboarding import CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI
-    from backend.views.post import LanguageAPI, LocationAPI, PostAPI, PostTypeAPI, PostVideoAPI, PostVideoByIdAPI
+    from backend.views.post import (
+        LanguageAPI, LocationAPI, PostAPI, PostBookmarkAPI, PostLikeAPI, PostTypeAPI, PostVideoAPI, PostVideoByIdAPI)
     from backend.views.skill import SkillAPI
     from backend.views.user import CustomerUserAPI, UserAPI
     # pylint: enable=import-outside-toplevel
@@ -60,6 +61,12 @@ def create_app():  # pylint: disable=too-many-locals
 
     post_video_by_id_view = cognito_auth_required(PostVideoByIdAPI.as_view('post_video_by_id_api'))
     app.add_url_rule('/posts/<post_id>/video/<upload_id>', view_func=post_video_by_id_view, methods=['PUT'])
+
+    post_bookmark_view = cognito_auth_required(PostBookmarkAPI.as_view('post_bookmark_api'))
+    app.add_url_rule('/posts/<post_id>/bookmark', view_func=post_bookmark_view, methods=['PUT', 'DELETE'])
+
+    post_like_view = cognito_auth_required(PostLikeAPI.as_view('post_like_api'))
+    app.add_url_rule('/posts/<post_id>/like', view_func=post_like_view, methods=['PUT', 'DELETE'])
 
     register_api(app, LanguageAPI, 'language_api', '/languages', ['GET', ])
     register_api(app, LocationAPI, 'location_api', '/locations', ['GET', ])

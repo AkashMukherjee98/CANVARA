@@ -81,6 +81,8 @@ class Post(ModelBase):
     desired_skills = relationship("PostDesiredSkill")
     user_matches = relationship("UserPostMatch", back_populates="post")
     description_video = relationship(UserUpload)
+    bookmark_users = relationship("UserPostBookmark", back_populates="post")
+    like_users = relationship("UserPostLike", back_populates="post")
 
     DEFAULT_INITIAL_POST_STATUS = PostStatus.ACTIVE
     VALID_SIZES = {'S', 'M', 'L'}
@@ -128,7 +130,8 @@ class Post(ModelBase):
         elif post_filter == PostFilter.YOUR:
             posts = posts.where(Post.owner_id == user.id)
         # elif post_filter == PostFilter.CURATED:
-        # elif post_filter == PostFilter.SAVED:
+        elif post_filter == PostFilter.SAVED:
+            posts = posts.join(Post.bookmark_users)
         # elif post_filter == PostFilter.UNDERWAY:
 
         return posts
@@ -206,7 +209,7 @@ class Post(ModelBase):
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
         PostDesiredSkill.update_skills(tx, self.owner.customer_id, self.desired_skills, skills)
 
-    def as_dict(self, match_user_id=None):
+    def as_dict(self, user_id=None):
         post = {
             'post_id': self.id,
             'name': self.name,
@@ -241,11 +244,14 @@ class Post(ModelBase):
             post['video_url'] = self.description_video.generate_presigned_get()
 
         # TODO: (sunil) See if this can be done at lookup time
-        if match_user_id is not None:
+        if user_id is not None:
             for match in self.user_matches:
-                if match.user_id == match_user_id:
+                if match.user_id == user_id:
                     post['match_level'] = match.confidence_level
                     break
+
+            post['is_bookmarked'] = any(bookmark.user_id == user_id for bookmark in self.bookmark_users)
+            post['is_liked'] = any(like.user_id == user_id for like in self.like_users)
 
         # TODO: (sunil) Remove summary, customer_id and post_owner_id once Frontend has been updated
         post['summary'] = self.name
@@ -259,3 +265,31 @@ class Post(ModelBase):
         }
 
         return post
+
+
+class UserPostBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __table__ = db.metadata.tables['user_post_bookmark']
+
+    user = relationship("User", back_populates="post_bookmarks")
+    post = relationship("Post", back_populates="bookmark_users")
+
+    @classmethod
+    def lookup(cls, tx, user_id, post_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, post_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Bookmark for post '{post_id}' for user '{user_id}' does not exist")
+        return bookmark
+
+
+class UserPostLike(ModelBase):  # pylint: disable=too-few-public-methods
+    __table__ = db.metadata.tables['user_post_like']
+
+    user = relationship("User", back_populates="post_likes")
+    post = relationship("Post", back_populates="like_users")
+
+    @classmethod
+    def lookup(cls, tx, user_id, post_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, post_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Like for post '{post_id}' for user '{user_id}' does not exist")
+        return bookmark

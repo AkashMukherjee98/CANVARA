@@ -31,6 +31,8 @@ class User(ModelBase):
     product_preferences = relationship("ProductPreference", secondary=db.metadata.tables['user_product_preference'])
     current_skills = relationship("UserCurrentSkill")
     desired_skills = relationship("UserDesiredSkill")
+    post_bookmarks = relationship("UserPostBookmark", back_populates="user")
+    post_likes = relationship("UserPostLike", back_populates="user")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 10

@@ -53,7 +53,12 @@ class UserUpload(ModelBase):
         return f'{customer_id}/{resource}/{filename}'
 
     def generate_presigned_get(self):
-        return UserUpload.__generate_presigned_url(self.bucket, self.path, 'get_object')
+        return UserUpload.__generate_presigned_url(
+            self.bucket,
+            self.path,
+            'get_object',
+            content_type=self.metadata.get('content_type')
+        )
 
     @classmethod
     def generate_presigned_put(cls, bucket, path, content_type):
@@ -63,7 +68,8 @@ class UserUpload(ModelBase):
     def __generate_presigned_url(cls, bucket, path, method, content_type=None):
         params = {'Bucket': bucket, 'Key': path}
         if content_type is not None:
-            params['ContentType'] = content_type
+            param_name = 'ResponseContentType' if method == 'get_object' else 'ContentType'
+            params[param_name] = content_type
 
         return boto3.client('s3').generate_presigned_url(
             ClientMethod=method,

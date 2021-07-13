@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.2
+  version: 0.3.3
 servers: []
 tags:
   - name: applications
@@ -715,6 +715,23 @@ paths:
                 $ref: '#/components/schemas/User'
       security:
         - AWSCognitoCanvaraPrototype: []
+  /banners:
+    get:
+      summary: List all banners
+      tags:
+        - users
+      operationId: list_banners
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banner'
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /onboarding/product_preferences:
     get:
       summary: List all products that user can select
@@ -1227,6 +1244,29 @@ components:
         - user_id
         - post_id
         - match_level
+    Banner:
+      title: Banner
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of banner.
+          enum:
+            - message
+            - progress
+        data:
+          type: object
+          description: Data to display in the banner.
+          properties:
+            title:
+              type: string
+            subtitle:
+              type: string
+            percent:
+              type: string
+      required:
+        - type
+        - data
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

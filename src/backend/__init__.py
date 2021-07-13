@@ -29,6 +29,7 @@ def create_app():  # pylint: disable=too-many-locals
 
     # pylint: disable=import-outside-toplevel
     from backend.views.application import ApplicationAPI, PostApplicationAPI
+    from backend.views.banner import BannerAPI
     from backend.views.customer import CustomerAPI
     from backend.views.match import MatchAPI
     from backend.views.onboarding import CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI
@@ -83,5 +84,8 @@ def create_app():  # pylint: disable=too-many-locals
     user_view = cognito_auth_required(UserAPI.as_view('user_api'))
     app.add_url_rule('/users/me', view_func=user_view, methods=['GET', ])
     app.add_url_rule('/users/<user_id>', view_func=user_view, methods=['GET', 'PUT'])
+
+    banner_view = cognito_auth_required(BannerAPI.as_view('banner_api'))
+    app.add_url_rule('/banners', view_func=banner_view, methods=['GET', ])
 
     return app

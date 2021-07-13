@@ -1,4 +1,6 @@
+from datetime import datetime
 import enum
+import uuid
 
 from flask import jsonify, request
 from flask.views import MethodView
@@ -10,6 +12,7 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
+from backend.models.user_upload import UserUpload, UserUploadStatus
 
 
 class OnboardingStep(enum.Enum):
@@ -115,3 +118,65 @@ class DesiredSkillAPI(MethodView):
             onboarding['current'] = OnboardingStep.ONBOARDING_COMPLETE.value
             user.profile = profile
         return make_no_content_response()
+
+
+class ProfilePictureAPI(MethodView):
+    @staticmethod
+    def put():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            customer_id = user.customer_id
+
+        # TODO: (sunil) add validation for accepted content types
+        original_filename = request.json['filename']
+        content_type = request.json['content_type']
+        bucket = UserUpload.get_bucket_name()
+        path = UserUpload.generate_upload_path(customer_id, 'users', original_filename)
+        presigned_url = UserUpload.generate_presigned_put_url(bucket, path, content_type)
+
+        now = datetime.utcnow()
+        with transaction() as tx:
+            user_upload = UserUpload(
+                id=str(uuid.uuid4()),
+                customer_id=customer_id,
+                bucket=bucket,
+                path=path,
+                content_type=content_type,
+                status=UserUploadStatus.CREATED.value,
+                metadata={
+                    'user_id': user.id,
+                    'original_filename': original_filename,
+                    'resource': 'user',
+                    'resource_id': user.id,
+                    'type': 'profile_picture',
+                },
+                created_at=now
+            )
+            tx.add(user_upload)
+
+        return {
+            'upload_id': user_upload.id,
+            'url': presigned_url,
+        }
+
+
+class ProfilePictureByIdAPI(MethodView):
+    @staticmethod
+    def put(upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            if status == UserUploadStatus.UPLOADED:
+                user.profile_picture = user_upload
+                user_upload.status = status.value
+            # TODO: (sunil) return an error if this status transition is not supported
+
+            profile = user.profile_copy
+            onboarding = profile.setdefault('onboarding_steps', {})
+            onboarding['current'] = OnboardingStep.ADD_CURRENT_SKILLS.value
+            user.profile = profile
+
+        return {
+            'status': user_upload.status,
+        }

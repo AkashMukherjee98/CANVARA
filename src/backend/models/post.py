@@ -241,7 +241,7 @@ class Post(ModelBase):
                 post[field] = value
 
         if self.description_video:
-            post['video_url'] = self.description_video.generate_presigned_get()
+            post['video_url'] = self.description_video.generate_presigned_get_url()
 
         # TODO: (sunil) See if this can be done at lookup time
         if user_id is not None:

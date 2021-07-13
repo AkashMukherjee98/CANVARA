@@ -25,9 +25,6 @@ class CustomerUserAPI(MethodView):
         if payload.get('title'):
             profile['title'] = payload['title']
 
-        if payload.get('profile_picture_url'):
-            profile['profile_picture_url'] = payload.get('profile_picture_url')
-
         if payload.get('linkedin_url') is not None:
             profile['linkedin_url'] = payload['linkedin_url']
 
@@ -98,9 +95,6 @@ class UserAPI(MethodView):
             profile = copy.deepcopy(user.profile)
             if payload.get('title'):
                 profile['title'] = payload['title']
-
-            if payload.get('profile_picture_url'):
-                profile['profile_picture_url'] = payload['profile_picture_url']
 
             if payload.get('linkedin_url') is not None:
                 if payload['linkedin_url']:

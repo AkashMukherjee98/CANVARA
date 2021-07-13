@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
+from .user_upload import UserUpload
 
 
 class SkillType(enum.Enum):
@@ -33,21 +34,26 @@ class User(ModelBase):
     desired_skills = relationship("UserDesiredSkill")
     post_bookmarks = relationship("UserPostBookmark", back_populates="user")
     post_likes = relationship("UserPostLike", back_populates="user")
+    profile_picture = relationship(UserUpload)
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 10
     MAX_DESIRED_SKILLS = 10
 
-    # TODO: (sunil) Separate production from other stacks
-    USER_UPLOADS_BASE_URL = 'https://canvara.s3-us-west-2.amazonaws.com/prototype/user_uploads'
-    DEFAULT_PROFILE_PICTURE_URL = f'{USER_UPLOADS_BASE_URL}/blank_profile_picture.png'
+    DEFAULT_PROFILE_PICTURE_PATH = 'public/users/blank_profile_picture.png'
+    DEFAULT_PROFILE_PICTURE_CONTENT_TYPE = 'image/png'
 
     @property
     def profile_picture_url(self):
-        # TODO: (sunil) Review this logic after we add the feature to upload profile pictures
-        if self.profile.get('profile_picture_url'):
-            return self.profile['profile_picture_url']
-        return User.DEFAULT_PROFILE_PICTURE_URL
+        if self.profile_picture:
+            self.profile_picture.generate_presigned_get_url()
+
+        return UserUpload.generate_presigned_url(
+            'get_object',
+            UserUpload.get_bucket_name(),
+            User.DEFAULT_PROFILE_PICTURE_PATH,
+            User.DEFAULT_PROFILE_PICTURE_CONTENT_TYPE
+        )
 
     @classmethod
     def lookup(cls, tx, user_id):
@@ -106,13 +112,13 @@ class User(ModelBase):
         user['product_preferences'] = [pref.as_dict() for pref in self.product_preferences]
         user['current_skills'] = [skill.as_dict() for skill in self.current_skills]
         user['desired_skills'] = [skill.as_dict() for skill in self.desired_skills]
+        user['profile_picture_url'] = self.profile_picture_url
 
         def add_if_not_none(key, value):
             if value is not None:
                 user[key] = value
 
         add_if_not_none('title', self.profile.get('title'))
-        add_if_not_none('profile_picture_url', self.profile.get('profile_picture_url'))
         add_if_not_none('linkedin_url', self.profile.get('linkedin_url'))
 
         return user

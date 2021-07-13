@@ -32,7 +32,8 @@ def create_app():  # pylint: disable=too-many-locals
     from backend.views.banner import BannerAPI
     from backend.views.customer import CustomerAPI
     from backend.views.match import MatchAPI
-    from backend.views.onboarding import CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI
+    from backend.views.onboarding import (
+        CurrentSkillAPI, DesiredSkillAPI, LinkedInAPI, ProductPreferenceAPI, ProfilePictureAPI, ProfilePictureByIdAPI)
     from backend.views.post import (
         LanguageAPI, LocationAPI, PostAPI, PostBookmarkAPI, PostLikeAPI, PostTypeAPI, PostVideoAPI, PostVideoByIdAPI)
     from backend.views.skill import SkillAPI
@@ -51,6 +52,8 @@ def create_app():  # pylint: disable=too-many-locals
     register_api(app, DesiredSkillAPI, 'desired_skill_api', '/onboarding/desired_skills', ['POST', ])
     register_api(app, LinkedInAPI, 'linkedin_api', '/onboarding/linkedin', ['POST', ])
     register_api(app, ProductPreferenceAPI, 'product_preference_api', '/onboarding/product_preferences', ['GET', 'POST'])
+    register_api(app, ProfilePictureAPI, 'profile_picture_api', '/onboarding/profile_picture', ['PUT', ])
+    register_api(app, ProfilePictureByIdAPI, 'profile_picture_by_id_api', '/onboarding/profile_picture/<upload_id>', ['PUT', ])
     register_api(app, SkillAPI, 'skill_api', '/skills', ['GET', ])
 
     post_view = cognito_auth_required(PostAPI.as_view('post_api'))

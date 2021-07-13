@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.3
+  version: 0.3.4
 servers: []
 tags:
   - name: applications
@@ -448,17 +448,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  upload_id:
-                    type: string
-                    description: Unique identifier of this upload.
-                  url:
-                    type: string
-                    description: Url where the file should be uploaded to.
-                required:
-                  - upload_id
-                  - url
+                $ref: '#/components/schemas/UserUploadResponse'
       tags:
         - posts
       security:
@@ -467,15 +457,12 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                filename:
-                  type: string
-                  description: Name of the file being uploaded.
-                content_type:
-                  type: string
-                  description: Content type of the file being uploaded.
-                  example: video/mp4
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_video.mp4
+                  content_type: video/mp4
   '/posts/{post_id}/video/{upload_id}':
     parameters:
       - schema:
@@ -515,6 +502,9 @@ paths:
               properties:
                 status:
                   type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
               required:
                 - status
   '/posts/{post_id}/like':
@@ -823,6 +813,69 @@ paths:
                   type: string
               required:
                 - linkedin_url
+  /onboarding/profile_picture:
+    put:
+      summary: Create request for a profile picture upload
+      tags:
+        - onboarding
+      operationId: upload_profile_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/onboarding/profile_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize profile picture upload
+      tags:
+        - onboarding
+      operationId: finalize_profile_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /skills:
     get:
       summary: Search skills
@@ -1267,6 +1320,32 @@ components:
       required:
         - type
         - data
+    UserUploadRequest:
+      title: UserUploadRequest
+      type: object
+      properties:
+        filename:
+          type: string
+          description: Name of the file being uploaded.
+        content_type:
+          type: string
+          description: Content type of the file being uploaded.
+      required:
+        - filename
+        - content_type
+    UserUploadResponse:
+      title: UserUploadResponse
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url where the file should be uploaded to.
+      required:
+        - upload_id
+        - url
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

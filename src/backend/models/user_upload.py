@@ -52,20 +52,20 @@ class UserUpload(ModelBase):
         # Within the customer directory, files are separated based on the resource - posts, applications, user etc.
         return f'{customer_id}/{resource}/{filename}'
 
-    def generate_presigned_get(self):
-        return UserUpload.__generate_presigned_url(
+    def generate_presigned_get_url(self):
+        return UserUpload.generate_presigned_url(
+            'get_object',
             self.bucket,
             self.path,
-            'get_object',
-            content_type=self.metadata.get('content_type')
+            self.metadata.get('content_type')
         )
 
     @classmethod
-    def generate_presigned_put(cls, bucket, path, content_type):
-        return cls.__generate_presigned_url(bucket, path, 'put_object', content_type=content_type)
+    def generate_presigned_put_url(cls, bucket, path, content_type):
+        return cls.generate_presigned_url('put_object', bucket, path, content_type)
 
     @classmethod
-    def __generate_presigned_url(cls, bucket, path, method, content_type=None):
+    def generate_presigned_url(cls, method, bucket, path, content_type):
         params = {'Bucket': bucket, 'Key': path}
         if content_type is not None:
             param_name = 'ResponseContentType' if method == 'get_object' else 'ContentType'

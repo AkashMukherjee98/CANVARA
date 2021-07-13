@@ -193,11 +193,12 @@ class PostVideoAPI(MethodView):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             customer_id = user.customer_id
 
+        # TODO: (sunil) add validation for accepted content types
         original_filename = request.json['filename']
         content_type = request.json['content_type']
         bucket = UserUpload.get_bucket_name()
         path = UserUpload.generate_upload_path(customer_id, 'posts', original_filename)
-        presigned_url = UserUpload.generate_presigned_put(bucket, path, content_type)
+        presigned_url = UserUpload.generate_presigned_put_url(bucket, path, content_type)
 
         now = datetime.utcnow()
         with transaction() as tx:
@@ -206,11 +207,11 @@ class PostVideoAPI(MethodView):
                 customer_id=customer_id,
                 bucket=bucket,
                 path=path,
+                content_type=content_type,
                 status=UserUploadStatus.CREATED.value,
                 metadata={
                     'user_id': user.id,
                     'original_filename': original_filename,
-                    'content_type': content_type,
                     'resource': 'post',
                     'resource_id': post_id,
                     'type': 'video',

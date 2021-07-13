@@ -1,3 +1,4 @@
+from datetime import datetime
 import enum
 import os.path
 import uuid
@@ -60,9 +61,13 @@ class UserUpload(ModelBase):
             self.metadata.get('content_type')
         )
 
-    @classmethod
-    def generate_presigned_put_url(cls, bucket, path, content_type):
-        return cls.generate_presigned_url('put_object', bucket, path, content_type)
+    def generate_presigned_put_url(self):
+        return self.generate_presigned_url(
+            'put_object',
+            self.bucket,
+            self.path,
+            self.content_type
+        )
 
     @classmethod
     def generate_presigned_url(cls, method, bucket, path, content_type):
@@ -75,3 +80,23 @@ class UserUpload(ModelBase):
             ClientMethod=method,
             Params=params
         )
+
+    @classmethod
+    def create_user_upload(cls, customer_id, subdirectory, original_filename, content_type, metadata):  # pylint: disable=too-many-arguments
+        path = UserUpload.generate_upload_path(customer_id, subdirectory, original_filename)
+        return UserUpload(
+            id=str(uuid.uuid4()),
+            customer_id=customer_id,
+            bucket=UserUpload.get_bucket_name(),
+            path=path,
+            content_type=content_type,
+            status=UserUploadStatus.CREATED.value,
+            metadata=metadata,
+            created_at=datetime.utcnow()
+        )
+
+    def as_dict(self):
+        return {
+            'upload_id': self.id,
+            'url': self.generate_presigned_put_url()
+        }

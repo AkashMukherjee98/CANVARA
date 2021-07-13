@@ -189,41 +189,23 @@ class PostAPI(MethodView):
 class PostVideoAPI(MethodView):
     @staticmethod
     def put(post_id):
+        # TODO: (sunil) add validation for accepted content types
+        filename = request.json['filename']
+        content_type = request.json['content_type']
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            customer_id = user.customer_id
+            metadata = {
+                'user_id': user.id,
+                'original_filename': filename,
+                'resource': 'post',
+                'resource_id': post_id,
+                'type': 'video',
+            }
 
-        # TODO: (sunil) add validation for accepted content types
-        original_filename = request.json['filename']
-        content_type = request.json['content_type']
-        bucket = UserUpload.get_bucket_name()
-        path = UserUpload.generate_upload_path(customer_id, 'posts', original_filename)
-        presigned_url = UserUpload.generate_presigned_put_url(bucket, path, content_type)
-
-        now = datetime.utcnow()
-        with transaction() as tx:
-            user_upload = UserUpload(
-                id=str(uuid.uuid4()),
-                customer_id=customer_id,
-                bucket=bucket,
-                path=path,
-                content_type=content_type,
-                status=UserUploadStatus.CREATED.value,
-                metadata={
-                    'user_id': user.id,
-                    'original_filename': original_filename,
-                    'resource': 'post',
-                    'resource_id': post_id,
-                    'type': 'video',
-                },
-                created_at=now
-            )
+            user_upload = UserUpload.create_user_upload(user.customer_id, 'posts', filename, content_type, metadata)
             tx.add(user_upload)
-
-        return {
-            'upload_id': user_upload.id,
-            'url': presigned_url,
-        }
+            return user_upload.as_dict()
 
 
 class PostVideoByIdAPI(MethodView):

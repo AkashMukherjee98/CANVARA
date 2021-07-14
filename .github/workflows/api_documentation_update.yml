@@ -28,7 +28,7 @@ jobs:
       run: |
         npm install
         pwd
-        #npx redoc-cli bundle api.yaml -o api.html
+        npx redoc-cli bundle apis/api.yaml -o api.html
       
     - uses: chrislennon/action-aws-cli@v1.1
     - run: |

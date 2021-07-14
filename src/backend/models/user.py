@@ -46,7 +46,7 @@ class User(ModelBase):
     @property
     def profile_picture_url(self):
         if self.profile_picture:
-            self.profile_picture.generate_presigned_get_url()
+            return self.profile_picture.generate_presigned_get_url()
 
         return UserUpload.generate_presigned_url(
             'get_object',

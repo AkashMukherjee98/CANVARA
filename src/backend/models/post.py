@@ -2,12 +2,13 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import contains_eager, joinedload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .language import Language
 from .location import Location
+from .match import UserPostMatch
 from .post_type import PostType
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user import User
@@ -105,7 +106,16 @@ class Post(ModelBase):
         if post_filter is None:
             post_filter = cls.DEFAULT_FILTER
 
-        posts = tx.query(cls).join(Post.owner).where(User.customer_id == user.customer_id)
+        # Eagerload UserPostMatch, UserPostBookmark etc. since we will need them later on
+        # Filter the joins by user id to force these relationships to be one-to-zero-or-one,
+        # so that eagerloading doesn't bring in any additional rows
+        posts = tx.query(cls).\
+            join(Post.owner).\
+            outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id)).\
+            outerjoin(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\
+            outerjoin(Post.like_users.and_(UserPostLike.user_id == user.id)).\
+            where(User.customer_id == user.customer_id)
+
         if owner_id is not None:
             posts = posts.where(Post.owner_id == owner_id)
 
@@ -134,6 +144,20 @@ class Post(ModelBase):
             posts = posts.join(Post.bookmark_users)
         # elif post_filter == PostFilter.UNDERWAY:
 
+        # Eagerload other columns needed later one
+        # TODO: (sunil) Consider changing list_posts operation to just return a summary for each post
+        #               instead of full post detail. Then we won't need to load the more expensive
+        #               attributes like skills.
+        posts = posts.options(
+            contains_eager(Post.owner).joinedload(User.profile_picture),
+            joinedload(Post.post_type, innerjoin=True),
+            joinedload(Post.location, innerjoin=True),
+            joinedload(Post.required_skills).joinedload(PostRequiredSkill.skill, innerjoin=True),
+            joinedload(Post.desired_skills).joinedload(PostDesiredSkill.skill, innerjoin=True),
+            joinedload(Post.description_video),
+            contains_eager(Post.user_matches),
+            contains_eager(Post.bookmark_users),
+            contains_eager(Post.like_users))
         return posts
 
     @classmethod

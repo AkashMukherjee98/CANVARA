@@ -30,13 +30,13 @@ jobs:
         npx redoc-cli bundle apis/api.yaml -o api.html
     
     - name: Configure AWS Credentials
-    - uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
         
     - name: uploaded the api file to S3
-    - run: |
+      run: |
         aws s3 ls
         aws s3 cp api.html s3://docs.canvara.com/api.html

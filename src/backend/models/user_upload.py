@@ -82,7 +82,9 @@ class UserUpload(ModelBase):
         )
 
     @classmethod
-    def create_user_upload(cls, customer_id, subdirectory, original_filename, content_type, metadata):  # pylint: disable=too-many-arguments
+    def create_user_upload(
+        cls, customer_id, subdirectory, original_filename, content_type, metadata
+    ):  # pylint: disable=too-many-arguments
         path = UserUpload.generate_upload_path(customer_id, subdirectory, original_filename)
         return UserUpload(
             id=str(uuid.uuid4()),

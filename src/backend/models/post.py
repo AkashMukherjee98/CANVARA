@@ -16,20 +16,29 @@ from .user_upload import UserUpload
 
 
 class PostFilter(Enum):
-    # Latest posts available to the current user
+    # Most relevant posts for the user
+    CURATED = 'curated'
+    RECOMMENDED = 'recommended'
+
+    # Latest posts recommended for the user
     LATEST = 'latest'
 
-    # Active posts owned by the current user
+    # Active posts owned by the user,
+    # sorted by status and creation time with drafts on top
     YOUR = 'your'
+    MY_POSTS = 'myposts'
 
-    # Posts saved by the current user
+    # Posts to which the user has applied,
+    # sorted by status and creation time with drafts on top
+    MY_APPLICATIONS = 'myapplications'
+
+    # Posts on which the user has been selected to work,
+    # sorted by status and time they were chosen or work started
+    MY_WORK = 'mywork'
+
+    # Posts saved by the user
     SAVED = 'saved'
-
-    # Posts owned by the current user with work currently underway
-    UNDERWAY = 'underway'
-
-    # Posts relevant to the current user
-    CURATED = 'curated'
+    BOOKMARKED = 'bookmarked'
 
     # Deactivated posts owned by the current user
     DEACTIVATED = 'deactivated'
@@ -100,21 +109,50 @@ class Post(ModelBase):
         return post
 
     @classmethod
+    def __apply_search_filter(cls, posts, user, post_filter):
+        if post_filter == PostFilter.DEACTIVATED:
+            posts = posts.where(and_(
+                Post.owner_id == user.id,
+                Post.status == PostStatus.DEACTIVED.value
+            ))
+
+        elif post_filter == PostFilter.LATEST:
+            posts = posts.where(Post.owner_id != user.id).\
+                order_by(Post.created_at.desc())
+
+        elif post_filter in (PostFilter.YOUR, PostFilter.MY_POSTS):
+            # TODO: (sunil) add check for status
+            # TODO: (sunil) add support for drafts
+            posts = posts.where(Post.owner_id == user.id).\
+                order_by(Post.created_at.desc())
+
+        elif post_filter in (PostFilter.CURATED, PostFilter.RECOMMENDED):
+            posts = posts.where(Post.owner_id != user.id).\
+                order_by(UserPostMatch.confidence_level.desc())
+
+        elif post_filter in (PostFilter.SAVED, PostFilter.BOOKMARKED):
+            posts = posts.join(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\
+                order_by(UserPostBookmark.created_at.desc())
+
+        elif post_filter == PostFilter.MY_APPLICATIONS:
+            # TODO: (sunil) add support for drafts
+            from .application import Application  # pylint: disable=import-outside-toplevel, cyclic-import
+            posts = posts.join(Post.applications.and_(Application.user_id == user.id)).\
+                order_by(Application.created_at.desc())
+
+        elif post_filter == PostFilter.MY_WORK:
+            # TODO: (sunil) implement this
+            raise NotImplementedError()
+        return posts
+
+    @classmethod
     def search(
         cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None
     ):  # pylint: disable=too-many-arguments
         if post_filter is None:
             post_filter = cls.DEFAULT_FILTER
 
-        # Eagerload UserPostMatch, UserPostBookmark etc. since we will need them later on
-        # Filter the joins by user id to force these relationships to be one-to-zero-or-one,
-        # so that eagerloading doesn't bring in any additional rows
-        posts = tx.query(cls).\
-            join(Post.owner).\
-            outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id)).\
-            outerjoin(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\
-            outerjoin(Post.like_users.and_(UserPostLike.user_id == user.id)).\
-            where(User.customer_id == user.customer_id)
+        posts = tx.query(cls).join(Post.owner).where(User.customer_id == user.customer_id)
 
         if owner_id is not None:
             posts = posts.where(Post.owner_id == owner_id)
@@ -129,20 +167,21 @@ class Post(ModelBase):
                 Post.description.ilike(f'%{query}%')
             ))
 
-        # TODO: (sunil) Implement filtering by remaining criteria
-        if post_filter == PostFilter.DEACTIVATED:
-            posts = posts.where(and_(
-                Post.owner_id == user.id,
-                Post.status == PostStatus.DEACTIVED.value
-            ))
-        elif post_filter == PostFilter.LATEST:
-            posts = posts.order_by(Post.created_at.desc())
-        elif post_filter == PostFilter.YOUR:
-            posts = posts.where(Post.owner_id == user.id)
-        # elif post_filter == PostFilter.CURATED:
-        elif post_filter == PostFilter.SAVED:
-            posts = posts.join(Post.bookmark_users)
-        # elif post_filter == PostFilter.UNDERWAY:
+        try:
+            posts = cls.__apply_search_filter(posts, user, post_filter)
+        except NotImplementedError:
+            return []
+
+        # Eagerload UserPostMatch, UserPostBookmark etc. since we will need them later on
+        # Filter the joins by user id to force these relationships to be one-to-zero-or-one,
+        # so that eagerloading doesn't bring in any additional rows
+        posts = posts.\
+            outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id)).\
+            outerjoin(Post.like_users.and_(UserPostLike.user_id == user.id))
+
+        # If we have already joined with UserPostBookmark because of the 'bookmarked' filter, don't join again
+        if post_filter not in (PostFilter.SAVED, PostFilter.BOOKMARKED):
+            posts = posts.outerjoin(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id))
 
         # Eagerload other columns needed later one
         # TODO: (sunil) Consider changing list_posts operation to just return a summary for each post

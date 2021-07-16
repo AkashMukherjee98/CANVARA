@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, nullslast, or_
 from sqlalchemy.orm import contains_eager, joinedload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -128,7 +128,7 @@ class Post(ModelBase):
 
         elif post_filter in (PostFilter.CURATED, PostFilter.RECOMMENDED):
             posts = posts.where(Post.owner_id != user.id).\
-                order_by(UserPostMatch.confidence_level.desc())
+                order_by(nullslast(UserPostMatch.confidence_level.desc()))
 
         elif post_filter in (PostFilter.SAVED, PostFilter.BOOKMARKED):
             posts = posts.join(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\

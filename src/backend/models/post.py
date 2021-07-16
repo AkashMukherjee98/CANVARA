@@ -17,7 +17,6 @@ from .user_upload import UserUpload
 
 class PostFilter(Enum):
     # Most relevant posts for the user
-    CURATED = 'curated'
     RECOMMENDED = 'recommended'
 
     # Latest posts recommended for the user
@@ -25,7 +24,6 @@ class PostFilter(Enum):
 
     # Active posts owned by the user,
     # sorted by status and creation time with drafts on top
-    YOUR = 'your'
     MY_POSTS = 'myposts'
 
     # Posts to which the user has applied,
@@ -37,7 +35,6 @@ class PostFilter(Enum):
     MY_WORK = 'mywork'
 
     # Posts saved by the user
-    SAVED = 'saved'
     BOOKMARKED = 'bookmarked'
 
     # Deactivated posts owned by the current user
@@ -120,17 +117,17 @@ class Post(ModelBase):
             posts = posts.where(Post.owner_id != user.id).\
                 order_by(Post.created_at.desc())
 
-        elif post_filter in (PostFilter.YOUR, PostFilter.MY_POSTS):
+        elif post_filter == PostFilter.MY_POSTS:
             # TODO: (sunil) add check for status
             # TODO: (sunil) add support for drafts
             posts = posts.where(Post.owner_id == user.id).\
                 order_by(Post.created_at.desc())
 
-        elif post_filter in (PostFilter.CURATED, PostFilter.RECOMMENDED):
+        elif post_filter == PostFilter.RECOMMENDED:
             posts = posts.where(Post.owner_id != user.id).\
                 order_by(nullslast(UserPostMatch.confidence_level.desc()))
 
-        elif post_filter in (PostFilter.SAVED, PostFilter.BOOKMARKED):
+        elif post_filter == PostFilter.BOOKMARKED:
             posts = posts.join(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\
                 order_by(UserPostBookmark.created_at.desc())
 
@@ -180,7 +177,7 @@ class Post(ModelBase):
             outerjoin(Post.like_users.and_(UserPostLike.user_id == user.id))
 
         # If we have already joined with UserPostBookmark because of the 'bookmarked' filter, don't join again
-        if post_filter not in (PostFilter.SAVED, PostFilter.BOOKMARKED):
+        if post_filter != PostFilter.BOOKMARKED:
             posts = posts.outerjoin(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id))
 
         # Eagerload other columns needed later one

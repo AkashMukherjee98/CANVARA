@@ -94,7 +94,7 @@ class Post(ModelBase):
     DEFAULT_INITIAL_POST_STATUS = PostStatus.ACTIVE
     VALID_SIZES = {'S', 'M', 'L'}
 
-    DEFAULT_FILTER = PostFilter.CURATED
+    DEFAULT_FILTER = PostFilter.RECOMMENDED
 
     MAX_SKILLS = 5
 

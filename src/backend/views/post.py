@@ -118,7 +118,7 @@ class PostAPI(MethodView):
                 post.post_type = PostType.lookup(tx, payload['post_type_id'])
 
             if 'location_id' in payload:
-                post.location = PostType.lookup(tx, payload['location_id'])
+                post.location = Location.lookup(tx, payload['location_id'])
 
             # TODO: (sunil) Move this to the Post model
             settables = {

@@ -10,6 +10,9 @@ from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 
 
+S3_BUCKET_PUBLIC_URL_FORMAT = 'https://{bucket}.s3.amazonaws.com/{path}'
+
+
 class UserUploadStatus(enum.Enum):
     # Upload request has been created but file may not have been uploaded yet
     CREATED = 'created'
@@ -53,24 +56,33 @@ class UserUpload(ModelBase):
         # Within the customer directory, files are separated based on the resource - posts, applications, user etc.
         return f'{customer_id}/{resource}/{filename}'
 
-    def generate_presigned_get_url(self):
-        return UserUpload.generate_presigned_url(
+    def generate_get_url(self, signed=True):
+        return UserUpload.generate_url(
             'get_object',
             self.bucket,
             self.path,
-            self.metadata.get('content_type')
+            self.metadata.get('content_type'),
+            signed=signed
         )
 
-    def generate_presigned_put_url(self):
-        return self.generate_presigned_url(
+    def generate_put_url(self):
+        return self.generate_url(
             'put_object',
             self.bucket,
             self.path,
-            self.content_type
+            self.content_type,
+            signed=True
         )
 
     @classmethod
-    def generate_presigned_url(cls, method, bucket, path, content_type):
+    def generate_url(cls, method, bucket, path, content_type, signed=True):  # pylint: disable=too-many-arguments
+        if not signed:
+            assert method == 'get_object', 'Unsigned urls must be GET'
+
+            # TODO: (sunil) Using botocore.UNSIGNED still appears to be too slow.
+            #               See if there is a better way than hardcoding the S3 URL
+            return S3_BUCKET_PUBLIC_URL_FORMAT.format(bucket=bucket, path=path)
+
         params = {'Bucket': bucket, 'Key': path}
         if content_type is not None:
             param_name = 'ResponseContentType' if method == 'get_object' else 'ContentType'
@@ -100,5 +112,5 @@ class UserUpload(ModelBase):
     def as_dict(self):
         return {
             'upload_id': self.id,
-            'url': self.generate_presigned_put_url()
+            'url': self.generate_put_url()
         }

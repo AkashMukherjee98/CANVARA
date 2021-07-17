@@ -46,13 +46,14 @@ class User(ModelBase):
     @property
     def profile_picture_url(self):
         if self.profile_picture:
-            return self.profile_picture.generate_presigned_get_url()
+            return self.profile_picture.generate_get_url(signed=False)
 
-        return UserUpload.generate_presigned_url(
+        return UserUpload.generate_url(
             'get_object',
             UserUpload.get_bucket_name(),
             User.DEFAULT_PROFILE_PICTURE_PATH,
-            User.DEFAULT_PROFILE_PICTURE_CONTENT_TYPE
+            User.DEFAULT_PROFILE_PICTURE_CONTENT_TYPE,
+            signed=False
         )
 
     @classmethod

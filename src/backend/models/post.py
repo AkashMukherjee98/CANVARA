@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import and_, nullslast, or_
-from sqlalchemy.orm import contains_eager, joinedload, relationship
+from sqlalchemy.orm import contains_eager, joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
@@ -169,31 +169,35 @@ class Post(ModelBase):
         except NotImplementedError:
             return []
 
-        # Eagerload UserPostMatch, UserPostBookmark etc. since we will need them later on
-        # Filter the joins by user id to force these relationships to be one-to-zero-or-one,
+        # Eagerload UserPostMatch since we will need it later on
+        # Filter the join by user id to force the relationship to be one-to-zero-or-one,
         # so that eagerloading doesn't bring in any additional rows
-        posts = posts.\
-            outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id)).\
-            outerjoin(Post.like_users.and_(UserPostLike.user_id == user.id))
+        posts = posts.outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id))
 
-        # If we have already joined with UserPostBookmark because of the 'bookmarked' filter, don't join again
-        if post_filter != PostFilter.BOOKMARKED:
-            posts = posts.outerjoin(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id))
-
-        # Eagerload other columns needed later one
-        # TODO: (sunil) Consider changing list_posts operation to just return a summary for each post
-        #               instead of full post detail. Then we won't need to load the more expensive
-        #               attributes like skills.
-        posts = posts.options(
+        # Eagerload other columns
+        # Avoid loading the more expensive attributes like skills, which are one-to-many,
+        # and video, which require expensive presigned url generation.
+        # These attributes are not strictly needed in the search results
+        # TODO: (sunil) Change the list posts API specification to make it formal that
+        #               these expensive attributes will not be returned.
+        query_options = [
             contains_eager(Post.owner).joinedload(User.profile_picture),
             joinedload(Post.post_type, innerjoin=True),
             joinedload(Post.location, innerjoin=True),
-            joinedload(Post.required_skills).joinedload(PostRequiredSkill.skill, innerjoin=True),
-            joinedload(Post.desired_skills).joinedload(PostDesiredSkill.skill, innerjoin=True),
-            joinedload(Post.description_video),
+            noload(Post.required_skills),
+            noload(Post.desired_skills),
+            noload(Post.description_video),
             contains_eager(Post.user_matches),
-            contains_eager(Post.bookmark_users),
-            contains_eager(Post.like_users))
+            noload(Post.like_users)
+        ]
+
+        # Don't load UserPostBookmark unless we have already joined with it because of the 'bookmarked' filter
+        if post_filter == PostFilter.BOOKMARKED:
+            query_options.append(contains_eager(Post.bookmark_users))
+        else:
+            query_options.append(noload(Post.bookmark_users))
+
+        posts = posts.options(query_options)
         return posts
 
     @classmethod
@@ -301,7 +305,7 @@ class Post(ModelBase):
                 post[field] = value
 
         if self.description_video:
-            post['video_url'] = self.description_video.generate_presigned_get_url()
+            post['video_url'] = self.description_video.generate_get_url()
 
         # TODO: (sunil) See if this can be done at lookup time
         if user_id is not None:

@@ -1,13 +1,14 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Canvara CICD Pipeline
+name: Frontend CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
+  branches: [ main ]
   pull_request:
-    branches: [ main ]
+  branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
@@ -16,181 +17,37 @@ env:
   VERSION: master
 
 jobs:
-  checkout:
-
+  build:
     runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f pip_requirements.txt ]; then pip install -r pip_requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pylint
-      run: |
-        if [ -f pip_test_requirements.txt ]; then pip install -r pip_test_requirements.txt; fi
-        pylint --rcfile .pylintrc src/backend
-    - name: Unit Test with pytest
-      run: |
-        pytest
-#
-#  build:
-#    needs: checkout
-#    runs-on: ubuntu-latest
-#    permissions:
-#      contents: read
-#      packages: write
-#
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v2
-#
-#      - name: Build image
-#        run: docker build . --file deploy/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
-#
-#      - name: Log in to the Container registry
-#        uses: docker/login-action@v1
-#        with:
-#          registry: ghcr.io
-#          username: ${{ secrets.DOCKER_USERNAME }}
-#          password: ${{ secrets.CREATE_DOCKER_TOKEN }}
-#
-#      - name: Push image
-#        run: |
-#          IMAGE_ID=$REGISTRY/$IMAGE_NAME
-#
-#          # Change all uppercase to lowercase
-#          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-#          # Strip git ref prefix from version
-#          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-#          # Strip "v" prefix from tag name
-#          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-#          # Use Docker `latest` tag convention
-#          [ "$VERSION" == "master" ] && VERSION=latest
-#          echo IMAGE_ID=$IMAGE_ID
-#          echo VERSION=$VERSION
-#          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-#          docker push $IMAGE_ID:$VERSION
-
-#  deploy:
-#    needs: build
-#    runs-on: self-hosted
-#    permissions:
-#      contents: read
-#      packages: write
-#    steps:
-#      - name: Log in to the Container registry
-#        run: |
-#          sudo docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.CREATE_DOCKER_TOKEN }}
-#
-#      - name: Kill if there is an existing container
-#        run: |
-#          ID=$(sudo docker container ls | awk 'NR > 1 {print $1}')
-#          if [ $ID ];
-#          then
-#          sudo docker stop $ID
-#          sudo docker rm $ID;
-#          fi
-#
-#
-#
-#      - name: Check for existing images & then pull the latest image
-#        run: |
-#          IMAGEID=$(sudo docker images | awk 'NR > 1 {print $3}')
-#          if [ $IMAGEID ];
-#          then
-#          sudo docker rmi $IMAGEID;
-#          fi
-#          sudo docker pull ghcr.io/canvarainc/prototype:main
-#
-#
-#      - name: Run the image
-#        run: |
-#          sudo docker run --detach --env CANVARA_ENV=prod -p 8080:8080 ghcr.io/canvarainc/prototype:main
-
-  deploy:
-    needs: checkout
-    runs-on: self-hosted
-    permissions:
-      contents: read
-      packages: write
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        clean: false
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f pip_requirements.txt ]; then pip install -r pip_requirements.txt; fi
-
-    - name: Export environment variables & restart gunicorn3
-      run: |
-        export AWS_CLIENT_ID=${{ secrets.AWS_CLIENT_ID }}
-        export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-        export PYTHONPATH=/home/ubuntu/actions-runner/canvara/prototype/prototype/src
-        export CANVARA_CONFIGS_DIR=/home/ubuntu/actions-runner/canvara/prototype/prototype/configs
-        export CANVARA_ENV=stage
-        export CANVARA_ROOT=/home/ubuntu/actions-runner/canvara/prototype/prototype/src
-#        cd /home/ubuntu/actions-runner/canvara
-#        chmod +x gunicorn.sh
-#        ls -ltr gunicorn.sh
-#        sh gunicorn.sh
-
-  integration_test:
-    needs: deploy
-    runs-on: ubuntu-latest
+    strategy:
+    matrix:
+    node-version: [14.x]
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        repository: canvarainc/api_automation
-        path: api_automation
-        token: ${{ secrets.AUTOMATION_REPO_ACCESS_TOKEN }}
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        #if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install -r api_automation/requirements.txt
-    - name: Setting env variables & running the test
-      run: |
-        export AWS_CLIENT_ID=${{ secrets.AWS_CLIENT_ID }}
-        export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-        export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        export AWS_COGNITO_ADMIN_USER=${{ secrets.AWS_COGNITO_ADMIN_USER }}
-        export AWS_COGNITO_ADMIN_PASSWORD=${{ secrets.AWS_COGNITO_ADMIN_PASSWORD }}
-        export AWS_COGNITO_POSTER_USER=${{ secrets.AWS_COGNITO_POSTER_USER }}
-        export AWS_COGNITO_POSTER_PASSWORD=${{ secrets.AWS_COGNITO_POSTER_PASSWORD }}
-        export AWS_COGNITO_APPLICANT1_USER=${{ secrets.AWS_COGNITO_APPLICANT1_USER }}
-        export AWS_COGNITO_APPLICANT1_PASSWORD=${{ secrets.AWS_COGNITO_APPLICANT1_PASSWORD }}
-        export AWS_COGNITO_APPLICANT2_USER=${{ secrets.AWS_COGNITO_APPLICANT2_USER }}
-        export AWS_COGNITO_APPLICANT2_PASSWORD=${{ secrets.AWS_COGNITO_APPLICANT2_PASSWORD }}
-        export BASE_API_URL=${{ secrets.BASE_API_URL }}
-        export RDS_HOST=${{ secrets.RDS_STAGE_HOST }}
-        export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
-        export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
-        export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
-        pytest
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+    with:
+      node-version: ${{ matrix.node-version }}
+      registry-url: https://npm.pkg.github.com
 
+      - name: Install dependencies
+        run: npm install
 
+      - name: lint
+        run: |
+          npm install -g eslint
+          eslint ./src --ext .js --ext .jsx
 
+      - name: Build
+        run: |
+          npm run build
+
+      - name: publish to the github packages
+        run: |
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -144,6 +144,8 @@ jobs:
           export CANVARA_CONFIGS_DIR=/home/ubuntu/actions-runner/canvara/prototype/prototype/configs
           export CANVARA_ENV=stage
           export CANVARA_ROOT=/home/ubuntu/actions-runner/canvara/prototype/prototype/src
+          cd /home/ubuntu/actions-runner/canvara/prototype/prototype/src/backend/db
+          alembic upgrade head
   #        cd /home/ubuntu/actions-runner/canvara
   #        chmod +x gunicorn.sh
   #        ls -ltr gunicorn.sh

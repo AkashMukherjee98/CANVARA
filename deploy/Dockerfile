@@ -5,6 +5,8 @@ WORKDIR /canvara
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /canvara
 ENV CANVARA_CONFIGS_DIR /canvara/configs
+ENV AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+ENV AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 # TODO: switch to non-root user
 

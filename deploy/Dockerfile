@@ -9,7 +9,6 @@ ENV CANVARA_CONFIGS_DIR /canvara/configs
 # TODO: switch to non-root user
 
 COPY pip_requirements.txt pip_requirements.txt
-COPY deploy/aws_credentials ~/.aws/credentials
 RUN pip install -r pip_requirements.txt
 
 COPY src .

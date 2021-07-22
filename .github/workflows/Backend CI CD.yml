@@ -115,7 +115,7 @@ jobs:
 
       - name: Run the image
         run: |
-          sudo docker run --detach --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/prototype:main
+          sudo docker run --detach  -v /home/ubuntu/docker_logs:/canvara/logs --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/prototype:main
 
 #deploy:
 # needs: checkout

@@ -105,11 +105,11 @@ jobs:
          
       - name: Check for existing images & then pull the latest image
         run: |
-          IMAGEID=$(sudo docker images | awk 'NR > 1 {print $3}')
-          if [ $IMAGEID ];
-          then
-          sudo docker rmi $IMAGEID;
-          fi
+          #IMAGEID=$(sudo docker images | awk 'NR > 1 {print $3}')
+          #if [ $IMAGEID ];
+          #then
+          #sudo docker rmi $IMAGEID;
+          #fi
           sudo docker pull $IMAGE_ID
 
 

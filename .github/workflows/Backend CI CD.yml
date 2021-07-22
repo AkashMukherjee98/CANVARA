@@ -110,12 +110,12 @@ jobs:
           #then
           #sudo docker rmi $IMAGEID;
           #fi
-          sudo docker pull $IMAGE_ID
+          sudo docker pull ghcr.io/canvarainc/prototype:main
 
 
       - name: Run the image
         run: |
-          sudo docker run --detach --env CANVARA_ENV=stage -p 8000:8000 $IMAGE_ID
+          sudo docker run --detach --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/prototype:main
 
 #deploy:
 # needs: checkout

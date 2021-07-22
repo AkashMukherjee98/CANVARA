@@ -4,7 +4,6 @@ WORKDIR /canvara
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /canvara
-
 ENV CANVARA_CONFIGS_DIR /canvara/configs
 
 # TODO: switch to non-root user
@@ -17,4 +16,6 @@ COPY configs configs
 
 EXPOSE 8080
 
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "backend:create_app()"]
+#ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "backend:create_app()"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--capture-output", "--access-logfile", "/canvara/logs/api_access.log", "--error-logfile", "/canvara/logs/api_error.log", "backend:create_app()"]
+

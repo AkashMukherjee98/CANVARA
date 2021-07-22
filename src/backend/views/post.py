@@ -15,6 +15,7 @@ from backend.models.post import Post, PostFilter, UserPostBookmark, UserPostLike
 from backend.models.post_type import PostType
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
+from backend.views.user_upload import UserUploadMixin
 
 
 class PostAPI(MethodView):
@@ -186,26 +187,17 @@ class PostAPI(MethodView):
         return {}
 
 
-class PostVideoAPI(MethodView):
+class PostVideoAPI(MethodView, UserUploadMixin):
     @staticmethod
     def put(post_id):
         # TODO: (sunil) add validation for accepted content types
-        filename = request.json['filename']
-        content_type = request.json['content_type']
-
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-            metadata = {
-                'user_id': user.id,
-                'original_filename': filename,
-                'resource': 'post',
-                'resource_id': post_id,
-                'type': 'video',
-            }
-
-            user_upload = UserUpload.create_user_upload(user.customer_id, 'posts', filename, content_type, metadata)
-            tx.add(user_upload)
-            return user_upload.as_dict()
+        metadata = {
+            'resource': 'post',
+            'resource_id': post_id,
+            'type': 'video',
+        }
+        return PostVideoAPI.create_user_upload(
+            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'posts', metadata)
 
 
 class PostVideoByIdAPI(MethodView):

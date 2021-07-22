@@ -11,6 +11,8 @@ from backend.models.application import Application
 from backend.models.db import transaction
 from backend.models.post import Post
 from backend.models.user import User
+from backend.models.user_upload import UserUpload, UserUploadStatus
+from backend.views.user_upload import UserUploadMixin
 
 
 class PostApplicationAPI(MethodView):
@@ -48,7 +50,7 @@ class PostApplicationAPI(MethodView):
                 status=Application.Status.NEW.value
             )
             tx.add(application)
-        return application.as_dict()
+            return application.as_dict()
 
 
 class ApplicationAPI(MethodView):
@@ -107,3 +109,34 @@ class ApplicationAPI(MethodView):
                 raise NotAllowedError(f"User '{user.id}' is not the applicant")
             tx.delete(application)
         return {}
+
+
+class ApplicationVideoAPI(MethodView, UserUploadMixin):
+    @staticmethod
+    def put(application_id):
+        # TODO: (sunil) add validation for accepted content types
+        metadata = {
+            'resource': 'application',
+            'resource_id': application_id,
+            'type': 'video',
+        }
+        return ApplicationVideoAPI.create_user_upload(
+            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'applications', metadata)
+
+
+class ApplicationVideoByIdAPI(MethodView):
+    @staticmethod
+    def put(application_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            application = Application.lookup(tx, application_id)
+            if status == UserUploadStatus.UPLOADED:
+                application.description_video = user_upload
+                user_upload.status = status.value
+            # TODO: (sunil) return an error if this status transition is not supported
+
+        return {
+            'status': user_upload.status,
+        }

@@ -10,7 +10,7 @@ def register_api(app, view, endpoint, url, methods):
 
 def register_application_apis(app):
     # pylint: disable=import-outside-toplevel
-    from backend.views.application import ApplicationAPI, PostApplicationAPI
+    from backend.views.application import ApplicationAPI, PostApplicationAPI, ApplicationVideoAPI, ApplicationVideoByIdAPI
     # pylint: enable=import-outside-toplevel
 
     register_api(app, PostApplicationAPI, 'post_application_api', '/posts/<post_id>/applications', ['GET', 'POST'])
@@ -18,6 +18,16 @@ def register_application_apis(app):
     application_view = cognito_auth_required(ApplicationAPI.as_view('application_api'))
     app.add_url_rule('/applications', view_func=application_view, methods=['GET', ])
     app.add_url_rule('/applications/<application_id>', view_func=application_view, methods=['GET', 'PUT', 'DELETE'])
+
+    application_video_view = cognito_auth_required(ApplicationVideoAPI.as_view('application_video_api'))
+    app.add_url_rule('/applications/<application_id>/video', view_func=application_video_view, methods=['PUT'])
+
+    application_video_by_id_view = cognito_auth_required(ApplicationVideoByIdAPI.as_view('application_video_by_id_api'))
+    app.add_url_rule(
+        '/applications/<application_id>/video/<upload_id>',
+        view_func=application_video_by_id_view,
+        methods=['PUT']
+    )
 
 
 def register_customer_apis(app):

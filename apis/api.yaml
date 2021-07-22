@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.4
+  version: 0.3.5
 servers: []
 tags:
   - name: applications
@@ -633,6 +633,82 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       tags:
         - applications
+  '/applications/{application_id}/video':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+        description: Unique identifier of the application.
+    put:
+      summary: Create request for an application video upload
+      operationId: upload_application_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - applications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_video.mp4
+                  content_type: video/mp4
+  '/applications/{application_id}/video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+        description: Unique identifier of the application.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize application video upload
+      operationId: finalize_application_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - applications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
   '/users/{user_id}':
     parameters:
       - schema:
@@ -1223,12 +1299,19 @@ components:
       properties:
         post_id:
           type: string
+          description: Unique identifier for the post.
         applicant_id:
           type: string
+          description: Unique identifier for the user applying for the post.
         application_id:
           type: string
+          description: Unique identifier for this application.
         description:
           type: string
+          description: Additional information for this application.
+        video_url:
+          type: string
+          description: The URL of video for this application.
     Skill:
       title: Skill
       type: object

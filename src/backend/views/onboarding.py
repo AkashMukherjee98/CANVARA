@@ -11,6 +11,7 @@ from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
 from backend.models.user_upload import UserUpload, UserUploadStatus
+from backend.views.user_upload import UserUploadMixin
 
 
 class OnboardingStep(enum.Enum):
@@ -118,27 +119,18 @@ class DesiredSkillAPI(MethodView):
         return make_no_content_response()
 
 
-class ProfilePictureAPI(MethodView):
+class ProfilePictureAPI(MethodView, UserUploadMixin):
     @staticmethod
     def put():
         # TODO: (sunil) add validation for accepted content types
-        filename = request.json['filename']
-        content_type = request.json['content_type']
-
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            metadata = {
-                'user_id': user.id,
-                'original_filename': filename,
-                'resource': 'user',
-                'resource_id': user.id,
-                'type': 'profile_picture',
-            }
-
-            user_upload = UserUpload.create_user_upload(user.customer_id, 'users', filename, content_type, metadata)
-            tx.add(user_upload)
-            return user_upload.as_dict()
+        user_id = current_cognito_jwt['sub']
+        metadata = {
+            'resource': 'user',
+            'resource_id': user_id,
+            'type': 'profile_picture',
+        }
+        return ProfilePictureAPI.create_user_upload(
+            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
 class ProfilePictureByIdAPI(MethodView):

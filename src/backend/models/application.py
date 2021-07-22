@@ -1,11 +1,12 @@
 from enum import Enum
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .post import Post
 from .user import User
+from .user_upload import UserUpload
 
 
 class Application(ModelBase):
@@ -13,6 +14,7 @@ class Application(ModelBase):
 
     applicant = relationship("User", back_populates="applications")
     post = relationship("Post", back_populates="applications")
+    description_video = relationship(UserUpload)
 
     # TODO: (sunil) Update this and use it to define the status column
     class Status(Enum):
@@ -25,7 +27,10 @@ class Application(ModelBase):
 
     @classmethod
     def lookup(cls, tx, application_id, must_exist=True):
-        application = tx.get(cls, application_id)
+        query_options = [
+            joinedload(Application.description_video)
+        ]
+        application = tx.get(cls, application_id, options=query_options)
         if application is None and must_exist:
             raise DoesNotExistError(f"Application '{application_id}' does not exist")
         return application
@@ -38,7 +43,10 @@ class Application(ModelBase):
         elif applicant_id is not None:
             applications = applications.join(Application.applicant).where(User.id == applicant_id)
 
-        return [application.as_dict() for application in applications]
+        query_options = [
+            noload(Application.description_video)
+        ]
+        return [application.as_dict() for application in applications.options(query_options)]
 
     @classmethod
     def validate_status(cls, status):
@@ -48,10 +56,14 @@ class Application(ModelBase):
             raise InvalidArgumentError(f"Invalid application status: {status}") from ex
 
     def as_dict(self):
-        return {
+        application = {
             'application_id': self.id,
             'post_id': self.post_id,
             'applicant_id': self.user_id,
             'description': self.details['description'],
             'status': self.status,
         }
+
+        if self.description_video:
+            application['video_url'] = self.description_video.generate_get_url()
+        return application

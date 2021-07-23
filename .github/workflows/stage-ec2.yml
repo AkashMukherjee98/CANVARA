@@ -25,6 +25,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f pip_requirements.txt ]; then pip install -r pip_requirements.txt; fi
+        cd /home/ubuntu/actions-runner/canvara/prototype/prototype/src/backend/db
+        alembic upgrade head
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names

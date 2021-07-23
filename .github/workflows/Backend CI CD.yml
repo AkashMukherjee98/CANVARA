@@ -115,7 +115,7 @@ jobs:
 
       - name: Run the image
         run: |
-          sudo docker run --detach  -v /home/ubuntu/docker_logs:/canvara/logs --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/prototype:main
+          sudo docker run --detach --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/prototype:main
 
 #deploy:
 # needs: checkout

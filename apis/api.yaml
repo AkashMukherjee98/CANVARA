@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.5
+  version: 0.3.6
 servers: []
 tags:
   - name: applications
@@ -1264,6 +1264,16 @@ components:
         match_level:
           type: number
           description: A number between 0 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.
+        matched_skills:
+          type: array
+          description: Post's skills that match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        unmatched_skills:
+          type: array
+          description: Post's skills that don't match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
         is_bookmarked:
           type: boolean
           description: Whether this post has been bookmarked by the current user or not.
@@ -1312,6 +1322,16 @@ components:
         video_url:
           type: string
           description: The URL of video for this application.
+        matched_skills:
+          type: array
+          description: Post's skills that match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        unmatched_skills:
+          type: array
+          description: Post's skills that don't match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
     Skill:
       title: Skill
       type: object

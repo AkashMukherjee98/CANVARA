@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+import itertools
 
 from sqlalchemy import and_, nullslast, or_
 from sqlalchemy.orm import contains_eager, joinedload, noload, relationship
@@ -273,7 +274,17 @@ class Post(ModelBase):
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
         PostDesiredSkill.update_skills(tx, self.owner.customer_id, self.desired_skills, skills)
 
-    def as_dict(self, user_id=None):
+    def match_user_skills(self, user):
+        matched_skills = []
+        unmatched_skills = []
+        for post_skill in itertools.chain(self.required_skills, self.desired_skills):
+            if any(post_skill.matches(user_skill) for user_skill in user.current_skills):
+                matched_skills.append(post_skill)
+            else:
+                unmatched_skills.append(post_skill)
+        return matched_skills, unmatched_skills
+
+    def as_dict(self, user=None):
         post = {
             'post_id': self.id,
             'name': self.name,
@@ -298,24 +309,26 @@ class Post(ModelBase):
         if self.expiration_date:
             post['expiration_date'] = self.expiration_date.isoformat()
 
-        optional_fields = ['candidate_description']
-        for field in optional_fields:
-            value = getattr(self, field)
-            if value is not None:
-                post[field] = value
+        if self.candidate_description:
+            post['candidate_description'] = self.candidate_description
 
         if self.description_video:
             post['video_url'] = self.description_video.generate_get_url()
 
         # TODO: (sunil) See if this can be done at lookup time
-        if user_id is not None:
+        if user is not None:
             for match in self.user_matches:
-                if match.user_id == user_id:
+                if match.user_id == user.id:
                     post['match_level'] = match.confidence_level
                     break
 
-            post['is_bookmarked'] = any(bookmark.user_id == user_id for bookmark in self.bookmark_users)
-            post['is_liked'] = any(like.user_id == user_id for like in self.like_users)
+            if self.required_skills or self.desired_skills:
+                matched_skills, unmatched_skills = self.match_user_skills(user)
+                post['matched_skills'] = [skill.as_dict() for skill in matched_skills]
+                post['unmatched_skills'] = [skill.as_dict() for skill in unmatched_skills]
+
+            post['is_bookmarked'] = any(bookmark.user_id == user.id for bookmark in self.bookmark_users)
+            post['is_liked'] = any(like.user_id == user.id for like in self.like_users)
 
         # TODO: (sunil) Remove summary, customer_id and post_owner_id once Frontend has been updated
         post['summary'] = self.name

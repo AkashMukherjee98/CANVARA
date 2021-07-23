@@ -63,7 +63,7 @@ class ApplicationAPI(AuthenticatedAPIBase):
     def __get_application(application_id):
         with transaction() as tx:
             application = Application.lookup(tx, application_id)
-        return application.as_dict()
+            return application.as_dict()
 
     @staticmethod
     def get(application_id=None):
@@ -92,7 +92,10 @@ class ApplicationAPI(AuthenticatedAPIBase):
                 Application.validate_status(payload['status'])
                 application.status = payload['status']
             application.last_updated_at = datetime.utcnow()
-        return application.as_dict()
+
+        with transaction() as tx:
+            application = Application.lookup(tx, application_id)
+            return application.as_dict()
 
     @staticmethod
     def delete(application_id):

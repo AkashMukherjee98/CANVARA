@@ -34,7 +34,7 @@ class PostAPI(AuthenticatedAPIBase):
                 post_type_id=request.args.get('type'),
                 post_filter=post_filter
             )
-            posts = [post.as_dict(user_id=user.id) for post in posts]
+            posts = [post.as_dict(user=user) for post in posts]
         return jsonify(posts)
 
     @staticmethod
@@ -42,7 +42,7 @@ class PostAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             post = Post.lookup(tx, post_id)
-            return post.as_dict(user_id=user.id)
+            return post.as_dict(user=user)
 
     @staticmethod
     def get(post_id=None):

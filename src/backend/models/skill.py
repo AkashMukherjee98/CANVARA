@@ -138,10 +138,14 @@ class SkillWithoutLevelMixin:
                 selected_skill.skill.usage_count += 1
                 existing_skills.append(selected_skill)
 
+    def matches(self, other):
+        return isinstance(other, SkillWithoutLevelMixin) and self.id == other.id
+
 
 class SkillWithLevelMixin(SkillWithoutLevelMixin):
     MIN_SKILL_LEVEL = 1
     MAX_SKILL_LEVEL = 100
+    SKILL_LEVEL_BUCKETS = 5
 
     def as_dict(self):
         details = self.skill.as_dict()
@@ -184,3 +188,12 @@ class SkillWithLevelMixin(SkillWithoutLevelMixin):
             if selected_skill.id not in existing_skill_ids:
                 selected_skill.skill.usage_count += 1
                 existing_skills.append(selected_skill)
+
+    def matches(self, other):
+        if not isinstance(other, SkillWithLevelMixin) or self.id != other.id:
+            return False
+
+        # instead of matching levels exactly, divide the full range into buckets
+        # and consider it a match if both skills fall in the same bucket
+        bucket_size = self.MAX_SKILL_LEVEL / self.SKILL_LEVEL_BUCKETS
+        return (self.level // bucket_size) == (other.level // bucket_size)

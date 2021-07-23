@@ -1,4 +1,5 @@
 from enum import Enum
+import itertools
 
 from sqlalchemy.orm import joinedload, noload, relationship
 
@@ -66,4 +67,13 @@ class Application(ModelBase):
 
         if self.description_video:
             application['video_url'] = self.description_video.generate_get_url()
+
+        if self.post and (self.post.required_skills or self.post.desired_skills):
+            application['matched_skills'] = []
+            application['unmatched_skills'] = []
+            for post_skill in itertools.chain(self.post.required_skills, self.post.desired_skills):
+                if any(post_skill.matches(user_skill) for user_skill in self.applicant.current_skills):
+                    application['matched_skills'].append(post_skill.as_dict())
+                else:
+                    application['unmatched_skills'].append(post_skill.as_dict())
         return application

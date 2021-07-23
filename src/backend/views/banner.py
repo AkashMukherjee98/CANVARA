@@ -1,14 +1,14 @@
 import random
 
 from flask import jsonify
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 
 from backend.models.db import transaction
 from backend.models.user import User
+from backend.views.base import AuthenticatedAPIBase
 
 
-class BannerAPI(MethodView):
+class BannerAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
         banners = [{

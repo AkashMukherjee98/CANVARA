@@ -1,16 +1,16 @@
 import copy
 
 from flask import jsonify, request
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 
 from sqlalchemy import select
 
 from backend.models.db import transaction
 from backend.models.user import User, SkillType
+from backend.views.base import AuthenticatedAPIBase
 
 
-class CustomerUserAPI(MethodView):
+class CustomerUserAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(customer_id):
         with transaction() as tx:
@@ -49,7 +49,7 @@ class CustomerUserAPI(MethodView):
         return user_details
 
 
-class UserAPI(MethodView):
+class UserAPI(AuthenticatedAPIBase):
     @staticmethod
     def __get_user(user_id):
         with transaction() as tx:

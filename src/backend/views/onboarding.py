@@ -1,7 +1,6 @@
 import enum
 
 from flask import jsonify, request
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 from sqlalchemy import select
 
@@ -12,6 +11,7 @@ from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
+from backend.views.base import AuthenticatedAPIBase
 
 
 class OnboardingStep(enum.Enum):
@@ -23,7 +23,7 @@ class OnboardingStep(enum.Enum):
     ONBOARDING_COMPLETE = 999
 
 
-class ProductPreferenceAPI(MethodView):
+class ProductPreferenceAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
         with transaction() as tx:
@@ -63,7 +63,7 @@ class ProductPreferenceAPI(MethodView):
         return make_no_content_response()
 
 
-class LinkedInAPI(MethodView):
+class LinkedInAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
         linkedin_url = request.json.get('linkedin_url')
@@ -87,7 +87,7 @@ class LinkedInAPI(MethodView):
         return make_no_content_response()
 
 
-class CurrentSkillAPI(MethodView):
+class CurrentSkillAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
         User.validate_skills(request.json, SkillType.CURRENT_SKILL)
@@ -103,7 +103,7 @@ class CurrentSkillAPI(MethodView):
         return make_no_content_response()
 
 
-class DesiredSkillAPI(MethodView):
+class DesiredSkillAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
         User.validate_skills(request.json, SkillType.DESIRED_SKILL)
@@ -119,7 +119,7 @@ class DesiredSkillAPI(MethodView):
         return make_no_content_response()
 
 
-class ProfilePictureAPI(MethodView, UserUploadMixin):
+class ProfilePictureAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put():
         # TODO: (sunil) add validation for accepted content types
@@ -133,7 +133,7 @@ class ProfilePictureAPI(MethodView, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
-class ProfilePictureByIdAPI(MethodView):
+class ProfilePictureByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(upload_id):
         status = UserUploadStatus.lookup(request.json['status'])

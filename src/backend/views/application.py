@@ -3,7 +3,6 @@ import copy
 import uuid
 
 from flask import jsonify, request
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 
 from backend.common.exceptions import NotAllowedError
@@ -13,9 +12,10 @@ from backend.models.post import Post
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
+from backend.views.base import AuthenticatedAPIBase
 
 
-class PostApplicationAPI(MethodView):
+class PostApplicationAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id):
         with transaction() as tx:
@@ -53,7 +53,7 @@ class PostApplicationAPI(MethodView):
             return application.as_dict()
 
 
-class ApplicationAPI(MethodView):
+class ApplicationAPI(AuthenticatedAPIBase):
     @staticmethod
     def __list_applications():
         with transaction() as tx:
@@ -111,7 +111,7 @@ class ApplicationAPI(MethodView):
         return {}
 
 
-class ApplicationVideoAPI(MethodView, UserUploadMixin):
+class ApplicationVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(application_id):
         # TODO: (sunil) add validation for accepted content types
@@ -124,7 +124,7 @@ class ApplicationVideoAPI(MethodView, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'applications', metadata)
 
 
-class ApplicationVideoByIdAPI(MethodView):
+class ApplicationVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(application_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])

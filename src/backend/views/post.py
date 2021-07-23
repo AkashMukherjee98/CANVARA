@@ -3,7 +3,6 @@ from functools import partial
 import uuid
 
 from flask import jsonify, request
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
@@ -16,9 +15,10 @@ from backend.models.post_type import PostType
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
+from backend.views.base import AuthenticatedAPIBase
 
 
-class PostAPI(MethodView):
+class PostAPI(AuthenticatedAPIBase):
     @staticmethod
     def __list_posts():
         post_filter = PostFilter.lookup(request.args.get('filter'))
@@ -187,7 +187,7 @@ class PostAPI(MethodView):
         return {}
 
 
-class PostVideoAPI(MethodView, UserUploadMixin):
+class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(post_id):
         # TODO: (sunil) add validation for accepted content types
@@ -200,7 +200,7 @@ class PostVideoAPI(MethodView, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'posts', metadata)
 
 
-class PostVideoByIdAPI(MethodView):
+class PostVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
@@ -218,7 +218,7 @@ class PostVideoByIdAPI(MethodView):
         }
 
 
-class PostBookmarkAPI(MethodView):
+class PostBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id):
         with transaction() as tx:
@@ -242,7 +242,7 @@ class PostBookmarkAPI(MethodView):
         return make_no_content_response()
 
 
-class PostLikeAPI(MethodView):
+class PostLikeAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id):
         with transaction() as tx:
@@ -266,7 +266,7 @@ class PostLikeAPI(MethodView):
         return make_no_content_response()
 
 
-class PostTypeAPI(MethodView):
+class PostTypeAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
         with transaction() as tx:
@@ -274,7 +274,7 @@ class PostTypeAPI(MethodView):
             return jsonify([post_type.as_dict() for post_type in query])
 
 
-class LocationAPI(MethodView):
+class LocationAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
         with transaction() as tx:
@@ -283,7 +283,7 @@ class LocationAPI(MethodView):
             return jsonify([location.as_dict() for location in query])
 
 
-class LanguageAPI(MethodView):
+class LanguageAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
         return jsonify(Language.SUPPORTED_LANGUAGES)

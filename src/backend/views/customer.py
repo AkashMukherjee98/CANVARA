@@ -1,15 +1,15 @@
 import uuid
 
 from flask import jsonify, request
-from flask.views import MethodView
 
 from sqlalchemy import select
 
 from backend.models.customer import Customer
 from backend.models.db import transaction
+from backend.views.base import AuthenticatedAPIBase
 
 
-class CustomerAPI(MethodView):
+class CustomerAPI(AuthenticatedAPIBase):
     @staticmethod
     def __list_customers():
         with transaction() as tx:

@@ -1,13 +1,13 @@
 from flask import jsonify, request
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 
 from backend.models.db import transaction
 from backend.models.skill import Skill
 from backend.models.user import User
+from backend.views.base import AuthenticatedAPIBase
 
 
-class SkillAPI(MethodView):
+class SkillAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
         with transaction() as tx:

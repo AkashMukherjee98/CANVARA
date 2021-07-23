@@ -2,7 +2,6 @@ from datetime import datetime
 import uuid
 
 from flask import jsonify, request
-from flask.views import MethodView
 from flask_cognito import current_cognito_jwt
 import sqlalchemy.exc
 
@@ -12,9 +11,10 @@ from backend.models.db import transaction
 from backend.models.match import UserPostMatch
 from backend.models.post import Post
 from backend.models.user import User
+from backend.views.base import AuthenticatedAPIBase
 
 
-class MatchAPI(MethodView):
+class MatchAPI(AuthenticatedAPIBase):
     @staticmethod
     def __list_matches(user_id=None, post_id=None):
         with transaction() as tx:

@@ -92,9 +92,6 @@ class ApplicationAPI(AuthenticatedAPIBase):
                 Application.validate_status(payload['status'])
                 application.status = payload['status']
             application.last_updated_at = datetime.utcnow()
-
-        with transaction() as tx:
-            application = Application.lookup(tx, application_id)
             return application.as_dict()
 
     @staticmethod

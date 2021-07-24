@@ -28,6 +28,7 @@ class Application(ModelBase):
 
     @classmethod
     def lookup(cls, tx, application_id, must_exist=True):
+        # TODO: (sunil) eagerload other relationships
         query_options = [
             joinedload(Application.description_video)
         ]

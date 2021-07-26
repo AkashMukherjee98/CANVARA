@@ -37,8 +37,8 @@ class User(ModelBase):
     profile_picture = relationship(UserUpload)
 
     MIN_CURRENT_SKILLS = 3
-    MAX_CURRENT_SKILLS = 10
-    MAX_DESIRED_SKILLS = 10
+    MAX_CURRENT_SKILLS = 50
+    MAX_DESIRED_SKILLS = 50
 
     DEFAULT_PROFILE_PICTURE_PATH = 'public/users/blank_profile_picture.png'
     DEFAULT_PROFILE_PICTURE_CONTENT_TYPE = 'image/png'

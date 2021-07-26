@@ -11,6 +11,7 @@ import uuid
 
 from flask import current_app, request
 from flask_cognito import current_cognito_jwt
+import flask.logging
 
 
 class JsonFormatter(logging.Formatter):
@@ -47,6 +48,19 @@ class JsonFormatter(logging.Formatter):
             else:
                 log_dict[field_name] = value
         return json.dumps(log_dict)
+
+
+def initialize_flask_logging():
+    flask.logging.default_handler.setFormatter(JsonFormatter())
+
+
+def initialize_gunicorn_logging(app):
+    # TODO: (sunil) Move the formatter setting to config file instead, and use --log-config in gunicorn command line
+    logger = logging.getLogger('gunicorn.error')
+    for handler in logger.handlers:
+        handler.setFormatter(JsonFormatter())
+    app.logger.handlers = logger.handlers
+    app.logger.setLevel(logger.level)
 
 
 def api_trace(func):

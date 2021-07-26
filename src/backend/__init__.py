@@ -1,7 +1,8 @@
+import os
+
 from flask import Flask
 from flask_cognito import CognitoAuth
 from flask_cors import CORS
-import flask.logging
 
 
 def register_api(app, view, endpoint, url, methods):
@@ -105,10 +106,14 @@ def register_user_apis(app):
 
 
 def create_app():  # pylint: disable=too-many-locals
-    from .common.logging import JsonFormatter  # pylint: disable=import-outside-toplevel
-    flask.logging.default_handler.setFormatter(JsonFormatter())
+    import backend.common.logging  # pylint: disable=import-outside-toplevel
+    backend.common.logging.initialize_flask_logging()
 
     app = Flask(__name__)
+
+    # If we're running under gunicorn, and configure logging to use gunicorn's logger
+    if os.environ.get('SERVER_SOFTWARE', '').startswith('gunicorn/'):
+        backend.common.logging.initialize_gunicorn_logging(app)
 
     app.config.update({
         'COGNITO_REGION': 'us-west-2',

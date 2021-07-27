@@ -1,10 +1,12 @@
 import copy
 import enum
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
+from .language import Language
+from .location import Location
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user_upload import UserUpload
 
@@ -35,6 +37,9 @@ class User(ModelBase):
     post_bookmarks = relationship("UserPostBookmark", back_populates="user")
     post_likes = relationship("UserPostLike", back_populates="user")
     profile_picture = relationship(UserUpload)
+    team = relationship("User", backref=backref("manager", remote_side='User.id'))
+    location = relationship(Location)
+    fun_facts = relationship("UserUpload", secondary=db.metadata.tables['user_fun_fact'])
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -62,6 +67,11 @@ class User(ModelBase):
         if user is None:
             raise DoesNotExistError(f"User '{user_id}' does not exist")
         return user
+
+    def validate_manager(self, manager):
+        if manager.id == self.id:
+            raise InvalidArgumentError("Manager must not be same as the user")
+        return manager
 
     @classmethod
     def validate_skills(cls, skills, skill_type):
@@ -104,6 +114,39 @@ class User(ModelBase):
     def profile_copy(self):
         return copy.deepcopy(self.profile) if self.profile is not None else {}
 
+    def update_profile(self, payload):
+        profile = copy.deepcopy(self.profile) if self.profile else {}
+        profile_fields = [
+            'title',
+            'linkedin_url',
+            'email',
+            'phone_number',
+            'hidden_secrets',
+            'career_goals',
+        ]
+        for field_name in profile_fields:
+            if payload.get(field_name) is not None:
+                if payload[field_name]:
+                    profile[field_name] = payload[field_name]
+                elif field_name in profile:
+                    # If there was an existing value for this field, and it's now
+                    # being set to empty string, remove it instead
+                    del profile[field_name]
+
+        if payload.get('languages') is not None:
+            if payload['languages']:
+                profile['languages'] = Language.validate_and_convert_languages(payload['languages'])
+            elif 'languages' in profile:
+                del profile['languages']
+        self.profile = profile
+
+    def as_summary_dict(self):
+        return {
+            'user_id': self.id,
+            'name': self.name,
+            'profile_picture_url': self.profile_picture_url,
+        }
+
     def as_dict(self):
         user = {
             'customer_id': self.customer_id,
@@ -119,7 +162,39 @@ class User(ModelBase):
             if value is not None:
                 user[key] = value
 
+        add_if_not_none('username', self.username)
         add_if_not_none('title', self.profile.get('title'))
+        add_if_not_none('email', self.profile.get('email'))
+        add_if_not_none('phone_number', self.profile.get('phone_number'))
         add_if_not_none('linkedin_url', self.profile.get('linkedin_url'))
+
+        add_if_not_none('hidden_secrets', self.profile.get('hidden_secrets'))
+        add_if_not_none('career_goals', self.profile.get('career_goals'))
+        add_if_not_none('languages', self.profile.get('languages'))
+
+        if self.location:
+            user['location'] = self.location.as_dict()
+
+        if self.manager:
+            user['manager'] = self.manager.as_summary_dict()
+
+        # if the user has direct reports, 'team' consists of all those direct reports
+        # otherwise, if the user has a manager, 'team' is all other users reporting to the same manager
+        if self.team:
+            user['team'] = [member.as_summary_dict() for member in self.team]
+        elif self.manager:
+            user['team'] = [member.as_summary_dict() for member in self.manager.team if member.id != self.id]
+
+        # Return the fun facts, if present in the following order:
+        # - video (at most 1)
+        # - images (at most 10)
+        # - text
+        fun_facts = [fact.as_dict(method='get') for fact in self.fun_facts if fact.is_video()]
+        fun_facts.extend([fact.as_dict(method='get') for fact in self.fun_facts if fact.is_image()])
+        if self.profile.get('interesting_facts') is not None:
+            fun_facts.append(self.profile['interesting_facts'])
+
+        if fun_facts:
+            user['fun_facts'] = fun_facts
 
         return user

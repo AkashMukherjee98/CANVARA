@@ -1,11 +1,10 @@
-import copy
-
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 
 from sqlalchemy import select
 
 from backend.models.db import transaction
+from backend.models.location import Location
 from backend.models.user import User, SkillType
 from backend.views.base import AuthenticatedAPIBase
 
@@ -21,21 +20,22 @@ class CustomerUserAPI(AuthenticatedAPIBase):
     @staticmethod
     def post(customer_id):
         payload = request.json
-        profile = {}
-        if payload.get('title'):
-            profile['title'] = payload['title']
-
-        if payload.get('linkedin_url') is not None:
-            profile['linkedin_url'] = payload['linkedin_url']
 
         user = User(
             id=payload['user_id'],
             customer_id=customer_id,
+            username=payload.get('username'),
             name=payload['name'],
-            profile=profile,
         )
         with transaction() as tx:
             tx.add(user)
+            user.update_profile(payload)
+
+            if payload.get('manager_id'):
+                user.manager = user.validate_manager(User.lookup(tx, payload['manager_id']))
+
+            if payload.get('location_id'):
+                user.location = Location.lookup(tx, payload['location_id'])
 
             if payload.get('current_skills'):
                 User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
@@ -79,8 +79,19 @@ class UserAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, user_id)
 
             payload = request.json
+
             if payload.get('name'):
                 user.name = payload['name']
+
+            if payload.get('username'):
+                user.username = payload['username']
+
+            if payload.get('manager_id'):
+                manager = User.lookup(tx, payload['manager_id'])
+                user.manager = user.validate_manager(manager)
+
+            if payload.get('location_id'):
+                user.location = Location.lookup(tx, payload['location_id'])
 
             # TODO: (sunil) Error if current_skills was given but set to empty list
             if payload.get('current_skills'):
@@ -92,19 +103,7 @@ class UserAPI(AuthenticatedAPIBase):
                 User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
                 user.set_desired_skills(tx, payload['desired_skills'])
 
-            profile = copy.deepcopy(user.profile)
-            if payload.get('title'):
-                profile['title'] = payload['title']
-
-            if payload.get('linkedin_url') is not None:
-                if payload['linkedin_url']:
-                    profile['linkedin_url'] = payload['linkedin_url']
-                elif profile['linkedin_url']:
-                    # If there was an existing value for LinkedIn URL, and it' now
-                    # being set to empty string, remove it instead
-                    del profile['linkedin_url']
-
-            user.profile = profile
+            user.update_profile(payload)
 
         # Fetch the user again from the database so the updates made above are reflected in the response
         with transaction() as tx:
@@ -121,3 +120,5 @@ class UserAPI(AuthenticatedAPIBase):
     #             return {}
     #         tx.delete(user)
     #     return {}
+
+# TODO: (sunil) add APIs to upload fun facts - at most 1 video and at most 10 images

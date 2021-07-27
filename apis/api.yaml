@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.6
+  version: 0.3.7
 servers: []
 tags:
   - name: applications
@@ -152,11 +152,13 @@ paths:
               properties:
                 user_id:
                   type: string
+                username:
+                  type: string
                 name:
                   type: string
                 title:
                   type: string
-                profile_picture_url:
+                location_id:
                   type: string
                 current_skills:
                   type: array
@@ -166,8 +168,22 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Skill'
+                email:
+                  type: string
+                phone_number:
+                  type: string
                 linkedin_url:
                   type: string
+                manager_id:
+                  type: string
+                hidden_secrets:
+                  type: string
+                career_goals:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
               required:
                 - user_id
                 - name
@@ -750,11 +766,13 @@ paths:
             schema:
               type: object
               properties:
+                username:
+                  type: string
                 name:
                   type: string
                 title:
                   type: string
-                profile_picture_url:
+                location_id:
                   type: string
                 current_skills:
                   type: array
@@ -764,8 +782,22 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Skill'
+                email:
+                  type: string
+                phone_number:
+                  type: string
                 linkedin_url:
                   type: string
+                manager_id:
+                  type: string
+                hidden_secrets:
+                  type: string
+                career_goals:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
   /users/me:
     get:
       summary: Get details of the current authenticated user
@@ -1154,14 +1186,31 @@ components:
           type: string
         user_id:
           type: string
+        username:
+          type: string
         name:
           type: string
         title:
           type: string
         profile_picture_url:
           type: string
+        location:
+          $ref: '#/components/schemas/Location'
         customer_name:
           type: string
+        email:
+          type: string
+        phone_number:
+          type: string
+        linkedin_url:
+          type: string
+        manager:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
         product_preferences:
           type: array
           items:
@@ -1174,8 +1223,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Skill'
-        linkedin_url:
+        fun_facts:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
+              - properties: {}
+                type: string
+        hidden_secrets:
           type: string
+        career_goals:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
       required:
         - customer_id
         - user_id
@@ -1449,6 +1511,22 @@ components:
       required:
         - upload_id
         - url
+    UserUpload:
+      title: UserUpload
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url for the uploaded file.
+        content_type:
+          type: string
+          description: Content type of the uploaded file.
+      required:
+        - url
+        - content_type
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

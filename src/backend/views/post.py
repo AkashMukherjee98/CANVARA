@@ -62,7 +62,7 @@ class PostAPI(AuthenticatedAPIBase):
 
         target_date = Post.validate_and_convert_target_date(payload['target_date'])
         size = Post.validate_and_convert_size(payload['size'])
-        language = Post.validate_and_convert_language(payload['language'])
+        language = Language.validate_and_convert_language(payload['language'])
 
         if payload.get('expiration_date'):
             expiration_date = Post.validate_and_convert_expiration_date(payload['expiration_date'])
@@ -133,7 +133,7 @@ class PostAPI(AuthenticatedAPIBase):
                     'validate_and_convert': Post.validate_and_convert_expiration_date
                 },
                 'language': {
-                    'validate_and_convert': Post.validate_and_convert_language
+                    'validate_and_convert': Language.validate_and_convert_language
                 },
                 'name': {},
                 'people_needed': {},

@@ -76,8 +76,8 @@ class LinkedInAPI(AuthenticatedAPIBase):
             profile = user.profile_copy
             if linkedin_url:
                 profile['linkedin_url'] = linkedin_url
-            elif profile['linkedin_url']:
-                # If there was an existing value for LinkedIn URL, and it' now
+            elif 'linkedin_url' in profile:
+                # If there was an existing value for LinkedIn URL, and it's now
                 # being set to empty string, remove it instead
                 del profile['linkedin_url']
 

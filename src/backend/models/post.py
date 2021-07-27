@@ -7,7 +7,6 @@ from sqlalchemy.orm import contains_eager, joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
-from .language import Language
 from .location import Location
 from .match import UserPostMatch
 from .post_type import PostType
@@ -222,12 +221,6 @@ class Post(ModelBase):
         if size.upper() not in cls.VALID_SIZES:
             raise InvalidArgumentError(f"Invalid size: {size}.")
         return size.upper()
-
-    @classmethod
-    def validate_and_convert_language(cls, language):
-        if language not in Language.SUPPORTED_LANGUAGES:
-            raise InvalidArgumentError(f"Unsupported language: {language}")
-        return language
 
     @staticmethod
     def validate_and_convert_status(status):

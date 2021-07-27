@@ -61,7 +61,7 @@ class UserUpload(ModelBase):
             'get_object',
             self.bucket,
             self.path,
-            self.metadata.get('content_type'),
+            self.content_type,
             signed=signed
         )
 
@@ -109,8 +109,21 @@ class UserUpload(ModelBase):
             created_at=datetime.utcnow()
         )
 
-    def as_dict(self):
+    def is_video(self):
+        return self.content_type.startswith('video/')
+
+    def is_image(self):
+        return self.content_type.startswith('image/')
+
+    def as_dict(self, method='put', signed=True):
+        if method == 'put':
+            return {
+                'upload_id': self.id,
+                'url': self.generate_put_url()
+            }
+
         return {
             'upload_id': self.id,
-            'url': self.generate_put_url()
+            'content_type': self.content_type,
+            'url': self.generate_get_url(signed=signed)
         }

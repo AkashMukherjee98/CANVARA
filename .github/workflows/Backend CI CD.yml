@@ -158,4 +158,3 @@ jobs:
           export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
           export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
           pytest
-}

@@ -16,7 +16,7 @@ env:
     IMAGE_ID: $REGISTRY/$IMAGE_NAME
 
 jobs:
-  checkout:
+#  checkout:
 #
 #    runs-on: ubuntu-latest
 #

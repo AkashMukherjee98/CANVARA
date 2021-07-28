@@ -28,6 +28,7 @@ class User(ModelBase):
     # Note: 'user' is a reserved keyword in PostgreSQL so we use 'canvara_user' instead
     __table__ = db.metadata.tables['canvara_user']
 
+    profile = None
     customer = relationship("Customer", back_populates="users")
     posts = relationship("Post", back_populates="owner")
     applications = relationship("Application", back_populates="applicant")

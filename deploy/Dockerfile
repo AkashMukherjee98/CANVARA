@@ -10,7 +10,8 @@ ENV CANVARA_CONFIGS_DIR /canvara/configs
 
 COPY pip_requirements.txt pip_requirements.txt
 RUN pip install -r pip_requirements.txt
-RUN cd backend/db
+RUN pwd
+RUN cd /canvara/backend/db
 RUN alembic upgrade head
 
 COPY src .

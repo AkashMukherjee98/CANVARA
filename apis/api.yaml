@@ -853,8 +853,14 @@ paths:
         - onboarding
       operationId: set_product_preferences
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductPreference'
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:
@@ -871,8 +877,14 @@ paths:
         - onboarding
       operationId: set_current_skills
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkillWithLevel'
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:
@@ -889,8 +901,14 @@ paths:
         - onboarding
       operationId: set_desired_skills
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:
@@ -906,8 +924,17 @@ paths:
       tags:
         - onboarding
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  linkedin_url:
+                    type: string
+                required:
+                  - linkedin_url
       operationId: set_linkedin_url
       security:
         - AWSCognitoCanvaraPrototype: []

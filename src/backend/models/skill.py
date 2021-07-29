@@ -127,10 +127,11 @@ class SkillWithoutLevelMixin:
         selected_skill_ids = [skill.id for skill in selected_skills]
 
         # Remove any skill that is not in the new list
-        for existing_skill in existing_skills:
-            if existing_skill.id not in selected_skill_ids:
-                existing_skill.skill.usage_count -= 1
-                tx.delete(existing_skill)
+        skills_to_remove = [skill for skill in existing_skills if skill.id not in selected_skill_ids]
+        for existing_skill in skills_to_remove:
+            existing_skill.skill.usage_count -= 1
+            tx.delete(existing_skill)
+            existing_skills.remove(existing_skill)
 
         # Now add any new ones
         for selected_skill in selected_skills:
@@ -173,13 +174,15 @@ class SkillWithLevelMixin(SkillWithoutLevelMixin):
         existing_skill_ids = [skill.id for skill in existing_skills]
         selected_skill_ids = [skill.id for skill in selected_skills]
 
-        # Remove or update the existing skills
-        for existing_skill in existing_skills:
-            if existing_skill.id not in selected_skill_ids:
-                existing_skill.skill.usage_count -= 1
-                tx.delete(existing_skill)
-                continue
+        # Remove any skill that is not in the new list
+        skills_to_remove = [skill for skill in existing_skills if skill.id not in selected_skill_ids]
+        for existing_skill in skills_to_remove:
+            existing_skill.skill.usage_count -= 1
+            tx.delete(existing_skill)
+            existing_skills.remove(existing_skill)
 
+        # Update level for existing skills
+        for existing_skill in existing_skills:
             selected_skill = next(skill for skill in selected_skills if skill.id == existing_skill.id)
             existing_skill.level = selected_skill.level
 

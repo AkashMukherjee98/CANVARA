@@ -5,7 +5,6 @@ from flask_cognito import current_cognito_jwt
 from sqlalchemy import select
 
 from backend.common.exceptions import InvalidArgumentError
-from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
@@ -60,7 +59,7 @@ class ProductPreferenceAPI(AuthenticatedAPIBase):
             onboarding = profile.setdefault('onboarding_steps', {})
             onboarding['current'] = OnboardingStep.CONNECT_LINKEDIN_ACCOUNT.value
             user.profile = profile
-        return make_no_content_response()
+        return jsonify([product.as_dict() for product in user.product_preferences])
 
 
 class LinkedInAPI(AuthenticatedAPIBase):
@@ -84,7 +83,9 @@ class LinkedInAPI(AuthenticatedAPIBase):
             onboarding = profile.setdefault('onboarding_steps', {})
             onboarding['current'] = OnboardingStep.SET_PROFILE_PICTURE.value
             user.profile = profile
-        return make_no_content_response()
+        return {
+            'linkedin_url': user.profile.get('linkedin_url', '')
+        }
 
 
 class CurrentSkillAPI(AuthenticatedAPIBase):
@@ -100,7 +101,7 @@ class CurrentSkillAPI(AuthenticatedAPIBase):
             onboarding = profile.setdefault('onboarding_steps', {})
             onboarding['current'] = OnboardingStep.ADD_DESIRED_SKILLS.value
             user.profile = profile
-        return make_no_content_response()
+        return jsonify([skill.as_dict() for skill in user.current_skills])
 
 
 class DesiredSkillAPI(AuthenticatedAPIBase):
@@ -116,7 +117,7 @@ class DesiredSkillAPI(AuthenticatedAPIBase):
             onboarding = profile.setdefault('onboarding_steps', {})
             onboarding['current'] = OnboardingStep.ONBOARDING_COMPLETE.value
             user.profile = profile
-        return make_no_content_response()
+        return jsonify([skill.as_dict() for skill in user.desired_skills])
 
 
 class ProfilePictureAPI(AuthenticatedAPIBase, UserUploadMixin):

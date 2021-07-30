@@ -8,9 +8,8 @@ from backend.common.exceptions import InvalidArgumentError
 from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
-from backend.models.user_upload import UserUpload, UserUploadStatus
-from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
+from backend.views.user import ProfilePictureAPIBase, ProfilePictureByIdAPIBase
 
 
 class OnboardingStep(enum.Enum):
@@ -120,37 +119,22 @@ class DesiredSkillAPI(AuthenticatedAPIBase):
         return jsonify([skill.as_dict() for skill in user.desired_skills])
 
 
-class ProfilePictureAPI(AuthenticatedAPIBase, UserUploadMixin):
+class ProfilePictureAPI(ProfilePictureAPIBase):
     @staticmethod
     def put():
-        # TODO: (sunil) add validation for accepted content types
-        user_id = current_cognito_jwt['sub']
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'profile_picture',
-        }
-        return ProfilePictureAPI.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+        return ProfilePictureAPIBase._put(current_cognito_jwt['sub'])
 
 
-class ProfilePictureByIdAPI(AuthenticatedAPIBase):
+class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
     @staticmethod
     def put(upload_id):
-        status = UserUploadStatus.lookup(request.json['status'])
+        response = ProfilePictureByIdAPIBase._put(current_cognito_jwt['sub'], upload_id)
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                user.profile_picture = user_upload
-                user_upload.status = status.value
-            # TODO: (sunil) return an error if this status transition is not supported
-
             profile = user.profile_copy
             onboarding = profile.setdefault('onboarding_steps', {})
             onboarding['current'] = OnboardingStep.ADD_CURRENT_SKILLS.value
             user.profile = profile
 
-        return {
-            'status': user_upload.status,
-        }
+        return response

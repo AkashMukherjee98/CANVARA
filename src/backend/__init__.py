@@ -62,8 +62,13 @@ def register_onboarding_apis(app):
     register_api(app, DesiredSkillAPI, 'desired_skill_api', '/onboarding/desired_skills', ['POST', ])
     register_api(app, LinkedInAPI, 'linkedin_api', '/onboarding/linkedin', ['POST', ])
     register_api(app, ProductPreferenceAPI, 'product_preference_api', '/onboarding/product_preferences', ['GET', 'POST'])
-    register_api(app, ProfilePictureAPI, 'profile_picture_api', '/onboarding/profile_picture', ['PUT', ])
-    register_api(app, ProfilePictureByIdAPI, 'profile_picture_by_id_api', '/onboarding/profile_picture/<upload_id>', ['PUT', ])
+    register_api(app, ProfilePictureAPI, 'onboarding_profile_picture_api', '/onboarding/profile_picture', ['PUT', ])
+    register_api(
+        app,
+        ProfilePictureByIdAPI,
+        'onboarding_profile_picture_by_id_api',
+        '/onboarding/profile_picture/<upload_id>',
+        ['PUT', ])
 
 
 def register_post_apis(app):
@@ -95,7 +100,8 @@ def register_post_apis(app):
 
 def register_user_apis(app):
     # pylint: disable=import-outside-toplevel
-    from backend.views.user import CustomerUserAPI, UserAPI
+    from backend.views.user import (
+        CustomerUserAPI, FunFactAPI, FunFactByIdAPI, ProfilePictureAPI, ProfilePictureByIdAPI, UserAPI)
     # pylint: enable=import-outside-toplevel
 
     register_api(app, CustomerUserAPI, 'customer_user_api', '/customers/<customer_id>/users', ['GET', 'POST'])
@@ -103,6 +109,13 @@ def register_user_apis(app):
     user_view = UserAPI.as_view('user_api')
     app.add_url_rule('/users/me', view_func=user_view, methods=['GET', ])
     app.add_url_rule('/users/<user_id>', view_func=user_view, methods=['GET', 'PUT'])
+
+    register_api(app, FunFactAPI, 'fun_fact_api', '/users/<user_id>/fun_fact', ['PUT', ])
+    register_api(app, FunFactByIdAPI, 'fun_fact_by_id_api', '/users/<user_id>/fun_fact/<upload_id>', ['PUT', ])
+
+    register_api(app, ProfilePictureAPI, 'profile_picture_api', '/users/<user_id>/profile_picture', ['PUT', ])
+    register_api(
+        app, ProfilePictureByIdAPI, 'profile_picture_by_id_api', '/users/<user_id>/profile_picture/<upload_id>', ['PUT', ])
 
 
 def create_app():  # pylint: disable=too-many-locals

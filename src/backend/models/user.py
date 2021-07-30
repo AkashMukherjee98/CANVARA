@@ -49,6 +49,9 @@ class User(ModelBase):
     DEFAULT_PROFILE_PICTURE_PATH = 'public/users/blank_profile_picture.png'
     DEFAULT_PROFILE_PICTURE_CONTENT_TYPE = 'image/png'
 
+    MAX_VIDEO_FUN_FACTS = 1
+    MAX_IMAGE_FUN_FACTS = 10
+
     @property
     def profile_picture_url(self):
         if self.profile_picture:
@@ -110,6 +113,26 @@ class User(ModelBase):
     def set_desired_skills(self, tx, skills):
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
         UserDesiredSkill.update_skills(tx, self.customer_id, self.desired_skills, skills)
+
+    def add_fun_fact(self, fun_fact):
+        # User can have at most 1 video and 10 image fun facts
+        # If the user already has that many fun facts, remove the oldest ones first
+        existing_fun_facts = []
+        max_fun_facts = -1
+        if fun_fact.is_video():
+            existing_fun_facts = [fact for fact in self.fun_facts if fact.is_video()]
+            max_fun_facts = self.MAX_VIDEO_FUN_FACTS
+        elif fun_fact.is_image():
+            existing_fun_facts = [fact for fact in self.fun_facts if fact.is_image()]
+            max_fun_facts = self.MAX_IMAGE_FUN_FACTS
+        else:
+            raise InvalidArgumentError(f"Invalid fun fact type: '{fun_fact.content_type}'")
+
+        if len(existing_fun_facts) >= max_fun_facts:
+            sorted_facts = sorted(existing_fun_facts, key=lambda fact: fact.created_at)
+            for fact in sorted_facts[:len(sorted_facts) - max_fun_facts + 1]:
+                self.fun_facts.remove(fact)
+        self.fun_facts.append(fun_fact)
 
     @property
     def profile_copy(self):

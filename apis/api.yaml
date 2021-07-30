@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.3.7
+  version: 0.4.0
 servers: []
 tags:
   - name: applications
@@ -798,6 +798,154 @@ paths:
                   type: array
                   items:
                     type: string
+  '/users/{user_id}/fun_fact':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a user fun fact image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_video.mp4
+                  content_type: video/mp4
+      tags:
+        - users
+  '/users/{user_id}/fun_fact/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize user fun fact image or video upload
+      operationId: finalize_profile_fun_fact_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
+  '/users/{user_id}/profile_picture':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a profile picture upload
+      operationId: upload_profile_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/profile_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize profile picture upload
+      operationId: finalize_profile_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
   /users/me:
     get:
       summary: Get details of the current authenticated user

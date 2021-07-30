@@ -7,6 +7,8 @@ from backend.models.db import transaction
 from backend.models.location import Location
 from backend.models.user import User, SkillType
 from backend.views.base import AuthenticatedAPIBase
+from backend.models.user_upload import UserUpload, UserUploadStatus
+from backend.views.user_upload import UserUploadMixin
 
 
 class CustomerUserAPI(AuthenticatedAPIBase):
@@ -121,4 +123,75 @@ class UserAPI(AuthenticatedAPIBase):
     #         tx.delete(user)
     #     return {}
 
-# TODO: (sunil) add APIs to upload fun facts - at most 1 video and at most 10 images
+
+class ProfilePictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
+    @staticmethod
+    def _put(user_id):
+        # TODO: (sunil) add validation for accepted content types
+        # user_id = current_cognito_jwt['sub']
+        metadata = {
+            'resource': 'user',
+            'resource_id': user_id,
+            'type': 'profile_picture',
+        }
+        return ProfilePictureAPIBase.create_user_upload(
+            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+
+
+class ProfilePictureAPI(ProfilePictureAPIBase):
+    @staticmethod
+    def put(user_id):
+        return ProfilePictureAPIBase._put(user_id)
+
+
+class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
+    @staticmethod
+    def _put(user_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            if status == UserUploadStatus.UPLOADED:
+                user.profile_picture = user_upload
+                user_upload.status = status.value
+            # TODO: (sunil) return an error if this status transition is not supported
+
+        return {
+            'status': user_upload.status,
+        }
+
+
+class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
+    @staticmethod
+    def put(user_id, upload_id):
+        return ProfilePictureByIdAPIBase._put(user_id, upload_id)
+
+
+class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
+    @staticmethod
+    def put(user_id):
+        # TODO: (sunil) add validation for accepted content types
+        metadata = {
+            'resource': 'user',
+            'resource_id': user_id,
+            'type': 'fun_fact',
+        }
+        return FunFactAPI.create_user_upload(
+            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+
+
+class FunFactByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(user_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            if status == UserUploadStatus.UPLOADED:
+                user.add_fun_fact(user_upload)
+                user_upload.status = status.value
+            # TODO: (sunil) return an error if this status transition is not supported
+
+        return {
+            'status': user_upload.status,
+        }

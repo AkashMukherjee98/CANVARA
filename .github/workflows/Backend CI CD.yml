@@ -117,7 +117,7 @@ jobs:
           sudo docker run --detach -v /home/ubuntu/docker_logs:/canvara/logs --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/prototype:main
           sleep 5
           new_container_id=$(sudo docker container ps | awk 'NR > 1 {print $1}')
-          if [ $new_container_id ]; then
+          if [ !$new_container_id ]; then
           sleep 5
           fi
 

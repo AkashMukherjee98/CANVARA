@@ -111,7 +111,7 @@ def register_user_apis(app):
     app.add_url_rule('/users/<user_id>', view_func=user_view, methods=['GET', 'PUT'])
 
     register_api(app, FunFactAPI, 'fun_fact_api', '/users/<user_id>/fun_fact', ['PUT', ])
-    register_api(app, FunFactByIdAPI, 'fun_fact_by_id_api', '/users/<user_id>/fun_fact/<upload_id>', ['PUT', ])
+    register_api(app, FunFactByIdAPI, 'fun_fact_by_id_api', '/users/<user_id>/fun_fact/<upload_id>', ['PUT', 'DELETE'])
 
     register_api(app, ProfilePictureAPI, 'profile_picture_api', '/users/<user_id>/profile_picture', ['PUT', ])
     register_api(

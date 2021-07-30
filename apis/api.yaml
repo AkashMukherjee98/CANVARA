@@ -872,6 +872,16 @@ paths:
                 - status
       tags:
         - users
+    delete:
+      summary: Delete a user fun fact
+      operationId: delete_profile_fun_fact
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
   '/users/{user_id}/profile_picture':
     parameters:
       - schema:

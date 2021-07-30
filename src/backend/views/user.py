@@ -3,6 +3,8 @@ from flask_cognito import current_cognito_jwt
 
 from sqlalchemy import select
 
+from backend.common.exceptions import NotAllowedError
+from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.location import Location
 from backend.models.user import User, SkillType
@@ -195,3 +197,16 @@ class FunFactByIdAPI(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+
+    @staticmethod
+    def delete(user_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+
+            # For now, only the user is allowed to delete their fun fact
+            if user.id != user_id:
+                raise NotAllowedError(f"User '{user.id}' cannot delete fun fact of user '{user_id}'")
+            user.fun_facts.remove(user_upload)
+            tx.delete(user_upload)
+        return make_no_content_response()

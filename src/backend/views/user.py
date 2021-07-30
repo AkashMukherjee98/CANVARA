@@ -6,7 +6,6 @@ from sqlalchemy import select
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.models.db import transaction
-from backend.models.location import Location
 from backend.models.user import User, SkillType
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -37,9 +36,6 @@ class CustomerUserAPI(AuthenticatedAPIBase):
 
             if payload.get('manager_id'):
                 user.manager = user.validate_manager(User.lookup(tx, payload['manager_id']))
-
-            if payload.get('location_id'):
-                user.location = Location.lookup(tx, payload['location_id'])
 
             if payload.get('current_skills'):
                 User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
@@ -93,9 +89,6 @@ class UserAPI(AuthenticatedAPIBase):
             if payload.get('manager_id'):
                 manager = User.lookup(tx, payload['manager_id'])
                 user.manager = user.validate_manager(manager)
-
-            if payload.get('location_id'):
-                user.location = Location.lookup(tx, payload['location_id'])
 
             # TODO: (sunil) Error if current_skills was given but set to empty list
             if payload.get('current_skills'):

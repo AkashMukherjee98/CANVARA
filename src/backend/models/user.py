@@ -6,7 +6,6 @@ from sqlalchemy.orm import backref, relationship
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import db, ModelBase
 from .language import Language
-from .location import Location
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user_upload import UserUpload
 
@@ -39,7 +38,6 @@ class User(ModelBase):
     post_likes = relationship("UserPostLike", back_populates="user")
     profile_picture = relationship(UserUpload)
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
-    location = relationship(Location)
     fun_facts = relationship("UserUpload", secondary=db.metadata.tables['user_fun_fact'])
 
     MIN_CURRENT_SKILLS = 3
@@ -142,6 +140,7 @@ class User(ModelBase):
         profile = copy.deepcopy(self.profile) if self.profile else {}
         profile_fields = [
             'title',
+            'location',
             'linkedin_url',
             'email',
             'phone_number',
@@ -188,6 +187,7 @@ class User(ModelBase):
 
         add_if_not_none('username', self.username)
         add_if_not_none('title', self.profile.get('title'))
+        add_if_not_none('location', self.profile.get('location'))
         add_if_not_none('email', self.profile.get('email'))
         add_if_not_none('phone_number', self.profile.get('phone_number'))
         add_if_not_none('linkedin_url', self.profile.get('linkedin_url'))
@@ -195,9 +195,6 @@ class User(ModelBase):
         add_if_not_none('hidden_secrets', self.profile.get('hidden_secrets'))
         add_if_not_none('career_goals', self.profile.get('career_goals'))
         add_if_not_none('languages', self.profile.get('languages'))
-
-        if self.location:
-            user['location'] = self.location.as_dict()
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()

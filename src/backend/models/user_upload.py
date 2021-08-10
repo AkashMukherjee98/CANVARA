@@ -3,6 +3,7 @@ import enum
 import os.path
 import uuid
 
+from sqlalchemy import and_
 import boto3
 
 from backend.common.config import get_canvara_config
@@ -20,6 +21,9 @@ class UserUploadStatus(enum.Enum):
     # File has been successfully uploaded
     UPLOADED = 'uploaded'
 
+    # File has been marked for deletion
+    DELETED = 'deleted'
+
     @classmethod
     def lookup(cls, status):
         try:
@@ -35,8 +39,12 @@ class UserUpload(ModelBase):
 
     @classmethod
     def lookup(cls, tx, upload_id, customer_id):
-        user_upload = tx.get(UserUpload, upload_id)
-        if user_upload is None or user_upload.customer_id != customer_id:
+        user_upload = tx.query(UserUpload).where(and_(
+            UserUpload.id == upload_id,
+            UserUpload.status != UserUploadStatus.DELETED.value,
+            UserUpload.customer_id == customer_id
+        )).one_or_none()
+        if user_upload is None:
             raise DoesNotExistError(f"Upload '{upload_id}' does not exist")
         return user_upload
 

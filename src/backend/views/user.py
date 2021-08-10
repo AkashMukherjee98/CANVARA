@@ -201,5 +201,5 @@ class FunFactByIdAPI(AuthenticatedAPIBase):
             if user.id != user_id:
                 raise NotAllowedError(f"User '{user.id}' cannot delete fun fact of user '{user_id}'")
             user.fun_facts.remove(user_upload)
-            tx.delete(user_upload)
+            user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()

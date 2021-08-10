@@ -200,11 +200,11 @@ class User(ModelBase):
             user['manager'] = self.manager.as_summary_dict()
 
         # if the user has direct reports, 'team' consists of all those direct reports
-        # otherwise, if the user has a manager, 'team' is all other users reporting to the same manager
+        # otherwise, if the user has a manager, 'team' is all other users reporting to the same manager, plus the manager
         if self.team:
             user['team'] = [member.as_summary_dict() for member in self.team]
         elif self.manager:
-            user['team'] = [member.as_summary_dict() for member in self.manager.team if member.id != self.id]
+            user['team'] = [self.manager.as_summary_dict()] + [member.as_summary_dict() for member in self.manager.team if member.id != self.id]
 
         # Return the fun facts, if present in the following order:
         # - video (at most 1)

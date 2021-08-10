@@ -13,6 +13,9 @@ class Skill(ModelBase):
     __table__ = db.metadata.tables['skill']
     # TODO: (sunil) Remove internal_name, instead put a functional index on name, like location table
 
+    DEFAULT_SEARCH_RESULTS_LIMIT = 20
+    MAX_SEARCH_RESULTS_LIMIT = 50
+
     @classmethod
     def lookup(cls, tx, customer_id, skill_id=None, name=None, must_exist=True):  # pylint: disable=too-many-arguments
         if skill_id is None and name is None:
@@ -66,7 +69,11 @@ class Skill(ModelBase):
         return skill
 
     @classmethod
-    def search(cls, tx, customer_id, query=None, limit=10):
+    def search(cls, tx, customer_id, query=None, limit=None):
+        if not limit:
+            limit = cls.DEFAULT_SEARCH_RESULTS_LIMIT
+        limit = min(limit, cls.MAX_SEARCH_RESULTS_LIMIT)
+
         customer_id_clause = or_(
             Skill.customer_id.is_(None),
             Skill.customer_id == customer_id)

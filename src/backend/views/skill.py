@@ -14,5 +14,6 @@ class SkillAPI(AuthenticatedAPIBase):
             # TODO: (sunil) Pass current user id to Skill.search and let it join
             #               with user table instead of executing two queries
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            skills = Skill.search(tx, user.customer_id, query=request.args.get('q'))
+            limit = int(request.args.get('limit', Skill.DEFAULT_SEARCH_RESULTS_LIMIT))
+            skills = Skill.search(tx, user.customer_id, query=request.args.get('q'), limit=limit)
         return jsonify(skills)

@@ -196,6 +196,7 @@ class User(ModelBase):
         add_if_not_none('career_goals', self.profile.get('career_goals'))
         add_if_not_none('languages', self.profile.get('languages'))
         add_if_not_none('allow_demo_mode', self.profile.get('allow_demo_mode'))
+        add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()

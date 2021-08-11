@@ -1,5 +1,3 @@
-import enum
-
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from sqlalchemy import select
@@ -12,13 +10,15 @@ from backend.views.base import AuthenticatedAPIBase
 from backend.views.user import ProfilePictureAPIBase, ProfilePictureByIdAPIBase
 
 
-class OnboardingStep(enum.Enum):
-    CHOOSE_PRODUCTS = 100
-    CONNECT_LINKEDIN_ACCOUNT = 200
-    SET_PROFILE_PICTURE = 300
-    ADD_CURRENT_SKILLS = 400
-    ADD_DESIRED_SKILLS = 500
-    ONBOARDING_COMPLETE = 999
+def set_onboarding_complete(user, onboarding_complete):
+    profile = user.profile_copy
+    if onboarding_complete:
+        profile['onboarding_complete'] = True
+    elif 'onboarding_complete' in profile:
+        # In certain cases (e.g. "demo mode"),
+        # a user may go through onboarding again after having already completed it
+        del profile['onboarding_complete']
+    user.profile = profile
 
 
 class ProductPreferenceAPI(AuthenticatedAPIBase):
@@ -53,11 +53,8 @@ class ProductPreferenceAPI(AuthenticatedAPIBase):
             for product in products_to_add:
                 user.product_preferences.append(product)
 
-            # Move the onboarding workflow to the next step
-            profile = user.profile_copy
-            onboarding = profile.setdefault('onboarding_steps', {})
-            onboarding['current'] = OnboardingStep.CONNECT_LINKEDIN_ACCOUNT.value
-            user.profile = profile
+            # Make sure onboarding is not marked as complete
+            set_onboarding_complete(user, False)
         return jsonify([product.as_dict() for product in user.product_preferences])
 
 
@@ -78,10 +75,10 @@ class LinkedInAPI(AuthenticatedAPIBase):
                 # If there was an existing value for LinkedIn URL, and it's now
                 # being set to empty string, remove it instead
                 del profile['linkedin_url']
-
-            onboarding = profile.setdefault('onboarding_steps', {})
-            onboarding['current'] = OnboardingStep.SET_PROFILE_PICTURE.value
             user.profile = profile
+
+            # Make sure onboarding is not marked as complete
+            set_onboarding_complete(user, False)
         return {
             'linkedin_url': user.profile.get('linkedin_url', '')
         }
@@ -95,11 +92,8 @@ class CurrentSkillAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user.set_current_skills(tx, request.json)
 
-            # Move the onboarding workflow to the next step
-            profile = user.profile_copy
-            onboarding = profile.setdefault('onboarding_steps', {})
-            onboarding['current'] = OnboardingStep.ADD_DESIRED_SKILLS.value
-            user.profile = profile
+            # Make sure onboarding is not marked as complete
+            set_onboarding_complete(user, False)
         return jsonify([skill.as_dict() for skill in user.current_skills])
 
 
@@ -111,11 +105,8 @@ class DesiredSkillAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user.set_desired_skills(tx, request.json)
 
-            # Move the onboarding workflow to the next step
-            profile = user.profile_copy
-            onboarding = profile.setdefault('onboarding_steps', {})
-            onboarding['current'] = OnboardingStep.ONBOARDING_COMPLETE.value
-            user.profile = profile
+            # Mark onboarding as complete
+            set_onboarding_complete(user, True)
         return jsonify([skill.as_dict() for skill in user.desired_skills])
 
 
@@ -132,9 +123,8 @@ class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            profile = user.profile_copy
-            onboarding = profile.setdefault('onboarding_steps', {})
-            onboarding['current'] = OnboardingStep.ADD_CURRENT_SKILLS.value
-            user.profile = profile
+
+            # Make sure onboarding is not marked as complete
+            set_onboarding_complete(user, False)
 
         return response

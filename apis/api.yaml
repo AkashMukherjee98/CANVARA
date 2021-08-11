@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.4.2
+  version: 0.4.3
 servers: []
 tags:
   - name: applications
@@ -1413,8 +1413,7 @@ components:
           items:
             anyOf:
               - $ref: '#/components/schemas/UserUpload'
-              - properties: {}
-                type: string
+              - type: string
         hidden_secrets:
           type: string
         career_goals:
@@ -1424,6 +1423,8 @@ components:
           items:
             type: string
         allow_demo_mode:
+          type: boolean
+        onboarding_complete:
           type: boolean
       required:
         - customer_id

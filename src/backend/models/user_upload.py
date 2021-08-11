@@ -8,7 +8,7 @@ import boto3
 
 from backend.common.config import get_canvara_config
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
-from .db import db, ModelBase
+from .db import ModelBase
 
 
 S3_BUCKET_PUBLIC_URL_FORMAT = 'https://{bucket}.s3.amazonaws.com/{path}'
@@ -33,7 +33,7 @@ class UserUploadStatus(enum.Enum):
 
 
 class UserUpload(ModelBase):
-    __table__ = db.metadata.tables['user_upload']
+    __tablename__ = 'user_upload'
 
     __bucket_name = None
 

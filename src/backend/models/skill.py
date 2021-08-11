@@ -6,11 +6,11 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
-from .db import db, ModelBase
+from .db import ModelBase
 
 
 class Skill(ModelBase):
-    __table__ = db.metadata.tables['skill']
+    __tablename__ = 'skill'
     # TODO: (sunil) Remove internal_name, instead put a functional index on name, like location table
 
     DEFAULT_SEARCH_RESULTS_LIMIT = 20

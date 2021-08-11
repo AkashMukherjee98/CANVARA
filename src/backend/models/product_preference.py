@@ -2,11 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import StatementError
 
 from backend.common.exceptions import InvalidArgumentError
-from .db import db, ModelBase
+from .db import ModelBase
 
 
 class ProductPreference(ModelBase):
-    __table__ = db.metadata.tables['product_preference']
+    __tablename__ = 'product_preference'
 
     @classmethod
     def lookup_multiple(cls, tx, ids, must_exist=True):

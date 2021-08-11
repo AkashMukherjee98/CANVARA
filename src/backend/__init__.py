@@ -144,6 +144,9 @@ def create_app():  # pylint: disable=too-many-locals
     for exception_type, exception_handler in APP_ERROR_HANDLERS.items():
         app.register_error_handler(exception_type, exception_handler)
 
+    from backend.models.db import CanvaraDB  # pylint: disable=import-outside-toplevel
+    CanvaraDB.init_db()
+
     # pylint: disable=import-outside-toplevel
     from backend.views.banner import BannerAPI
     from backend.views.skill import SkillAPI

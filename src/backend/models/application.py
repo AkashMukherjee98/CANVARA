@@ -4,14 +4,14 @@ import itertools
 from sqlalchemy.orm import joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
-from .db import db, ModelBase
+from .db import ModelBase
 from .post import Post
 from .user import User
 from .user_upload import UserUpload
 
 
 class Application(ModelBase):
-    __table__ = db.metadata.tables['application']
+    __tablename__ = 'application'
 
     applicant = relationship("User", back_populates="applications")
     post = relationship("Post", back_populates="applications")

@@ -1,9 +1,9 @@
 from backend.common.exceptions import DoesNotExistError
-from .db import db, ModelBase
+from .db import ModelBase
 
 
 class PostType(ModelBase):
-    __table__ = db.metadata.tables['post_type']
+    __tablename__ = 'post_type'
 
     @classmethod
     def lookup(cls, tx, post_type_id, must_exist=True):

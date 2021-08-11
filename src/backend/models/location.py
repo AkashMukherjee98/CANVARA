@@ -1,11 +1,11 @@
 from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError
-from .db import db, ModelBase
+from .db import ModelBase
 
 
 class Location(ModelBase):
-    __table__ = db.metadata.tables['location']
+    __tablename__ = 'location'
 
     customer = relationship('Customer', back_populates='locations')
 

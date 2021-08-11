@@ -4,7 +4,7 @@ import enum
 from sqlalchemy.orm import backref, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
-from .db import db, ModelBase
+from .db import ModelBase
 from .language import Language
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user_upload import UserUpload
@@ -16,29 +16,29 @@ class SkillType(enum.Enum):
 
 
 class UserCurrentSkill(ModelBase, SkillWithLevelMixin):
-    __table__ = db.metadata.tables['user_current_skill']
+    __tablename__ = 'user_current_skill'
 
 
 class UserDesiredSkill(ModelBase, SkillWithoutLevelMixin):
-    __table__ = db.metadata.tables['user_desired_skill']
+    __tablename__ = 'user_desired_skill'
 
 
 class User(ModelBase):
     # Note: 'user' is a reserved keyword in PostgreSQL so we use 'canvara_user' instead
-    __table__ = db.metadata.tables['canvara_user']
+    __tablename__ = 'canvara_user'
 
     profile = None
     customer = relationship("Customer", back_populates="users")
     posts = relationship("Post", back_populates="owner")
     applications = relationship("Application", back_populates="applicant")
-    product_preferences = relationship("ProductPreference", secondary=db.metadata.tables['user_product_preference'])
+    product_preferences = relationship("ProductPreference", secondary='user_product_preference')
     current_skills = relationship("UserCurrentSkill")
     desired_skills = relationship("UserDesiredSkill")
     post_bookmarks = relationship("UserPostBookmark", back_populates="user")
     post_likes = relationship("UserPostLike", back_populates="user")
     profile_picture = relationship(UserUpload)
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
-    fun_facts = relationship("UserUpload", secondary=db.metadata.tables['user_fun_fact'])
+    fun_facts = relationship("UserUpload", secondary='user_fun_fact')
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50

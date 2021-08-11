@@ -6,7 +6,7 @@ from sqlalchemy import and_, nullslast, or_
 from sqlalchemy.orm import contains_eager, joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
-from .db import db, ModelBase
+from .db import ModelBase
 from .location import Location
 from .match import UserPostMatch
 from .post_type import PostType
@@ -70,7 +70,7 @@ class PostSkillType(Enum):
 
 
 class PostSkill(ModelBase, SkillWithLevelMixin):
-    __table__ = db.metadata.tables['post_skill']
+    __tablename__ = 'post_skill'
 
     @classmethod
     def create_desired_skill(cls, level, skill):
@@ -82,7 +82,7 @@ class PostSkill(ModelBase, SkillWithLevelMixin):
 
 
 class Post(ModelBase):
-    __table__ = db.metadata.tables['post']
+    __tablename__ = 'post'
 
     owner = relationship("User", back_populates="posts")
     applications = relationship("Application", back_populates="post")
@@ -342,7 +342,7 @@ class Post(ModelBase):
 
 
 class UserPostBookmark(ModelBase):  # pylint: disable=too-few-public-methods
-    __table__ = db.metadata.tables['user_post_bookmark']
+    __tablename__ = 'user_post_bookmark'
 
     user = relationship("User", back_populates="post_bookmarks")
     post = relationship("Post", back_populates="bookmark_users")
@@ -356,7 +356,7 @@ class UserPostBookmark(ModelBase):  # pylint: disable=too-few-public-methods
 
 
 class UserPostLike(ModelBase):  # pylint: disable=too-few-public-methods
-    __table__ = db.metadata.tables['user_post_like']
+    __tablename__ = 'user_post_like'
 
     user = relationship("User", back_populates="post_likes")
     post = relationship("Post", back_populates="like_users")

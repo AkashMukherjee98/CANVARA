@@ -1,11 +1,11 @@
 from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError
-from .db import db, ModelBase
+from .db import ModelBase
 
 
 class UserPostMatch(ModelBase):
-    __table__ = db.metadata.tables['user_post_match']
+    __tablename__ = 'user_post_match'
 
     user = relationship("User")
     post = relationship("Post", back_populates="user_matches")

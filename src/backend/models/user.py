@@ -195,6 +195,7 @@ class User(ModelBase):
         add_if_not_none('hidden_secrets', self.profile.get('hidden_secrets'))
         add_if_not_none('career_goals', self.profile.get('career_goals'))
         add_if_not_none('languages', self.profile.get('languages'))
+        add_if_not_none('allow_demo_mode', self.profile.get('allow_demo_mode'))
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()

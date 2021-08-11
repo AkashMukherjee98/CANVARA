@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.4.1
+  version: 0.4.2
 servers: []
 tags:
   - name: applications
@@ -1423,6 +1423,8 @@ components:
           type: array
           items:
             type: string
+        allow_demo_mode:
+          type: boolean
       required:
         - customer_id
         - user_id

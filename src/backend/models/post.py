@@ -10,7 +10,7 @@ from .db import db, ModelBase
 from .location import Location
 from .match import UserPostMatch
 from .post_type import PostType
-from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
+from .skill import SkillWithLevelMixin
 from .user import User
 from .user_upload import UserUpload
 
@@ -69,12 +69,16 @@ class PostSkillType(Enum):
     DESIRED_SKILL = 'desired_skills'
 
 
-class PostRequiredSkill(ModelBase, SkillWithLevelMixin):
-    __table__ = db.metadata.tables['post_required_skill']
+class PostSkill(ModelBase, SkillWithLevelMixin):
+    __table__ = db.metadata.tables['post_skill']
 
+    @classmethod
+    def create_desired_skill(cls, level, skill):
+        return cls(level=level, skill=skill, is_required=False)
 
-class PostDesiredSkill(ModelBase, SkillWithoutLevelMixin):
-    __table__ = db.metadata.tables['post_desired_skill']
+    @classmethod
+    def create_required_skill(cls, level, skill):
+        return cls(level=level, skill=skill, is_required=True)
 
 
 class Post(ModelBase):
@@ -84,8 +88,9 @@ class Post(ModelBase):
     applications = relationship("Application", back_populates="post")
     post_type = relationship(PostType)
     location = relationship(Location)
-    required_skills = relationship("PostRequiredSkill")
-    desired_skills = relationship("PostDesiredSkill")
+
+    required_skills = relationship("PostSkill", primaryjoin='and_(Post.id == PostSkill.post_id, PostSkill.is_required)')
+    desired_skills = relationship("PostSkill", primaryjoin='and_(Post.id == PostSkill.post_id, not_(PostSkill.is_required))')
     user_matches = relationship("UserPostMatch", back_populates="post")
     description_video = relationship(UserUpload)
     bookmark_users = relationship("UserPostBookmark", back_populates="post")
@@ -245,10 +250,7 @@ class Post(ModelBase):
                 raise InvalidArgumentError(f"Multiple entries found for {skill_type.value} '{skill['name']}'.")
             skill_names_seen.add(name)
 
-            if skill_type == PostSkillType.DESIRED_SKILL:
-                # Ignore level even if it's specified
-                continue
-            PostRequiredSkill.validate_skill_level(skill['name'], skill.get('level'))
+            PostSkill.validate_skill_level(skill['name'], skill.get('level'))
         return skills
 
     @classmethod
@@ -261,11 +263,13 @@ class Post(ModelBase):
 
     def set_required_skills(self, tx, skills):
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
-        PostRequiredSkill.update_skills(tx, self.owner.customer_id, self.required_skills, skills)
+        PostSkill.update_skills(
+            tx, self.owner.customer_id, self.required_skills, skills, factory=PostSkill.create_required_skill)
 
     def set_desired_skills(self, tx, skills):
         # TODO: (sunil) Need to lock the user here so no other thread can make updates
-        PostDesiredSkill.update_skills(tx, self.owner.customer_id, self.desired_skills, skills)
+        PostSkill.update_skills(
+            tx, self.owner.customer_id, self.desired_skills, skills, factory=PostSkill.create_desired_skill)
 
     def match_user_skills(self, user):
         matched_skills = []

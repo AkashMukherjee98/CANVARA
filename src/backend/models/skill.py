@@ -123,12 +123,17 @@ class SkillWithoutLevelMixin:
         return self.skill.as_dict()
 
     @classmethod
-    def update_skills(cls, tx, customer_id, existing_skills, skills):
+    def update_skills(cls, tx, customer_id, existing_skills, skills, factory=None):  # pylint: disable=too-many-arguments
+        # Caller can specify a factory method to create the table row
+        # If it's not specified, just use the class constructor
+        if factory is None:
+            factory = cls
+
         selected_skills = []
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
             skill = Skill.lookup_or_add(tx, customer_id, skill_id=skill_data.get('skill_id'), name=skill_data.get('name'))
-            selected_skills.append(cls(skill=skill))
+            selected_skills.append(factory(skill=skill))
 
         existing_skill_ids = [skill.id for skill in existing_skills]
         selected_skill_ids = [skill.id for skill in selected_skills]
@@ -171,12 +176,17 @@ class SkillWithLevelMixin(SkillWithoutLevelMixin):
                 f"Skill levels must be between {cls.MIN_SKILL_LEVEL} and {cls.MAX_SKILL_LEVEL}.")
 
     @classmethod
-    def update_skills(cls, tx, customer_id, existing_skills, skills):
+    def update_skills(cls, tx, customer_id, existing_skills, skills, factory=None):  # pylint: disable=too-many-arguments
+        # Caller can specify a factory method to create the table row
+        # If it's not specified, just use the class constructor
+        if factory is None:
+            factory = cls
+
         selected_skills = []
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
             skill = Skill.lookup_or_add(tx, customer_id, skill_id=skill_data.get('skill_id'), name=skill_data.get('name'))
-            selected_skills.append(cls(level=skill_data['level'], skill=skill))
+            selected_skills.append(factory(level=skill_data['level'], skill=skill))
 
         existing_skill_ids = [skill.id for skill in existing_skills]
         selected_skill_ids = [skill.id for skill in selected_skills]

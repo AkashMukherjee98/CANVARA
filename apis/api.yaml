@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.4.0
+  version: 0.4.1
 servers: []
 tags:
   - name: applications
@@ -289,7 +289,7 @@ paths:
                   type: array
                   description: Nice-to-have skills for this post.
                   items:
-                    $ref: '#/components/schemas/Skill'
+                    $ref: '#/components/schemas/SkillWithLevel'
                 candidate_description:
                   type: string
                   description: Description of an ideal candidate for this post.
@@ -388,7 +388,7 @@ paths:
                   type: array
                   description: Nice-to-have skills for this post.
                   items:
-                    $ref: '#/components/schemas/Skill'
+                    $ref: '#/components/schemas/SkillWithLevel'
                 candidate_description:
                   type: string
                   description: Description of an ideal candidate for this post.
@@ -1504,7 +1504,7 @@ components:
           type: array
           description: Nice-to-have skills for this post.
           items:
-            $ref: '#/components/schemas/Skill'
+            $ref: '#/components/schemas/SkillWithLevel'
         candidate_description:
           type: string
           description: Description of an ideal candidate for this post.

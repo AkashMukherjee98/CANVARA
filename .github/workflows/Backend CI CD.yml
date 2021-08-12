@@ -185,4 +185,4 @@ jobs:
         uses: docker://technosophos/slack-notify
         env: 
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: Frontend Deploy Success!!
+          SLACK_MESSAGE: Backend Deploy Failed!!

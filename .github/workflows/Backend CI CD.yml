@@ -167,3 +167,16 @@ jobs:
           export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
           export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
           pytest
+      
+      - name: slack message notification
+        uses: docker://technosophos/slack-notify
+        env: 
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Stage Deploy Successful!!
+          
+      - name: slack message notification on failure
+        if: failure
+        uses: docker://technosophos/slack-notify
+        env: 
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Frontend Deploy Success!!

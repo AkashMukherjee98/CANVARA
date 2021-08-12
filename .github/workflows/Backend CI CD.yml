@@ -175,7 +175,7 @@ jobs:
           SLACK_MESSAGE: Backend Stage Deploy Successful!!
           
       - name: slack message notification on failure
-        if: failure
+        if: failure()
         uses: docker://technosophos/slack-notify
         env: 
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

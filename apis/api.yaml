@@ -1,12 +1,13 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.4.3
+  version: 0.5.0
 servers: []
 tags:
   - name: applications
   - name: customers
   - name: matches
+  - name: notifications
   - name: onboarding
   - name: posts
   - name: users
@@ -1349,6 +1350,78 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       tags:
         - matches
+  /notifications:
+    get:
+      summary: List all notifications for the user
+      tags:
+        - notifications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+      operationId: list_notifications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: integer
+            default: 20
+          in: query
+          name: limit
+          description: Maximum number of notifications to return.
+        - schema:
+            type: integer
+          in: query
+          name: start
+          description: Start index from where to return the notifications.
+  '/notifications/{notification_id}':
+    parameters:
+      - schema:
+          type: string
+        name: notification_id
+        in: path
+        required: true
+        description: Unique identifier of the notification.
+    put:
+      summary: Update status of a notification
+      tags:
+        - notifications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+      operationId: update_notification
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - read
+                    - unread
+    delete:
+      summary: Delete a notification
+      tags:
+        - notifications
+      responses:
+        '204':
+          description: No Content
+      operationId: delete_notification
+      security:
+        - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
     Customer:
@@ -1715,6 +1788,39 @@ components:
       required:
         - url
         - content_type
+    Notification:
+      title: Notification
+      type: object
+      properties:
+        notification_id:
+          type: string
+          description: Unique identifier of this notification.
+        type:
+          type: string
+          description: Type of notification.
+          enum:
+            - accepted
+            - rejected
+            - new_application
+            - new_match
+        data:
+          type: object
+          description: Data to display in the notification.
+        created_at:
+          type: string
+          description: 'UTC date and time when this notification was created, in ISO 8601 format.'
+        status:
+          type: string
+          description: Unread status of the notification.
+          enum:
+            - read
+            - unread
+      required:
+        - notification_id
+        - type
+        - data
+        - created_at
+        - status
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

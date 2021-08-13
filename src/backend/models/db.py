@@ -22,16 +22,17 @@ class CanvaraDB:
     @classmethod
     def init_db(cls):  # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import, import-outside-toplevel, unused-import
-        from .application import Application  # noqa: F401
-        from .customer import Customer        # noqa: F401
-        from .location import Location        # noqa: F401
-        from .match import UserPostMatch      # noqa: F401
+        from .application import Application    # noqa: F401
+        from .customer import Customer          # noqa: F401
+        from .location import Location          # noqa: F401
+        from .match import UserPostMatch        # noqa: F401
+        from .notification import Notification  # noqa: F401
         from .post import Post, PostSkill, UserPostBookmark, UserPostLike  # noqa: F401
-        from .post_type import PostType       # noqa: F401
+        from .post_type import PostType         # noqa: F401
         from .product_preference import ProductPreference           # noqa: F401
-        from .skill import Skill              # noqa: F401
+        from .skill import Skill                # noqa: F401
         from .user import User, UserCurrentSkill, UserDesiredSkill  # noqa: F401
-        from .user_upload import UserUpload   # noqa: F401
+        from .user_upload import UserUpload     # noqa: F401
         # pylint: enable=cyclic-import, import-outside-toplevel, unused-import
 
         engine = cls.get_engine()

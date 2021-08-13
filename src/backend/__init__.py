@@ -52,6 +52,15 @@ def register_match_apis(app):
     app.add_url_rule('/matches/<match_id>', view_func=match_view, methods=['GET', 'PUT', 'DELETE'])
 
 
+def register_notification_apis(app):
+    # pylint: disable=import-outside-toplevel
+    from backend.views.notification import NotificationAPI, NotificationByIdAPI
+    # pylint: enable=import-outside-toplevel
+
+    register_api(app, NotificationAPI, 'notification_api', '/notifications', ['GET', ])
+    register_api(app, NotificationByIdAPI, 'notification_by_id_api', '/notifications/<notification_id>', ['PUT', 'DELETE'])
+
+
 def register_onboarding_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.onboarding import (
@@ -156,6 +165,7 @@ def create_app():  # pylint: disable=too-many-locals
     register_customer_apis(app)
     register_onboarding_apis(app)
     register_match_apis(app)
+    register_notification_apis(app)
     register_post_apis(app)
     register_user_apis(app)
 

@@ -1,4 +1,6 @@
+from datetime import datetime
 import enum
+import uuid
 
 from sqlalchemy import and_
 from sqlalchemy.orm import relationship
@@ -66,6 +68,24 @@ class Notification(ModelBase):
             cls.user_id == user_id,
             cls.status != NotificationStatus.DELETED.value
         )).order_by(Notification.created_at.desc()).offset(start).limit(limit).all()
+
+    @classmethod
+    def create_new_application_notification(cls, application):
+        return Notification(
+            id=str(uuid.uuid4()),
+            user=application.post.owner,
+            type=NotificationType.NEW_APPLICATION.value,
+            data={
+                'post_id': application.post_id,
+                'application_id': application.id,
+                'user': {
+                    'user_id': application.applicant.id,
+                    'name': application.applicant.name,
+                }
+            },
+            created_at=datetime.utcnow(),
+            status=NotificationStatus.UNREAD.value
+        )
 
     def as_dict(self):
         return {

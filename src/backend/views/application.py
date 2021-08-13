@@ -8,6 +8,7 @@ from flask_cognito import current_cognito_jwt
 from backend.common.exceptions import NotAllowedError
 from backend.models.application import Application
 from backend.models.db import transaction
+from backend.models.notification import Notification
 from backend.models.post import Post
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -42,14 +43,17 @@ class PostApplicationAPI(AuthenticatedAPIBase):
             now = datetime.utcnow()
             application = Application(
                 id=application_id,
-                post_id=post.id,
-                user_id=applicant.id,
+                post=post,
+                applicant=applicant,
                 created_at=now,
                 last_updated_at=now,
                 details=details,
                 status=Application.Status.NEW.value
             )
             tx.add(application)
+
+            # Generate a notification for the post owner
+            tx.add(Notification.create_new_application_notification(application))
             return application.as_dict()
 
 

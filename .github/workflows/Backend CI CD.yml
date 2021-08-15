@@ -21,6 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: slack message notification for the start of the job
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend workflow triggered by "${{ github.event.commits[0].committer.name }}" for the changes "${{ github.event.commits[0].message }}" commit_url "${{ github.event.commits[0].url }}"
+      
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
@@ -53,6 +59,14 @@ jobs:
       - name: Unit Test with pytest
         run: |
           pytest
+          
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env: 
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed at "checkout" job    
+      
   build:
     needs: checkout
     runs-on: ubuntu-latest
@@ -91,6 +105,13 @@ jobs:
           echo VERSION=$VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+          
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env: 
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed at "build" job
 
   deploy:
     needs: build
@@ -131,6 +152,12 @@ jobs:
           if [ !$new_container_id ]; then
           sleep 5
           fi
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env: 
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed at "deploy" job
 
   integration_test:
     needs: deploy

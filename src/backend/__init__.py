@@ -42,6 +42,14 @@ def register_customer_apis(app):
     app.add_url_rule('/customers/<customer_id>', view_func=customer_view, methods=['GET', 'PUT', 'DELETE'])
 
 
+def register_feedback_apis(app):
+    # pylint: disable=import-outside-toplevel
+    from backend.views.feedback import FeedbackAPI
+    # pylint: enable=import-outside-toplevel
+
+    register_api(app, FeedbackAPI, 'feedback_api', '/posts/<post_id>/feedback', ['GET', 'POST'])
+
+
 def register_match_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.match import MatchAPI
@@ -163,6 +171,7 @@ def create_app():  # pylint: disable=too-many-locals
 
     register_application_apis(app)
     register_customer_apis(app)
+    register_feedback_apis(app)
     register_onboarding_apis(app)
     register_match_apis(app)
     register_notification_apis(app)

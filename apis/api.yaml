@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.5.0
+  version: 0.6.0
 servers: []
 tags:
   - name: applications
@@ -580,6 +580,55 @@ paths:
         - posts
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/post/{post_id}/feedback':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    get:
+      summary: List all feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feedback'
+      operationId: list_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: create_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
   /applications:
     get:
       summary: List all applications
@@ -1495,6 +1544,10 @@ components:
           type: array
           items:
             type: string
+        feedback:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feedback'
         allow_demo_mode:
           type: boolean
         onboarding_complete:
@@ -1821,6 +1874,41 @@ components:
         - data
         - created_at
         - status
+    Feedback:
+      title: Feedback
+      type: object
+      properties:
+        feedback_id:
+          type: string
+        post_id:
+          type: string
+        author:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        performer:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        post_owner:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        comments:
+          type: string
+        concerns:
+          type: string
+        additional_comments:
+          type: string
   securitySchemes:
     AWSCognitoCanvaraPrototype:
       type: http

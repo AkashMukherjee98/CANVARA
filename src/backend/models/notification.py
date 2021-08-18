@@ -2,7 +2,7 @@ from datetime import datetime
 import enum
 import uuid
 
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -68,6 +68,13 @@ class Notification(ModelBase):
             cls.user_id == user_id,
             cls.status != NotificationStatus.DELETED.value
         )).order_by(Notification.created_at.desc()).offset(start).limit(limit).all()
+
+    @classmethod
+    def get_unread_count(cls, tx, user_id):
+        return tx.query(func.count(cls.id)).where(and_(
+            cls.user_id == user_id,
+            cls.status == NotificationStatus.UNREAD.value
+        )).scalar()
 
     @classmethod
     def create_new_application_notification(cls, application):

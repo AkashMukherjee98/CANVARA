@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import request
 from flask_cognito import current_cognito_jwt
 
 from backend.common.exceptions import NotAllowedError
@@ -18,7 +18,10 @@ class NotificationAPI(AuthenticatedAPIBase):
         user_id = current_cognito_jwt['sub']
         with transaction() as tx:
             notifications = Notification.lookup_multiple(tx, user_id, start=start, limit=limit)
-            return jsonify([notification.as_dict() for notification in notifications])
+            return {
+                'notifications': [notification.as_dict() for notification in notifications],
+                'total_unread': Notification.get_unread_count(tx, user_id),
+            }
 
 
 class NotificationByIdAPI(AuthenticatedAPIBase):

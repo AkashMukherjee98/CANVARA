@@ -580,7 +580,7 @@ paths:
         - posts
       security:
         - AWSCognitoCanvaraPrototype: []
-  '/post/{post_id}/feedback':
+  '/posts/{post_id}/feedback':
     parameters:
       - schema:
           type: string
@@ -623,6 +623,9 @@ paths:
             schema:
               type: object
               properties:
+                performer_id:
+                  type: string
+                  description: Unique identifier of the performer who this feedback is for.
                 comments:
                   type: string
                 concerns:

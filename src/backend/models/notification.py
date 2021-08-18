@@ -17,7 +17,7 @@ class NotificationStatus(enum.Enum):
     @classmethod
     def lookup(cls, status):
         try:
-            return cls(status).value
+            return cls(status)
         except ValueError as ex:
             raise InvalidArgumentError(f"Invalid notification status: {status}") from ex
 
@@ -31,7 +31,7 @@ class NotificationType(enum.Enum):
     @classmethod
     def lookup(cls, notification_type):
         try:
-            return cls(notification_type).value
+            return cls(notification_type)
         except ValueError as ex:
             raise InvalidArgumentError(f"Invalid notification type: {notification_type}") from ex
 

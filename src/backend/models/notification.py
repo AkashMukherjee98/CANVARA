@@ -76,7 +76,10 @@ class Notification(ModelBase):
             user=application.post.owner,
             type=NotificationType.NEW_APPLICATION.value,
             data={
-                'post_id': application.post_id,
+                'post': {
+                    'post_id': application.post.id,
+                    'name': application.post.name,
+                },
                 'application_id': application.id,
                 'user': {
                     'user_id': application.applicant.id,

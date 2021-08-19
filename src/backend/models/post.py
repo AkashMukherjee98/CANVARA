@@ -16,13 +16,13 @@ from .user_upload import UserUpload
 
 
 class PostFilter(Enum):
-    # Most relevant posts for the user
+    # Most relevant active posts for the user
     RECOMMENDED = 'recommended'
 
-    # Latest posts recommended for the user
+    # Latest active posts recommended for the user
     LATEST = 'latest'
 
-    # Active posts owned by the user,
+    # Active and deactivated posts owned by the user,
     # sorted by status and creation time with drafts on top
     MY_POSTS = 'myposts'
 
@@ -123,18 +123,23 @@ class Post(ModelBase):
             ))
 
         elif post_filter == PostFilter.LATEST:
-            posts = posts.where(Post.owner_id != user.id).\
-                order_by(Post.created_at.desc())
+            posts = posts.where(and_(
+                Post.owner_id != user.id,
+                Post.status == PostStatus.ACTIVE.value,
+            )).order_by(Post.created_at.desc())
 
         elif post_filter == PostFilter.MY_POSTS:
-            # TODO: (sunil) add check for status
+            # My posts includes both active and deactivated posts
+            # This is to allow the user to re-activate one of their posts
             # TODO: (sunil) add support for drafts
             posts = posts.where(Post.owner_id == user.id).\
                 order_by(Post.created_at.desc())
 
         elif post_filter == PostFilter.RECOMMENDED:
-            posts = posts.where(Post.owner_id != user.id).\
-                order_by(nullslast(UserPostMatch.confidence_level.desc()))
+            posts = posts.where(and_(
+                Post.owner_id != user.id,
+                Post.status == PostStatus.ACTIVE.value,
+            )).order_by(nullslast(UserPostMatch.confidence_level.desc()))
 
         elif post_filter == PostFilter.BOOKMARKED:
             posts = posts.join(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\

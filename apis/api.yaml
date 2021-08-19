@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.6.1
+  version: 0.6.2
 servers: []
 tags:
   - name: applications
@@ -524,6 +524,16 @@ paths:
                     - uploaded
               required:
                 - status
+    delete:
+      summary: Delete a post video
+      operationId: delete_post_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
   '/posts/{post_id}/like':
     parameters:
       - schema:

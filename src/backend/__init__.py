@@ -102,7 +102,7 @@ def register_post_apis(app):
     app.add_url_rule('/posts/<post_id>/video', view_func=post_video_view, methods=['PUT'])
 
     post_video_by_id_view = PostVideoByIdAPI.as_view('post_video_by_id_api')
-    app.add_url_rule('/posts/<post_id>/video/<upload_id>', view_func=post_video_by_id_view, methods=['PUT'])
+    app.add_url_rule('/posts/<post_id>/video/<upload_id>', view_func=post_video_by_id_view, methods=['PUT', 'DELETE'])
 
     post_bookmark_view = PostBookmarkAPI.as_view('post_bookmark_api')
     app.add_url_rule('/posts/<post_id>/bookmark', view_func=post_bookmark_view, methods=['PUT', 'DELETE'])

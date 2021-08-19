@@ -213,6 +213,20 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
             'status': user_upload.status,
         }
 
+    @staticmethod
+    def delete(post_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            post = Post.lookup(tx, post_id)
+
+            # For now, only the post owner is allowed to delete the post video
+            if post.owner_id != user.id:
+                raise NotAllowedError(f"User '{user.id}' is not the post owner")
+            post.description_video = None
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
 
 class PostBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod

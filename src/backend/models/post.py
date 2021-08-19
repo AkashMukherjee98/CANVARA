@@ -61,7 +61,8 @@ class PostStatus(Enum):
     # Post has expired and is not available for new applications
     EXPIRED = 'expired'
 
-    # TODO: (sunil) Add more statuses
+    # Post has been deleted and can no longer be accessed by any user
+    DELETED = 'deleted'
 
 
 class PostSkillType(Enum):
@@ -105,7 +106,10 @@ class Post(ModelBase):
 
     @classmethod
     def lookup(cls, tx, post_id, must_exist=True):
-        post = tx.get(cls, post_id)
+        post = tx.query(cls).where(and_(
+            cls.id == post_id,
+            cls.status != PostStatus.DELETED.value,
+        )).one_or_none()
         if post is None and must_exist:
             raise DoesNotExistError(f"Post '{post_id}' does not exist")
         return post
@@ -154,7 +158,11 @@ class Post(ModelBase):
         if post_filter is None:
             post_filter = cls.DEFAULT_FILTER
 
-        posts = tx.query(cls).join(Post.owner).where(User.customer_id == user.customer_id)
+        # Get all non-deleted posts within this customer account
+        posts = tx.query(cls).join(Post.owner).where(and_(
+            User.customer_id == user.customer_id,
+            cls.status != PostStatus.DELETED.value,
+        ))
 
         if owner_id is not None:
             posts = posts.where(Post.owner_id == owner_id)

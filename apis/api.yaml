@@ -399,8 +399,8 @@ paths:
         - posts
       operationId: delete_post
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
       security:
         - AWSCognitoCanvaraPrototype: []
   '/posts/{post_id}/applications':

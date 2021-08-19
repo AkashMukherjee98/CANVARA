@@ -10,7 +10,7 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.location import Location
-from backend.models.post import Post, PostFilter, UserPostBookmark, UserPostLike
+from backend.models.post import Post, PostFilter, PostStatus, UserPostBookmark, UserPostLike
 from backend.models.post_type import PostType
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -174,17 +174,13 @@ class PostAPI(AuthenticatedAPIBase):
     def delete(post_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            post = Post.lookup(tx, post_id, must_exist=False)
-
-            if post is None:
-                # Noop if the post does not exist
-                return {}
+            post = Post.lookup(tx, post_id)
 
             # For now, only the post owner is allowed to delete the post
             if post.owner_id != user.id:
                 raise NotAllowedError(f"User '{user.id}' is not the post owner")
-            tx.delete(post)
-        return {}
+            post.status = PostStatus.DELETED.value
+        return make_no_content_response()
 
 
 class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):

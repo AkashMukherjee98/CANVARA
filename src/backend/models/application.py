@@ -1,6 +1,7 @@
 from enum import Enum
 import itertools
 
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -25,6 +26,7 @@ class Application(ModelBase):
         REJECTED = 'rejected'
         SHORTLISTED = 'shortlisted'
         SELECTED = 'selected'
+        DELETED = 'deleted'
 
     @classmethod
     def lookup(cls, tx, application_id, must_exist=True):
@@ -32,14 +34,18 @@ class Application(ModelBase):
         query_options = [
             joinedload(Application.description_video)
         ]
-        application = tx.get(cls, application_id, options=query_options)
+
+        application = tx.query(cls).where(and_(
+            cls.id == application_id,
+            cls.status != Application.Status.DELETED.value,
+        )).options(query_options).one_or_none()
         if application is None and must_exist:
             raise DoesNotExistError(f"Application '{application_id}' does not exist")
         return application
 
     @classmethod
     def lookup_multiple(cls, tx, post_id=None, applicant_id=None):
-        applications = tx.query(cls)
+        applications = tx.query(cls).where(cls.status != Application.Status.DELETED.value)
         if post_id is not None:
             applications = applications.join(Application.post).where(Post.id == post_id)
         elif applicant_id is not None:

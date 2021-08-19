@@ -6,6 +6,7 @@ from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 
 from backend.common.exceptions import NotAllowedError
+from backend.common.http import make_no_content_response
 from backend.models.application import Application
 from backend.models.db import transaction
 from backend.models.notification import Notification
@@ -102,17 +103,13 @@ class ApplicationAPI(AuthenticatedAPIBase):
     def delete(application_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            application = Application.lookup(tx, application_id, must_exist=False)
-
-            if application is None:
-                # Noop if the application does not exist
-                return {}
+            application = Application.lookup(tx, application_id)
 
             # For now, only the applicant is allowed to delete the application
             if application.applicant.id != user.id:
                 raise NotAllowedError(f"User '{user.id}' is not the applicant")
-            tx.delete(application)
-        return {}
+            application.status = Application.Status.DELETED.value
+        return make_no_content_response()
 
 
 class ApplicationVideoAPI(AuthenticatedAPIBase, UserUploadMixin):

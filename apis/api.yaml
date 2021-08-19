@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.6.2
+  version: 0.6.3
 servers: []
 tags:
   - name: applications
@@ -706,8 +706,8 @@ paths:
       summary: Delete an application
       operationId: delete_application
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
       security:
         - AWSCognitoCanvaraPrototype: []
       tags:

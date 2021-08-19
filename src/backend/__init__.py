@@ -28,7 +28,7 @@ def register_application_apis(app):
     app.add_url_rule(
         '/applications/<application_id>/video/<upload_id>',
         view_func=application_video_by_id_view,
-        methods=['PUT']
+        methods=['PUT', 'DELETE']
     )
 
 

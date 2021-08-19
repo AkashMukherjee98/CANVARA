@@ -141,3 +141,17 @@ class ApplicationVideoByIdAPI(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+
+    @staticmethod
+    def delete(application_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            application = Application.lookup(tx, application_id)
+
+            # For now, only the applicant is allowed to delete the application video
+            if application.applicant.id != user.id:
+                raise NotAllowedError(f"User '{user.id}' is not the applicant")
+            application.description_video = None
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()

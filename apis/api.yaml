@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.6.4
+  version: 0.6.5
 servers: []
 tags:
   - name: applications
@@ -420,6 +420,18 @@ paths:
       operationId: list_applications_by_post
       security:
         - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - shortlisted
+              - selected
+              - passed
+            default: all
+          in: query
+          name: filter
+          description: Filter for the results.
     post:
       summary: Add a new application for a post
       operationId: create_application

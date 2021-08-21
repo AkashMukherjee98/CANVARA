@@ -7,7 +7,7 @@ from flask_cognito import current_cognito_jwt
 
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
-from backend.models.application import Application
+from backend.models.application import Application, ApplicationFilter, ApplicationStatus
 from backend.models.db import transaction
 from backend.models.notification import Notification
 from backend.models.post import Post
@@ -20,8 +20,10 @@ from backend.views.base import AuthenticatedAPIBase
 class PostApplicationAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id):
+        application_filter = ApplicationFilter.lookup(request.args.get('filter'))
+
         with transaction() as tx:
-            return jsonify(Application.lookup_multiple(tx, post_id=post_id))
+            return jsonify(Application.lookup_by_post(tx, post_id, application_filter=application_filter))
 
     @staticmethod
     def post(post_id):
@@ -49,7 +51,7 @@ class PostApplicationAPI(AuthenticatedAPIBase):
                 created_at=now,
                 last_updated_at=now,
                 details=details,
-                status=Application.Status.NEW.value
+                status=ApplicationStatus.NEW.value
             )
             tx.add(application)
 
@@ -62,7 +64,7 @@ class ApplicationAPI(AuthenticatedAPIBase):
     @staticmethod
     def __list_applications():
         with transaction() as tx:
-            return jsonify(Application.lookup_multiple(tx, applicant_id=current_cognito_jwt['sub']))
+            return jsonify(Application.lookup_by_user(tx, current_cognito_jwt['sub']))
 
     @staticmethod
     def __get_application(application_id):
@@ -94,8 +96,7 @@ class ApplicationAPI(AuthenticatedAPIBase):
 
             # TODO: (sunil) enforce correct state transitions
             if 'status' in payload:
-                Application.validate_status(payload['status'])
-                application.status = payload['status']
+                application.status = ApplicationStatus.lookup(payload['status']).value
             application.last_updated_at = datetime.utcnow()
             return application.as_dict()
 
@@ -108,7 +109,7 @@ class ApplicationAPI(AuthenticatedAPIBase):
             # For now, only the applicant is allowed to delete the application
             if application.applicant.id != user.id:
                 raise NotAllowedError(f"User '{user.id}' is not the applicant")
-            application.status = Application.Status.DELETED.value
+            application.status = ApplicationStatus.DELETED.value
         return make_no_content_response()
 
 

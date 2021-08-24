@@ -125,7 +125,9 @@ class Application(ModelBase):
         }
 
         if self.description_video:
+            # TODO: (sunil) remove this once Frontend has been updated
             application['video_url'] = self.description_video.generate_get_url()
+            application['description_video'] = self.description_video.as_dict(method='get')
 
         if self.post and (self.post.required_skills or self.post.desired_skills):
             application['matched_skills'] = []

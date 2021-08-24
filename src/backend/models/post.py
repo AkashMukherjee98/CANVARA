@@ -323,7 +323,9 @@ class Post(ModelBase):
             post['candidate_description'] = self.candidate_description
 
         if self.description_video:
+            # TODO: (sunil) remove this once Frontend has been updated
             post['video_url'] = self.description_video.generate_get_url()
+            post['description_video'] = self.description_video.as_dict(method='get')
 
         # TODO: (sunil) See if this can be done at lookup time
         if user is not None:

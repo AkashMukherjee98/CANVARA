@@ -102,7 +102,7 @@ class Post(ModelBase):
 
     DEFAULT_FILTER = PostFilter.RECOMMENDED
 
-    MAX_SKILLS = 5
+    MAX_SKILLS = 20
 
     @classmethod
     def lookup(cls, tx, post_id, must_exist=True):

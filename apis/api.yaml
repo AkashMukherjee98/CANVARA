@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.6.6
+  version: 0.6.7
 servers: []
 tags:
   - name: applications
@@ -712,6 +712,12 @@ paths:
               properties:
                 description:
                   type: string
+                status:
+                  type: string
+                  enum:
+                    - shortlisted
+                    - selected
+                    - passed
       tags:
         - applications
     delete:

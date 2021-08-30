@@ -44,10 +44,17 @@ def register_customer_apis(app):
 
 def register_feedback_apis(app):
     # pylint: disable=import-outside-toplevel
-    from backend.views.feedback import FeedbackAPI
+    from backend.views.feedback import PerformerFeedbackAPI, PosterFeedbackAPI
     # pylint: enable=import-outside-toplevel
 
-    register_api(app, FeedbackAPI, 'feedback_api', '/posts/<post_id>/feedback', ['GET', 'POST'])
+    register_api(
+        app,
+        PerformerFeedbackAPI,
+        'performer_feedback_api',
+        '/posts/<post_id>/performers/<performer_id>/feedback',
+        ['GET', 'POST']
+    )
+    register_api(app, PosterFeedbackAPI, 'post_feedback_api', '/posts/<post_id>/feedback', ['GET', 'POST'])
 
 
 def register_match_apis(app):
@@ -86,6 +93,20 @@ def register_onboarding_apis(app):
         'onboarding_profile_picture_by_id_api',
         '/onboarding/profile_picture/<upload_id>',
         ['PUT', ])
+
+
+def register_performer_apis(app):
+    # pylint: disable=import-outside-toplevel
+    from backend.views.performer import PerformerAPI, PerformerByIdAPI
+    # pylint: enable=import-outside-toplevel
+
+    register_api(app, PerformerAPI, 'post_performer_api', '/posts/<post_id>/performers', ['GET', ])
+    register_api(
+        app,
+        PerformerByIdAPI,
+        'post_performer_by_id_api',
+        '/posts/<post_id>/performers/<performer_id>',
+        ['GET', 'PUT'])
 
 
 def register_post_apis(app):
@@ -176,6 +197,7 @@ def create_app():  # pylint: disable=too-many-locals
     register_match_apis(app)
     register_notification_apis(app)
     register_post_apis(app)
+    register_performer_apis(app)
     register_user_apis(app)
 
     register_api(app, SkillAPI, 'skill_api', '/skills', ['GET', ])

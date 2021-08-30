@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.6.7
+  version: 0.7.0
 servers: []
 tags:
   - name: applications
@@ -460,6 +460,135 @@ paths:
         name: post_id
         in: path
         required: true
+  '/posts/{post_id}/performers':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    get:
+      summary: List all performers for a post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Performer'
+      operationId: list_performers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters: []
+      tags:
+        - posts
+  '/posts/{post_id}/performers/{performer_id}/':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: performer_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a performer
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Performer'
+      operationId: get_performer
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a performer
+      operationId: update_performer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Performer'
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - in_progress
+                    - suspended
+                    - stopped
+                    - complete
+  '/posts/{post_id}/performers/{performer_id}/feedback':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: performer_id
+        in: path
+        required: true
+    get:
+      summary: Get feedback for a performer
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: get_performer_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add feedback for a performer
+      tags:
+        - posts
+      operationId: create_performer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
   '/posts/{post_id}/video':
     parameters:
       - schema:
@@ -626,7 +755,7 @@ paths:
       security:
         - AWSCognitoCanvaraPrototype: []
     post:
-      summary: Add a new feedback for a post
+      summary: Add feedback for a post
       tags:
         - posts
       responses:
@@ -645,9 +774,6 @@ paths:
             schema:
               type: object
               properties:
-                performer_id:
-                  type: string
-                  description: Unique identifier of the performer who this feedback is for.
                 comments:
                   type: string
                 concerns:
@@ -1758,6 +1884,22 @@ components:
           description: Post's skills that don't match the user's skills.
           items:
             $ref: '#/components/schemas/SkillWithLevel'
+    Performer:
+      title: Performer
+      type: object
+      properties:
+        post_id:
+          type: string
+        user_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - in_progress
+            - suspended
+            - stopped
+            - complete
+            - reviewed
     Skill:
       title: Skill
       type: object

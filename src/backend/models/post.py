@@ -147,13 +147,24 @@ class Post(ModelBase):
 
         elif post_filter == PostFilter.MY_APPLICATIONS:
             # TODO: (sunil) add support for drafts
-            from .application import Application  # pylint: disable=import-outside-toplevel, cyclic-import
-            posts = posts.join(Post.applications.and_(Application.user_id == user.id)).\
-                order_by(Application.created_at.desc())
+            from .application import Application, ApplicationStatus  # pylint: disable=import-outside-toplevel, cyclic-import
+
+            # Return posts that have a new, shortlisted or rejected application
+            # Selected applications will show up only in "my work"
+            posts = posts.join(Post.applications.and_(
+                Application.user_id == user.id,
+                Application.status.in_(
+                    ApplicationStatus.NEW.value,
+                    ApplicationStatus.SHORTLISTED.value,
+                    ApplicationStatus.PASSED.value)
+            )).order_by(Application.created_at.desc())
 
         elif post_filter == PostFilter.MY_WORK:
-            # TODO: (sunil) implement this
-            raise NotImplementedError()
+            from .application import Application, ApplicationStatus  # pylint: disable=import-outside-toplevel, cyclic-import
+            posts = posts.join(Post.applications.and_(
+                Application.user_id == user.id,
+                Application.status == ApplicationStatus.SELECTED.value
+            )).order_by(Application.created_at.desc())
         return posts
 
     @classmethod

@@ -27,6 +27,7 @@ class CanvaraDB:
         from .location import Location          # noqa: F401
         from .match import UserPostMatch        # noqa: F401
         from .notification import Notification  # noqa: F401
+        from .performer import Performer        # noqa: F401
         from .post import Post, PostSkill, UserPostBookmark, UserPostLike  # noqa: F401
         from .post_type import PostType         # noqa: F401
         from .product_preference import ProductPreference           # noqa: F401

@@ -10,6 +10,7 @@ from backend.common.http import make_no_content_response
 from backend.models.application import Application, ApplicationFilter, ApplicationStatus
 from backend.models.db import transaction
 from backend.models.notification import Notification
+from backend.models.performer import Performer, PerformerStatus
 from backend.models.post import Post
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -83,6 +84,7 @@ class ApplicationAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             application = Application.lookup(tx, application_id)
             payload = request.json
+            now = datetime.utcnow()
 
             # TODO: (sunil) add authorization -
             #   Only the post owner can change status to rejected/shortlisted/selected
@@ -96,8 +98,17 @@ class ApplicationAPI(AuthenticatedAPIBase):
 
             # TODO: (sunil) enforce correct state transitions
             if 'status' in payload:
-                application.status = ApplicationStatus.lookup(payload['status']).value
-            application.last_updated_at = datetime.utcnow()
+                new_status = ApplicationStatus.lookup(payload['status'])
+                application.status = new_status.value
+
+                # If the application has been selected, add a new performer
+                if application.status != new_status and new_status == ApplicationStatus.SELECTED:
+                    tx.add(Performer(
+                        application=application,
+                        status=PerformerStatus.IN_PROGRESS.value,
+                        created_at=now,
+                        last_updated_at=now))
+            application.last_updated_at = now
             return application.as_dict()
 
     @staticmethod

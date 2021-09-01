@@ -24,6 +24,7 @@ class CanvaraDB:
         # pylint: disable=cyclic-import, import-outside-toplevel, unused-import
         from .application import Application    # noqa: F401
         from .customer import Customer          # noqa: F401
+        from .feedback import Feedback          # noqa: F401
         from .location import Location          # noqa: F401
         from .match import UserPostMatch        # noqa: F401
         from .notification import Notification  # noqa: F401

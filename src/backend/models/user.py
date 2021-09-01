@@ -39,6 +39,7 @@ class User(ModelBase):
     profile_picture = relationship(UserUpload)
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
+    feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -220,5 +221,9 @@ class User(ModelBase):
 
         if fun_facts:
             user['fun_facts'] = fun_facts
+
+        # TODO: (sunil) add a max limit to the number of feedback items sent
+        if self.feedback_list:
+            user['feedback'] = [feedback.as_dict() for feedback in self.feedback_list]
 
         return user

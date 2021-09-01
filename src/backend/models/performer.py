@@ -45,7 +45,7 @@ class Performer(ModelBase):
             Post.id == post_id).options(query_options).order_by(cls.created_at.desc())
 
     @classmethod
-    def lookup(cls, tx, post_id, performer_id):
+    def lookup(cls, tx, post_id, performer_id, must_exist=True):
         query_options = [
             contains_eager(cls.application).joinedload(Application.post, innerjoin=True),
             contains_eager(cls.application).joinedload(Application.applicant, innerjoin=True)
@@ -56,7 +56,7 @@ class Performer(ModelBase):
             User.id == performer_id
         )).options(query_options).one_or_none()
 
-        if performer is None:
+        if performer is None and must_exist:
             raise DoesNotExistError(f"Performer '{performer_id}' does not exist for post '{post_id}'")
         return performer
 

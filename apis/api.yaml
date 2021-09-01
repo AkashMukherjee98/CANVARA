@@ -484,7 +484,7 @@ paths:
       parameters: []
       tags:
         - posts
-  '/posts/{post_id}/performers/{performer_id}/':
+  '/posts/{post_id}/performers/{performer_id}':
     parameters:
       - schema:
           type: string

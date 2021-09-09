@@ -153,10 +153,10 @@ class Post(ModelBase):
             # Selected applications will show up only in "my work"
             posts = posts.join(Post.applications.and_(
                 Application.user_id == user.id,
-                Application.status.in_(
+                Application.status.in_([
                     ApplicationStatus.NEW.value,
                     ApplicationStatus.SHORTLISTED.value,
-                    ApplicationStatus.PASSED.value)
+                    ApplicationStatus.PASSED.value])
             )).order_by(Application.created_at.desc())
 
         elif post_filter == PostFilter.MY_WORK:

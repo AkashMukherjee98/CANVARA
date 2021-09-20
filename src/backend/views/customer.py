@@ -4,6 +4,7 @@ from flask import jsonify, request
 
 from sqlalchemy import select
 
+
 from backend.common.exceptions import DoesNotExistError
 from backend.common.http import make_no_content_response
 from backend.models.customer import Customer

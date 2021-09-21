@@ -61,6 +61,5 @@ class CustomerAPI(AuthenticatedAPIBase):
             if customer is None:
                 raise DoesNotExistError("404 Error, Customer Does Not Exist")
             # delete customer
-            else:
-                tx.delete(customer)
+            tx.delete(customer)
         return make_no_content_response()

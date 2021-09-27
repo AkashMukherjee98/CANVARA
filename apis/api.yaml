@@ -187,6 +187,14 @@ paths:
                   type: string
                 superpowers:
                   type: string
+                company_start_date:
+                  type: string
+                pronoun:
+                  type: string
+                department:
+                  type: string
+                introduction:
+                  type: string
               required:
                 - user_id
                 - name
@@ -1019,6 +1027,14 @@ paths:
                     type: string
                 superpowers:
                   type: string
+                company_start_date:
+                  type: string
+                pronoun:
+                  type: string
+                department:
+                  type: string
+                introduction:
+                  type: string
   '/users/{user_id}/fun_fact':
     parameters:
       - schema:
@@ -1715,6 +1731,14 @@ components:
         hidden_secrets:
           type: string
         superpowers:
+          type: string
+        company_start_date:
+          type: string
+        pronoun:
+          type: string
+        department:
+          type: string
+        introduction:
           type: string
         career_goals:
           type: string

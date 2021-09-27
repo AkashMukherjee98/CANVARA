@@ -147,6 +147,7 @@ class User(ModelBase):
             'phone_number',
             'hidden_secrets',
             'career_goals',
+            'superpowers'
         ]
         for field_name in profile_fields:
             if payload.get(field_name) is not None:
@@ -195,6 +196,7 @@ class User(ModelBase):
 
         add_if_not_none('hidden_secrets', self.profile.get('hidden_secrets'))
         add_if_not_none('career_goals', self.profile.get('career_goals'))
+        add_if_not_none('superpowers', self.profile.get('superpowers'))
         add_if_not_none('languages', self.profile.get('languages'))
         add_if_not_none('allow_demo_mode', self.profile.get('allow_demo_mode'))
         add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))

@@ -183,8 +183,8 @@ paths:
                   type: string
                 languages:
                   type: array
-                items:
-                  type: string
+                  items:
+                    type: string
                 superpowers:
                   type: string
                 company_start_date:

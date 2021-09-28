@@ -151,7 +151,7 @@ class User(ModelBase):
             'company_start_date',
             'pronoun',
             'department',
-            'introduction'
+            'introduction',
         ]
         for field_name in profile_fields:
             if payload.get(field_name) is not None:

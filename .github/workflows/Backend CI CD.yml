@@ -25,15 +25,16 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: echo "$GITHUB_CONTEXT"
-
-      - name: slack message notification for the start of the push job
-        uses: docker://technosophos/slack-notify
-	if: github.event_name == 'pull_request'
-	env:
-	 SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-	 SLACK_MESSAGE: Backend workflow triggered by "${{ github.event.pull_request.user.login }}" for PR number "${{ github.event.pull_request.number }}" with pull_request_url "${{ github.event.pull_request.html_url }}"
-
+        
       - name: slack message notification for the start of the pull request job
+        uses: docker://technosophos/slack-notify
+        if: github.event_name == 'pull_request'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend workflow triggered by "${{ github.event.pull_request.user.login }}" for PR number "${{ github.event.pull_request.number }}" with pull_request_url "${{ github.event.pull_request.html_url }}"
+
+      
+      - name: slack message notification for the start of the push job
         uses: docker://technosophos/slack-notify
         if: github.event_name == 'push'
         env:

@@ -156,7 +156,7 @@ class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
     @staticmethod
     def put(user_id, upload_id):
         return ProfilePictureByIdAPIBase._put(user_id, upload_id)    
-class BackgroundPictureByAPIBase(AuthenticatedAPIBase, UserUploadMixin):
+class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def _put(user_id):
         metadata = {
@@ -166,7 +166,7 @@ class BackgroundPictureByAPIBase(AuthenticatedAPIBase, UserUploadMixin):
         }
         return BackgroundPictureAPIBase.create_user_upload(
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
-class BackgroundPictureAPI(BackroundPictureByAPIBase):
+class BackgroundPictureAPI(BackroundPictureAPIBase):
     @staticmethod
     def put(user_id):
         return BackgroundPictureAPIBase._put(user_id)

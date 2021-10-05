@@ -166,7 +166,7 @@ class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
         }
         return BackgroundPictureAPIBase.create_user_upload(
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
-class BackgroundPictureAPI(BackroundPictureAPIBase):
+class BackgroundPictureAPI(BackgroundPictureAPIBase):
     @staticmethod
     def put(user_id):
         return BackgroundPictureAPIBase._put(user_id)

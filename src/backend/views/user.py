@@ -156,7 +156,7 @@ class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
     @staticmethod
     def put(user_id, upload_id):
         return ProfilePictureByIdAPIBase._put(user_id, upload_id)    
-class BackgroundPictureAPIBase(AUthenticatedAPIBase, UserUploadMixin):
+class BackgroundPictureByAPIBase(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def _put(user_id):
         metadata = {
@@ -165,12 +165,8 @@ class BackgroundPictureAPIBase(AUthenticatedAPIBase, UserUploadMixin):
             'type': 'background_picture',
         }
         return BackgroundPictureAPIBase.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)        
-class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
-    @staticmethod
-    def put(user_id, upload_id):
-        return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
-class BackgroundPictureAPI(BackroundPictureAPIBase):
+            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+class BackgroundPictureAPI(BackroundPictureByAPIBase):
     @staticmethod
     def put(user_id):
         return BackgroundPictureAPIBase._put(user_id)
@@ -187,6 +183,10 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
+    @staticmethod
+    def put(user_id, upload_id):
+        return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
 class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(user_id):

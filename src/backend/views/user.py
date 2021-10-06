@@ -159,7 +159,7 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
-      
+
 
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
 

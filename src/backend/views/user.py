@@ -158,9 +158,9 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
 
         return {
             'status': user_upload.status,
-        }     
-
-
+        }
+        
+        
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
 
     @staticmethod
@@ -203,7 +203,7 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
             'status': user_upload.status,
         }
         
-        
+                        
 class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
 
     @staticmethod

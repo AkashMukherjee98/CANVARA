@@ -13,6 +13,7 @@ from backend.views.user_upload import UserUploadMixin
 
 
 class CustomerUserAPI(AuthenticatedAPIBase):
+
     @staticmethod
     def get(customer_id):
         with transaction() as tx:
@@ -50,6 +51,7 @@ class CustomerUserAPI(AuthenticatedAPIBase):
 
 
 class UserAPI(AuthenticatedAPIBase):
+
     @staticmethod
     def __get_user(user_id):
         with transaction() as tx:
@@ -120,6 +122,7 @@ class UserAPI(AuthenticatedAPIBase):
 
 
 class ProfilePictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
+
     @staticmethod
     def _put(user_id):
         # TODO: (sunil) add validation for accepted content types
@@ -132,14 +135,17 @@ class ProfilePictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
         return ProfilePictureAPIBase.create_user_upload(
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
+
 class ProfilePictureAPI(ProfilePictureAPIBase):
+
     @staticmethod
-    
     def put(user_id):
         return ProfilePictureAPIBase._put(user_id)
+
+
 class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
+
     @staticmethod
-    
     def _put(user_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
@@ -156,13 +162,15 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
         
         
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
+
     @staticmethod
-    
     def put(user_id, upload_id):
         return ProfilePictureByIdAPIBase._put(user_id, upload_id)    
+
+
 class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
+
     @staticmethod
-    
     def _put(user_id):
         metadata = {
             'resource': 'user',
@@ -171,14 +179,18 @@ class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
         }
         return BackgroundPictureAPIBase.create_user_upload(
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+
+
 class BackgroundPictureAPI(BackgroundPictureAPIBase):
+
     @staticmethod
-    
     def put(user_id):
         return BackgroundPictureAPIBase._put(user_id)
+
+
 class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
+
     @staticmethod
-    
     def _put(user_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
@@ -190,15 +202,18 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+
         
 class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
+
     @staticmethod
-    
     def put(user_id, upload_id):
         return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
+
+
 class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
+
     @staticmethod
-    
     def put(user_id):
         # TODO: (sunil) add validation for accepted content types
         metadata = {
@@ -208,9 +223,11 @@ class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
         }
         return FunFactAPI.create_user_upload(
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+
+
 class FunFactByIdAPI(AuthenticatedAPIBase):
+
     @staticmethod
-    
     def put(user_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
@@ -224,8 +241,8 @@ class FunFactByIdAPI(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+
     @staticmethod
-    
     def delete(user_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])

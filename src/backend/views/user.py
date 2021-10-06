@@ -134,11 +134,12 @@ class ProfilePictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
 
 class ProfilePictureAPI(ProfilePictureAPIBase):
     @staticmethod
-    def put(user_id):
-        return ProfilePictureAPIBase._put(user_id)  
     
+    def put(user_id):
+        return ProfilePictureAPIBase._put(user_id)
 class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
     @staticmethod
+    
     def _put(user_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
@@ -152,12 +153,16 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+        
+        
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
     @staticmethod
+    
     def put(user_id, upload_id):
         return ProfilePictureByIdAPIBase._put(user_id, upload_id)    
 class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
+    
     def _put(user_id):
         metadata = {
             'resource': 'user',
@@ -168,10 +173,12 @@ class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 class BackgroundPictureAPI(BackgroundPictureAPIBase):
     @staticmethod
+    
     def put(user_id):
         return BackgroundPictureAPIBase._put(user_id)
 class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
     @staticmethod
+    
     def _put(user_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
@@ -183,12 +190,15 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
         return {
             'status': user_upload.status,
         }
+        
 class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
     @staticmethod
+    
     def put(user_id, upload_id):
         return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
 class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
+    
     def put(user_id):
         # TODO: (sunil) add validation for accepted content types
         metadata = {
@@ -200,6 +210,7 @@ class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 class FunFactByIdAPI(AuthenticatedAPIBase):
     @staticmethod
+    
     def put(user_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
@@ -214,6 +225,7 @@ class FunFactByIdAPI(AuthenticatedAPIBase):
             'status': user_upload.status,
         }
     @staticmethod
+    
     def delete(user_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])

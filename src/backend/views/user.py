@@ -158,14 +158,12 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
 
         return {
             'status': user_upload.status,
-        }
-        
-        
+        }       
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
 
     @staticmethod
     def put(user_id, upload_id):
-        return ProfilePictureByIdAPIBase._put(user_id, upload_id)    
+        return ProfilePictureByIdAPIBase._put(user_id, upload_id)  
 
 
 class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):

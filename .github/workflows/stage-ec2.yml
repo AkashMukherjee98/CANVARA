@@ -6,8 +6,6 @@ name: Stage EC2 Deployment
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:

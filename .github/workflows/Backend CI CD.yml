@@ -20,12 +20,7 @@ jobs:
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-        
+    steps:        
       - name: slack message notification for the start of the pull request job
         uses: docker://technosophos/slack-notify
         if: github.event_name == 'pull_request'

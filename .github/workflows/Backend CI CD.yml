@@ -132,35 +132,35 @@ jobs:
     steps:
       - name: Log in to the Container registry
         run: |
-          sudo docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.CREATE_DOCKER_TOKEN }}
-
-      - name: Kill if there is an existing container
-        run: |
-          ID=$(sudo docker container ps | awk 'NR > 1 {print $1}')
-          if [ $ID ];
-          then
-          sudo docker stop $ID
-          sudo docker rm $ID;
-          fi
+          docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.CREATE_DOCKER_TOKEN }}
 
       - name: Check for existing images & then pull the latest image
         run: |
-          #IMAGEID=$(sudo docker images | awk 'NR > 1 {print $3}')
+          #IMAGEID=$(docker images | awk 'NR > 1 {print $3}')
           #if [ $IMAGEID ];
           #then
-          #sudo docker rmi $IMAGEID;
+          #docker rmi $IMAGEID;
           #fi
-          sudo docker pull ghcr.io/canvarainc/backend:main
+          docker pull ghcr.io/canvarainc/backend:main
 
+      - name: Kill if there is an existing container
+        run: |
+          ID=$(docker container ps | awk 'NR > 1 {print $1}')
+          if [ $ID ];
+          then
+          docker stop $ID
+          docker rm $ID;
+          fi
 
       - name: Run the image
         run: |
-          sudo docker run --detach -v /home/ubuntu/docker_logs:/canvara/logs --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/backend:main
+          docker run --detach -v /home/ubuntu/docker_logs:/canvara/logs --label canvara:svc=backend --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage -p 8000:8000 ghcr.io/canvarainc/backend:main
           sleep 5
-          new_container_id=$(sudo docker container ps | awk 'NR > 1 {print $1}')
+          new_container_id=$(docker container ls -q -f "label=canvara:svc=backend")
           if [ !$new_container_id ]; then
           sleep 5
           fi
+
       - name: slack message notification on failure
         if: failure()
         uses: docker://technosophos/slack-notify

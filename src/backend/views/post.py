@@ -77,6 +77,8 @@ class PostAPI(AuthenticatedAPIBase):
             owner = User.lookup(tx, current_cognito_jwt['sub'])
             post_type = PostType.lookup(tx, payload['post_type_id'])
             location = Location.lookup(tx, payload['location_id'])
+            name = User.lookup(tx, payload['name'])
+            summary = User.lookup(tx, payload['summary'])
             post = Post(
                 id=post_id,
                 owner=owner,
@@ -94,7 +96,10 @@ class PostAPI(AuthenticatedAPIBase):
                 target_date=target_date,
                 expiration_date=expiration_date
             )
-
+            if (name.length > 48):
+                raise InvalidArgumentError("Invalid Entry: Name must be less than 48 characters.")
+            if (summary.length > 144):
+                raise InvalidArgumentError("Invalid Entry: Summary must be less than 144 characters.")
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])
                 post.set_required_skills(tx, payload['required_skills'])

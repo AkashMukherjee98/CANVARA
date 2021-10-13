@@ -6,6 +6,7 @@ name: Canvara CICD Pipeline
 on:
   push:
     branches: [ main ]
+    paths-ignore: /.github
   pull_request:
     branches: [ main ]
 

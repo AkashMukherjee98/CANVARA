@@ -216,7 +216,7 @@ jobs:
           export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
           export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
           export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
-          pytest src/tests/test_smoke_suite.py
+          pytest src/tests/api/test_smoke_suite.py
 
       - name: slack message notification
         uses: docker://technosophos/slack-notify

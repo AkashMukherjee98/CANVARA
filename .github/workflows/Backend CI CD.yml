@@ -217,6 +217,12 @@ jobs:
           export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
           export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
           pytest src/tests/api/test_smoke_suite.py
+          
+      - name: Uploading the log file to the workflow
+        uses: actions/upload-artifact@v2
+        with:
+          name: run-log
+          path: src/test_execution_logs/
 
       - name: slack message notification
         uses: docker://technosophos/slack-notify

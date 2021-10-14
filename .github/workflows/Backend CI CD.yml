@@ -147,12 +147,7 @@ jobs:
 
       - name: Kill if there is an existing container
         run: |
-          ID=$(docker container ps | awk 'NR > 1 {print $1}')
-          if [ $ID ];
-          then
-          docker stop $ID
-          docker rm $ID;
-          fi
+          docker rm $(docker stop $(docker ps -aq --filter "label=canvara:svc=backend"))
 
       - name: Run the image
         run: |

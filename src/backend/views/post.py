@@ -84,7 +84,6 @@ class PostAPI(AuthenticatedAPIBase):
                 owner=owner,
                 created_at=now,
                 last_updated_at=now,
-                name=payload['name'],
                 post_type=post_type,
                 status=Post.DEFAULT_INITIAL_POST_STATUS.value,
                 description=payload.get('description'),
@@ -188,16 +187,17 @@ class PostAPI(AuthenticatedAPIBase):
                 raise NotAllowedError(f"User '{user.id}' is not the post owner")
             post.status = PostStatus.DELETED.value
         return make_no_content_response()
-    
+
     @staticmethod
     def saveDraft(post_id):
         with transaction() as tx:
             post = Post.lookup(tx, post_id)
             post.status = PostStatus.SAVED.value
         return make_no_content_response()
-    
+   
 class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     
+   
     @staticmethod
     def put(post_id):
         # TODO: (sunil) add validation for accepted content types
@@ -240,7 +240,7 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
             post.description_video = None
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()
-    
+
     @staticmethod
     def saveDraft(post_id, upload_id):
         with transaction() as tx:
@@ -250,7 +250,6 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
             post.description_video = None
             user_upload.status = UserUploadStatus.SAVED.value
         return make_no_content_response()
-
 
 class PostBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
@@ -274,7 +273,7 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
             tx.delete(bookmark)
         return make_no_content_response()
-    
+   
     @staticmethod
     def saveDraft(post_id):
         with transaction() as tx:
@@ -283,7 +282,7 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
             tx.save(bookmark)
         return make_no_content_response()
-    
+
     @staticmethod
     def delete(post_id):
         with transaction() as tx:
@@ -293,8 +292,9 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
             tx.delete(bookmark)
         return make_no_content_response()
 
+
 class PostLikeAPI(AuthenticatedAPIBase):
-    
+
     @staticmethod
     def put(post_id):
         with transaction() as tx:
@@ -316,7 +316,7 @@ class PostLikeAPI(AuthenticatedAPIBase):
             like = UserPostLike.lookup(tx, user.id, post.id)
             tx.delete(like)
         return make_no_content_response()
-    
+
     @staticmethod
     def saveDraft(post_id):
         with transaction() as tx:

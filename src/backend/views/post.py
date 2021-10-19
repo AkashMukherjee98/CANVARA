@@ -84,6 +84,7 @@ class PostAPI(AuthenticatedAPIBase):
                 owner=owner,
                 created_at=now,
                 last_updated_at=now,
+                name = name,
                 post_type=post_type,
                 status=Post.DEFAULT_INITIAL_POST_STATUS.value,
                 description=payload.get('description'),

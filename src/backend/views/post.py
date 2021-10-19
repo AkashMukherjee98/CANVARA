@@ -77,8 +77,8 @@ class PostAPI(AuthenticatedAPIBase):
             owner = User.lookup(tx, current_cognito_jwt['sub'])
             post_type = PostType.lookup(tx, payload['post_type_id'])
             location = Location.lookup(tx, payload['location_id'])
-            name = User.lookup(tx, payload['name'])
-            summary = User.lookup(tx, payload['summary'])
+            name = payload['name']
+            summary = payload['summary']
             post = Post(
                 id=post_id,
                 owner=owner,
@@ -102,12 +102,14 @@ class PostAPI(AuthenticatedAPIBase):
                 raise InvalidArgumentError("Invalid Entry: Summary must be less than 144 characters.")
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])
+                post.set_required_skills(tx, payload['required_skills'])                
+            if payload.get('required_skills'):
+                Post.validate_required_skills(payload['required_skills'])
                 post.set_required_skills(tx, payload['required_skills'])
-
             if payload.get('desired_skills'):
                 Post.validate_desired_skills(payload['desired_skills'])
                 post.set_desired_skills(tx, payload['desired_skills'])
-            return post.as_dict()
+        return post.as_dict()
 
     @staticmethod
     def put(post_id):
@@ -186,9 +188,16 @@ class PostAPI(AuthenticatedAPIBase):
                 raise NotAllowedError(f"User '{user.id}' is not the post owner")
             post.status = PostStatus.DELETED.value
         return make_no_content_response()
-
-
+    
+    @staticmethod
+    def saveDraft(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            post.status = PostStatus.SAVED.value
+        return make_no_content_response()
+    
 class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
+    
     @staticmethod
     def put(post_id):
         # TODO: (sunil) add validation for accepted content types
@@ -231,6 +240,16 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
             post.description_video = None
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()
+    
+    @staticmethod
+    def saveDraft(post_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            post = Post.lookup(tx, post_id)
+            post.description_video = None
+            user_upload.status = UserUploadStatus.SAVED.value
+        return make_no_content_response()
 
 
 class PostBookmarkAPI(AuthenticatedAPIBase):
@@ -255,9 +274,27 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
             tx.delete(bookmark)
         return make_no_content_response()
-
+    
+    @staticmethod
+    def saveDraft(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
+            tx.save(bookmark)
+        return make_no_content_response()
+    
+    @staticmethod
+    def delete(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
+            tx.delete(bookmark)
+        return make_no_content_response()
 
 class PostLikeAPI(AuthenticatedAPIBase):
+    
     @staticmethod
     def put(post_id):
         with transaction() as tx:
@@ -278,6 +315,15 @@ class PostLikeAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             like = UserPostLike.lookup(tx, user.id, post.id)
             tx.delete(like)
+        return make_no_content_response()
+    
+    @staticmethod
+    def saveDraft(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            like = UserPostLike.lookup(tx, user.id, post.id)
+            tx.save(like)
         return make_no_content_response()
 
 

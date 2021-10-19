@@ -101,7 +101,7 @@ class PostAPI(AuthenticatedAPIBase):
                 raise InvalidArgumentError("Invalid Entry: Summary must be less than 144 characters.")
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])
-                post.set_required_skills(tx, payload['required_skills'])                
+                post.set_required_skills(tx, payload['required_skills'])               
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])
                 post.set_required_skills(tx, payload['required_skills'])
@@ -194,10 +194,10 @@ class PostAPI(AuthenticatedAPIBase):
             post = Post.lookup(tx, post_id)
             post.status = PostStatus.SAVED.value
         return make_no_content_response()
-   
-class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
-    
-   
+
+
+class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):    
+
     @staticmethod
     def put(post_id):
         # TODO: (sunil) add validation for accepted content types
@@ -251,6 +251,7 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
             user_upload.status = UserUploadStatus.SAVED.value
         return make_no_content_response()
 
+
 class PostBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id):
@@ -273,7 +274,7 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
             tx.delete(bookmark)
         return make_no_content_response()
-   
+  
     @staticmethod
     def saveDraft(post_id):
         with transaction() as tx:
@@ -282,16 +283,7 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
             tx.save(bookmark)
         return make_no_content_response()
-
-    @staticmethod
-    def delete(post_id):
-        with transaction() as tx:
-            post = Post.lookup(tx, post_id)
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-            bookmark = UserPostBookmark.lookup(tx, user.id, post.id)
-            tx.delete(bookmark)
-        return make_no_content_response()
-
+    
 
 class PostLikeAPI(AuthenticatedAPIBase):
 

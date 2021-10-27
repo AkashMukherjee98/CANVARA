@@ -189,7 +189,7 @@ class PostAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
     @staticmethod
-    def SaveDraft(post_id):
+    def save(post_id):
         with transaction() as tx:
             post = Post.lookup(tx, post_id)
             post.status = PostStatus.SAVED.value
@@ -242,13 +242,13 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
     @staticmethod
-    def saveDraft(post_id, upload_id):
+    def save(post_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             post = Post.lookup(tx, post_id)
             post.description_video = None
-            user_upload.status = UserUploadStatus.SAVED.value
+            user_upload.status = UserUploadStatus.UPLOADED.value
         return make_no_content_response()
 
 
@@ -276,7 +276,7 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
     @staticmethod
-    def saveDraft(post_id):
+    def save(post_id):
         with transaction() as tx:
             post = Post.lookup(tx, post_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
@@ -310,7 +310,7 @@ class PostLikeAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
     @staticmethod
-    def saveDraft(post_id):
+    def save(post_id):
         with transaction() as tx:
             post = Post.lookup(tx, post_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])

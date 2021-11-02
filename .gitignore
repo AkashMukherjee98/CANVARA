@@ -1,4 +1,7 @@
 # Python virtual environments
 .venv
-
 __pycache__/
+
+# Config files for local development
+configs/local/*
+!configs/local/*.example

@@ -4,7 +4,6 @@ WORKDIR /canvara
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /canvara
-ENV CANVARA_CONFIGS_DIR /canvara/configs
 
 # TODO: switch to non-root user
 
@@ -14,7 +13,6 @@ RUN pip install -r pip_requirements.txt
 COPY src .
 COPY deploy/docker_run.sh .
 RUN chmod +x docker_run.sh
-COPY configs configs
 
 EXPOSE 8000
 

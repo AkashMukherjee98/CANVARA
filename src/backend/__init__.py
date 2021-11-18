@@ -166,10 +166,11 @@ def create_app():  # pylint: disable=too-many-locals
     if os.environ.get('SERVER_SOFTWARE', '').startswith('gunicorn/'):
         backend.common.logging.initialize_gunicorn_logging(app)
 
+    # TODO: (sunil) move these env variables into config.py, remove config yaml file and use env variables instead
     app.config.update({
-        'COGNITO_REGION': 'us-west-2',
-        'COGNITO_USERPOOL_ID': 'us-west-2_WXlSvui2Y',
-        'COGNITO_APP_CLIENT_ID': '4bqvh8quoqlvdrsi0rl4s5h3mt',
+        'COGNITO_REGION': os.environ['COGNITO_REGION'],
+        'COGNITO_USERPOOL_ID': os.environ['COGNITO_USERPOOL_ID'],
+        'COGNITO_APP_CLIENT_ID': os.environ['COGNITO_APP_CLIENT_ID'],
         'COGNITO_CHECK_TOKEN_EXPIRATION': True,
         'COGNITO_JWT_HEADER_NAME': 'Authorization',
         'COGNITO_JWT_HEADER_PREFIX': 'Bearer',

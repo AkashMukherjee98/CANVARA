@@ -152,6 +152,11 @@ class User(ModelBase):
             'pronoun',
             'department',
             'introduction',
+            'hashtags',
+            'mentorship_description',
+            'slack_id',
+            'teams_id',
+            'messaging_id'
         ]
         for field_name in profile_fields:
             if payload.get(field_name) is not None:
@@ -167,6 +172,13 @@ class User(ModelBase):
                 profile['languages'] = Language.validate_and_convert_languages(payload['languages'])
             elif 'languages' in profile:
                 del profile['languages']
+
+        if payload.get('hashtags') is not None:
+            if payload['hashtags']:
+                profile['hashtags'] = payload['hashtags']
+            elif 'hashtags' in profile:
+                del profile['hashtags']
+        
         self.profile = profile
 
     def as_summary_dict(self):
@@ -208,6 +220,11 @@ class User(ModelBase):
         add_if_not_none('languages', self.profile.get('languages'))
         add_if_not_none('allow_demo_mode', self.profile.get('allow_demo_mode'))
         add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))
+        add_if_not_none('hashtags', self.profile.get('hashtags'))
+        add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
+        add_if_not_none('slack_id', self.profile.get('slack_id'))
+        add_if_not_none('teams_id', self.profile.get('teams_id'))
+        add_if_not_none('messaging_id', self.profile.get('messaging_id'))
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()

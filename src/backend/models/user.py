@@ -41,8 +41,8 @@ class User(ModelBase):
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
-    mentorship_video = relationship("UserUpload", 
-        primaryjoin="User.mentorship_video_id==UserUpload.id", foreign_keys="[User.mentorship_video_id]")
+    mentorship_video = relationship(
+        "UserUpload", primaryjoin="User.mentorship_video_id==UserUpload.id", foreign_keys="[User.mentorship_video_id]")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -170,7 +170,6 @@ class User(ModelBase):
             'pronoun',
             'department',
             'introduction',
-            'hashtags',
             'mentorship_description',
             'slack_id',
             'teams_id',
@@ -191,11 +190,12 @@ class User(ModelBase):
             elif 'languages' in profile:
                 del profile['languages']
 
-        if payload.get('hashtags') is not None:
+        '''if payload.get('hashtags') is not None:
             if payload['hashtags']:
                 profile['hashtags'] = payload['hashtags']
             elif 'hashtags' in profile:
-                del profile['hashtags']
+                del profile['hashtags']'''
+        profile['hashtags'] = payload['hashtags'] if payload.get('hashtags') is not None else []
 
         if payload.get('mentorship_offered') is not None:
             if type(payload['mentorship_offered']) is bool:
@@ -203,7 +203,6 @@ class User(ModelBase):
             else:
                 raise InvalidArgumentError(
                     f"Mentorship Offered accepts true or false, you have provided: {payload['mentorship_offered']}")
-
         self.profile = profile
 
     def as_summary_dict(self):

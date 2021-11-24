@@ -263,7 +263,7 @@ class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
         with transaction() as tx:
             user = User.lookup(tx, user_id)
             user.validate_mentorship_video(request.json)
-        
+
         metadata = {
             'resource': 'user',
             'resource_id': user_id,

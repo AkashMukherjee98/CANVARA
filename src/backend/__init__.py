@@ -139,7 +139,7 @@ def register_post_apis(app):
 def register_user_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.user import (
-        CustomerUserAPI, FunFactAPI, FunFactByIdAPI, ProfilePictureAPI, ProfilePictureByIdAPI, 
+        CustomerUserAPI, FunFactAPI, FunFactByIdAPI, ProfilePictureAPI, ProfilePictureByIdAPI,
         MentorshipVideoAPI, MentorshipVideoByIdAPI, UserAPI)
     # pylint: enable=import-outside-toplevel
 

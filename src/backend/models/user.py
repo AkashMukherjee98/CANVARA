@@ -1,6 +1,5 @@
 import copy
 import enum
-from flask.globals import request
 
 from sqlalchemy.orm import backref, relationship
 
@@ -135,20 +134,6 @@ class User(ModelBase):
             for fact in sorted_facts[:len(sorted_facts) - max_fun_facts + 1]:
                 self.fun_facts.remove(fact)
         self.fun_facts.append(fun_fact)
-
-    def validate_mentorship_video(self, media):
-        if not media['content_type'].startswith('video/'):
-            raise InvalidArgumentError(f"Invalid mentorship video content type: '{media['content_type']}'")
-
-    def add_mentorship_video(self, media):
-        if not media.is_video():
-            raise InvalidArgumentError(f"Invalid mentorship video content type: '{media.content_type}'")
-        else:
-            payload = request.json
-            self.mentorship_video_id = media.id
-            self.update_profile(payload)
-        user_details = self.as_dict()
-        return user_details
 
     @property
     def profile_copy(self):

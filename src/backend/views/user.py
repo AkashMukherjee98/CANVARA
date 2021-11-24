@@ -260,10 +260,6 @@ class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def put(user_id):
-        with transaction() as tx:
-            user = User.lookup(tx, user_id)
-            user.validate_mentorship_video(request.json)
-
         metadata = {
             'resource': 'user',
             'resource_id': user_id,
@@ -282,7 +278,9 @@ class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, user_id)
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             if status == UserUploadStatus.UPLOADED:
-                user.add_mentorship_video(user_upload)
+                payload = request.json
+                user.mentorship_video_id = user_upload.id
+                user.update_profile(payload)
                 user_upload.status = status.value
 
         return {

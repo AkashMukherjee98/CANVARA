@@ -260,6 +260,10 @@ class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def put(user_id):
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            user.validate_mentorship_video(request.json)
+        
         metadata = {
             'resource': 'user',
             'resource_id': user_id,

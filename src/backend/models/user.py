@@ -41,7 +41,8 @@ class User(ModelBase):
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
-    mentorship_video = relationship("UserUpload", primaryjoin="User.mentorship_video_id==UserUpload.id", foreign_keys="[User.mentorship_video_id]")
+    mentorship_video = relationship("UserUpload", 
+        primaryjoin="User.mentorship_video_id==UserUpload.id", foreign_keys="[User.mentorship_video_id]")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -135,20 +136,20 @@ class User(ModelBase):
                 self.fun_facts.remove(fact)
         self.fun_facts.append(fun_fact)
 
-    def add_mentorship_video(self, mentorship_media):
-        if mentorship_media.is_video():
-            #existing_mentorship_video = [fact for fact in self.mentorship_video if fact.is_video()]
-            existing_mentorship_video = self.mentorship_video.as_dict(method='get')
-        else:
-            raise InvalidArgumentError(f"Invalid mentorship video content type: '{mentorship_media.content_type}'")
+    def validate_mentorship_video(self, media):
+        if not media['content_type'].startswith('video/'):
+            raise InvalidArgumentError(f"Invalid mentorship video content type: '{media['content_type']}'")
+
+    def add_mentorship_video(self, media):
+        if not media.is_video():
+            raise InvalidArgumentError(f"Invalid mentorship video content type: '{media.content_type}'")
 
         payload = request.json
-        self.mentorship_video_id = mentorship_media.id
+        self.mentorship_video_id = media.id
         self.update_profile(payload)
 
         user_details = self.as_dict()
         return user_details
-
 
     @property
     def profile_copy(self):
@@ -200,8 +201,9 @@ class User(ModelBase):
             if type(payload['mentorship_offered']) is bool:
                 profile['mentorship_offered'] = payload['mentorship_offered']
             else:
-                raise InvalidArgumentError(f"Mentorship Offered accepts true or false, you have provided: {payload['mentorship_offered']}")
-        
+                raise InvalidArgumentError(
+                    f"Mentorship Offered accepts true or false, you have provided: {payload['mentorship_offered']}")
+
         self.profile = profile
 
     def as_summary_dict(self):

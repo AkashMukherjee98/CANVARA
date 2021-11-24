@@ -195,6 +195,20 @@ paths:
                   type: string
                 introduction:
                   type: string
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                slack_id:
+                  type: string
+                teams_id:
+                  type: string
+                messaging_id:
+                  type: string
+                mentorship_offered:
+                  type: boolean
+                mentorship_description:
+                  type: string
               required:
                 - user_id
                 - name
@@ -1035,6 +1049,20 @@ paths:
                   type: string
                 introduction:
                   type: string
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                slack_id:
+                  type: string
+                teams_id:
+                  type: string
+                messaging_id:
+                  type: string
+                mentorship_offered:
+                  type: boolean
+                mentorship_description:
+                  type: string
   '/users/{user_id}/fun_fact':
     parameters:
       - schema:
@@ -1225,6 +1253,80 @@ paths:
                   $ref: '#/components/schemas/Banner'
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/mentorship_video':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a user mentorship video upload
+      operationId: upload_profile_mentorship_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: mentorship_video.avi
+                  content_type: video/x-msvideo
+      tags:
+        - users
+  '/users/{user_id}/mentorship_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize user mentorship video upload
+      operationId: finalize_profile_mentorship_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
   /onboarding/product_preferences:
     get:
       summary: List all products that user can select
@@ -1754,6 +1856,24 @@ components:
           type: boolean
         onboarding_complete:
           type: boolean
+        hashtags:
+          type: array
+          items:
+            type: string
+        slack_id:
+          type: string
+        teams_id:
+          type: string
+        messaging_id:
+          type: string
+        mentorship_offered:
+          type: boolean
+        mentorship_description:
+          type: string
+        mentorship_video:
+          anyOf:
+            - $ref: '#/components/schemas/UserUpload'
+            - type: string
       required:
         - customer_id
         - user_id

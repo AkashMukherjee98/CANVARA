@@ -143,11 +143,10 @@ class User(ModelBase):
     def add_mentorship_video(self, media):
         if not media.is_video():
             raise InvalidArgumentError(f"Invalid mentorship video content type: '{media.content_type}'")
-
-        payload = request.json
-        self.mentorship_video_id = media.id
-        self.update_profile(payload)
-
+        else:
+            payload = request.json
+            self.mentorship_video_id = media.id
+            self.update_profile(payload)
         user_details = self.as_dict()
         return user_details
 
@@ -190,15 +189,10 @@ class User(ModelBase):
             elif 'languages' in profile:
                 del profile['languages']
 
-        '''if payload.get('hashtags') is not None:
-            if payload['hashtags']:
-                profile['hashtags'] = payload['hashtags']
-            elif 'hashtags' in profile:
-                del profile['hashtags']'''
         profile['hashtags'] = payload['hashtags'] if payload.get('hashtags') is not None else []
 
         if payload.get('mentorship_offered') is not None:
-            if type(payload['mentorship_offered']) is bool:
+            if isinstance(payload['mentorship_offered'], bool):
                 profile['mentorship_offered'] = payload['mentorship_offered']
             else:
                 raise InvalidArgumentError(

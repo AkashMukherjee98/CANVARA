@@ -1,5 +1,6 @@
 import copy
 import enum
+from flask.globals import request
 
 from sqlalchemy.orm import backref, relationship
 
@@ -40,6 +41,7 @@ class User(ModelBase):
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
+    mentorship_video = relationship("UserUpload", primaryjoin="User.mentorship_video_id==UserUpload.id", foreign_keys="[User.mentorship_video_id]")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -133,6 +135,21 @@ class User(ModelBase):
                 self.fun_facts.remove(fact)
         self.fun_facts.append(fun_fact)
 
+    def add_mentorship_video(self, mentorship_media):
+        if mentorship_media.is_video():
+            #existing_mentorship_video = [fact for fact in self.mentorship_video if fact.is_video()]
+            existing_mentorship_video = self.mentorship_video.as_dict(method='get')
+        else:
+            raise InvalidArgumentError(f"Invalid mentorship video content type: '{mentorship_media.content_type}'")
+
+        payload = request.json
+        self.mentorship_video_id = mentorship_media.id
+        self.update_profile(payload)
+
+        user_details = self.as_dict()
+        return user_details
+
+
     @property
     def profile_copy(self):
         return copy.deepcopy(self.profile) if self.profile is not None else {}
@@ -178,6 +195,12 @@ class User(ModelBase):
                 profile['hashtags'] = payload['hashtags']
             elif 'hashtags' in profile:
                 del profile['hashtags']
+
+        if payload.get('mentorship_offered') is not None:
+            if type(payload['mentorship_offered']) is bool:
+                profile['mentorship_offered'] = payload['mentorship_offered']
+            else:
+                raise InvalidArgumentError(f"Mentorship Offered accepts true or false, you have provided: {payload['mentorship_offered']}")
         
         self.profile = profile
 
@@ -221,6 +244,7 @@ class User(ModelBase):
         add_if_not_none('allow_demo_mode', self.profile.get('allow_demo_mode'))
         add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))
         add_if_not_none('hashtags', self.profile.get('hashtags'))
+        add_if_not_none('mentorship_offered', self.profile.get('mentorship_offered'))
         add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
         add_if_not_none('slack_id', self.profile.get('slack_id'))
         add_if_not_none('teams_id', self.profile.get('teams_id'))
@@ -248,6 +272,10 @@ class User(ModelBase):
 
         if fun_facts:
             user['fun_facts'] = fun_facts
+
+        mentorship_video = self.mentorship_video.as_dict(method='get') if self.mentorship_video.is_video() else None
+        if mentorship_video:
+            user['mentorship_video'] = mentorship_video
 
         # TODO: (sunil) add a max limit to the number of feedback items sent
         if self.feedback_list:

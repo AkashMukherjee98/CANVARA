@@ -139,7 +139,7 @@ def register_post_apis(app):
 def register_user_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.user import (
-        CustomerUserAPI, FunFactAPI, FunFactByIdAPI, ProfilePictureAPI, ProfilePictureByIdAPI, UserAPI)
+        CustomerUserAPI, FunFactAPI, FunFactByIdAPI, ProfilePictureAPI, ProfilePictureByIdAPI, MentorshipVideoAPI, MentorshipVideoByIdAPI, UserAPI)
     # pylint: enable=import-outside-toplevel
 
     register_api(app, CustomerUserAPI, 'customer_user_api', '/customers/<customer_id>/users', ['GET', 'POST'])
@@ -154,6 +154,9 @@ def register_user_apis(app):
     register_api(app, ProfilePictureAPI, 'profile_picture_api', '/users/<user_id>/profile_picture', ['PUT', ])
     register_api(
         app, ProfilePictureByIdAPI, 'profile_picture_by_id_api', '/users/<user_id>/profile_picture/<upload_id>', ['PUT', ])
+
+    register_api(app, MentorshipVideoAPI, 'mentorship_video_api', '/users/<user_id>/mentorship_video', ['PUT', ])
+    register_api(app, MentorshipVideoByIdAPI, 'mentorship_video_by_id_api', '/users/<user_id>/mentorship_video/<upload_id>', ['PUT', ])
 
 
 def create_app():  # pylint: disable=too-many-locals

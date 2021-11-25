@@ -253,7 +253,7 @@ class User(ModelBase):
         if fun_facts:
             user['fun_facts'] = fun_facts
 
-        mentorship_video = self.mentorship_video.as_dict(method='get') if self.mentorship_video is not None and self.mentorship_video.is_video() else None
+        mentorship_video = self.mentorship_video.as_dict(method='get') if self.mentorship_video is not None else None
         if mentorship_video:
             user['mentorship_video'] = mentorship_video
 

@@ -116,6 +116,14 @@ class Post(ModelBase):
 
     @classmethod
     def __apply_search_filter(cls, posts, user, post_filter):
+        # Exclude posts if user is already applied for
+        # It won't apply if custom filter BOOKMARKED/MY_APPLICATIONS/MY_WORK is applied
+        if post_filter not in [PostFilter.BOOKMARKED, PostFilter.MY_APPLICATIONS, PostFilter.MY_WORK]:
+            from .application import Application  # pylint: disable=import-outside-toplevel
+            posts = posts.join(Post.applications.and_(
+                Application.user_id != user.id
+            ))
+
         if post_filter == PostFilter.DEACTIVATED:
             posts = posts.where(and_(
                 Post.owner_id == user.id,

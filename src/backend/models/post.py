@@ -119,10 +119,11 @@ class Post(ModelBase):
         # Exclude posts if user is already applied for
         # It won't apply if custom filter BOOKMARKED/MY_APPLICATIONS/MY_WORK is applied
         if post_filter not in [PostFilter.BOOKMARKED, PostFilter.MY_APPLICATIONS, PostFilter.MY_WORK]:
-            from .application import Application  # pylint: disable=import-outside-toplevel
-            posts = posts.join(Post.applications.and_(
-                Application.user_id != user.id
-            ))
+            from .application import Application, ApplicationStatus  # pylint: disable=import-outside-toplevel, cyclic-import
+            posts = posts.outerjoin(Post.applications.and_(
+                Application.user_id == user.id,
+                Application.status != ApplicationStatus.DELETED.value
+            )).where(Application.user_id.is_(None))
 
         if post_filter == PostFilter.DEACTIVATED:
             posts = posts.where(and_(

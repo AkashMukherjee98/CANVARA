@@ -263,7 +263,7 @@ class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
         metadata = {
             'resource': 'user',
             'resource_id': user_id,
-            'type': 'mentorship',
+            'type': 'mentorship_video',
         }
         return MentorshipVideoAPI.create_user_upload(
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
@@ -278,11 +278,21 @@ class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, user_id)
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             if status == UserUploadStatus.UPLOADED:
-                payload = request.json
-                user.mentorship_video_id = user_upload.id
-                user.update_profile(payload)
+                user.mentorship_video = user_upload
                 user_upload.status = status.value
 
         return {
             'status': user_upload.status,
         }
+
+    @staticmethod
+    def delete(user_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+
+            if user.id != user_id:
+                raise NotAllowedError(f"User '{user.id}' cannot delete mentorship video of user '{user_id}'")
+            user.mentorship_video = None
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()

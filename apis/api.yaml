@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.7.0
+  version: 0.8.0
 servers: []
 tags:
   - name: applications
@@ -199,11 +199,7 @@ paths:
                   type: array
                   items:
                     type: string
-                slack_id:
-                  type: string
-                teams_id:
-                  type: string
-                messaging_id:
+                slack_teams_messaging_id:
                   type: string
                 mentorship_offered:
                   type: boolean
@@ -1053,11 +1049,7 @@ paths:
                   type: array
                   items:
                     type: string
-                slack_id:
-                  type: string
-                teams_id:
-                  type: string
-                messaging_id:
+                slack_teams_messaging_id:
                   type: string
                 mentorship_offered:
                   type: boolean
@@ -1261,8 +1253,8 @@ paths:
         in: path
         required: true
     put:
-      summary: Create request for a user mentorship video upload
-      operationId: upload_profile_mentorship_video
+      summary: Create request for a mentorship video upload
+      operationId: upload_mentorship_video
       responses:
         '200':
           description: OK
@@ -1298,8 +1290,8 @@ paths:
         required: true
         description: Unique identifier of the file upload.
     put:
-      summary: Finalize user mentorship video upload
-      operationId: finalize_profile_mentorship_video_upload
+      summary: Finalize mentorship video upload
+      operationId: finalize_mentorship_video_upload
       responses:
         '200':
           description: OK
@@ -1327,6 +1319,16 @@ paths:
                 - status
       tags:
         - users
+    delete:
+      summary: Delete a mentorship video
+      operationId: delete_mentorship_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /onboarding/product_preferences:
     get:
       summary: List all products that user can select
@@ -1860,20 +1862,14 @@ components:
           type: array
           items:
             type: string
-        slack_id:
-          type: string
-        teams_id:
-          type: string
-        messaging_id:
+        slack_teams_messaging_id:
           type: string
         mentorship_offered:
           type: boolean
         mentorship_description:
           type: string
         mentorship_video:
-          anyOf:
-            - $ref: '#/components/schemas/UserUpload'
-            - type: string
+          $ref: '#/components/schemas/UserUpload'
       required:
         - customer_id
         - user_id

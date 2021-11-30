@@ -36,10 +36,11 @@ class User(ModelBase):
     desired_skills = relationship("UserDesiredSkill")
     post_bookmarks = relationship("UserPostBookmark", back_populates="user")
     post_likes = relationship("UserPostLike", back_populates="user")
-    profile_picture = relationship(UserUpload)
+    profile_picture = relationship(UserUpload, foreign_keys="[User.profile_picture_id]")
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
+    mentorship_video = relationship(UserUpload, foreign_keys="[User.mentorship_video_id]")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -152,6 +153,8 @@ class User(ModelBase):
             'pronoun',
             'department',
             'introduction',
+            'slack_teams_messaging_id',
+            'mentorship_description'
         ]
         for field_name in profile_fields:
             if payload.get(field_name) is not None:
@@ -167,6 +170,15 @@ class User(ModelBase):
                 profile['languages'] = Language.validate_and_convert_languages(payload['languages'])
             elif 'languages' in profile:
                 del profile['languages']
+
+        profile['hashtags'] = payload['hashtags'] if payload.get('hashtags') is not None else []
+
+        if payload.get('mentorship_offered') is not None:
+            if isinstance(payload['mentorship_offered'], bool):
+                profile['mentorship_offered'] = payload['mentorship_offered']
+            else:
+                raise InvalidArgumentError(
+                    f"Mentorship Offered accepts true or false, you have provided: {payload['mentorship_offered']}")
         self.profile = profile
 
     def as_summary_dict(self):
@@ -208,6 +220,10 @@ class User(ModelBase):
         add_if_not_none('languages', self.profile.get('languages'))
         add_if_not_none('allow_demo_mode', self.profile.get('allow_demo_mode'))
         add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))
+        add_if_not_none('hashtags', self.profile.get('hashtags'))
+        add_if_not_none('slack_teams_messaging_id', self.profile.get('slack_teams_messaging_id'))
+        add_if_not_none('mentorship_offered', self.profile.get('mentorship_offered'))
+        add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()
@@ -235,5 +251,8 @@ class User(ModelBase):
         # TODO: (sunil) add a max limit to the number of feedback items sent
         if self.feedback_list:
             user['feedback'] = [feedback.as_dict() for feedback in self.feedback_list]
+
+        if self.mentorship_video:
+            user['mentorship_video'] = self.mentorship_video.as_dict(method='get')
 
         return user

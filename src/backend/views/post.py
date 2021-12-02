@@ -96,9 +96,9 @@ class PostAPI(AuthenticatedAPIBase):
                 target_date=target_date,
                 expiration_date=expiration_date
             )
-            if name.length > 48:
+            if (name.length > 48):
                 raise InvalidArgumentError("Invalid Entry: Name must be less than 48 characters.")
-            if summary.length > 144:
+            if (summary.length > 144):
                 raise InvalidArgumentError("Invalid Entry: Summary must be less than 144 characters.")
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])

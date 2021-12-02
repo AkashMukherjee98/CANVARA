@@ -7,9 +7,6 @@ on:
   push:
     branches: [ main ]
     paths-ignore: '.github/**'
-    
-  pull_request:
-    branches: [ main ]
 
 env:
     REGISTRY: ghcr.io

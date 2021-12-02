@@ -189,7 +189,7 @@ class PostAPI(AuthenticatedAPIBase):
     def save(post_id):
         with transaction() as tx:
             post = Post.lookup(tx, post_id)
-            post.status = PostStatus.DRAFT.value
+            post.status = PostStatus.SAVED.value
         return make_no_content_response()
 
 

@@ -65,7 +65,7 @@ class PostStatus(Enum):
     DELETED = 'deleted'
 
     # post has been saved as a draft
-    DRAFT = 'draft'
+    SAVED = 'saved'
 
 
 class PostSkillType(Enum):

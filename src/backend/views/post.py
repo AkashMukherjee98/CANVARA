@@ -185,6 +185,13 @@ class PostAPI(AuthenticatedAPIBase):
             post.status = PostStatus.DELETED.value
         return make_no_content_response()
 
+    @staticmethod
+    def save(post_id):
+        with transaction() as tx:
+            post = Post.lookup(tx, post_id)
+            post.status = PostStatus.DRAFT.value
+        return make_no_content_response()
+
 
 class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
 

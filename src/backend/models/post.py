@@ -63,9 +63,6 @@ class PostStatus(Enum):
 
     # Post has been deleted and can no longer be accessed by any user
     DELETED = 'deleted'
-    
-    #post has been saved as a draft
-    SAVED = 'saved'
 
 
 class PostSkillType(Enum):

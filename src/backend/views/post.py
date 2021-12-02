@@ -95,17 +95,20 @@ class PostAPI(AuthenticatedAPIBase):
                 target_date=target_date,
                 expiration_date=expiration_date
             )
-            if len(payload['name']) > 48:
+            if payload['name'].length > 48:
                 raise InvalidArgumentError("Invalid Entry: Name must be less than 48 characters.")
             if summary.length > 144:
                 raise InvalidArgumentError("Invalid Entry: Summary must be less than 144 characters.")
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])
                 post.set_required_skills(tx, payload['required_skills'])
+            if payload.get('required_skills'):
+                Post.validate_required_skills(payload['required_skills'])
+                post.set_required_skills(tx, payload['required_skills'])
             if payload.get('desired_skills'):
                 Post.validate_desired_skills(payload['desired_skills'])
                 post.set_desired_skills(tx, payload['desired_skills'])
-            return post.as_dict()
+        return post.as_dict()
 
     @staticmethod
     def put(post_id):

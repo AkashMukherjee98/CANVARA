@@ -1,17 +1,25 @@
 import os
-import yaml
+
+import sqlalchemy.engine.url
 
 
 def get_canvara_config():
-    # Root directory containing configs for all the environments
-    canvara_configs_root_dir = os.environ['CANVARA_CONFIGS_DIR']
+    config = {}
+    config['user_uploads'] = {
+        's3_bucket': os.environ['S3_USER_UPLOADS_BUCKET']
+    }
 
-    # Current Canvara environment ('dev', 'prod' etc.)
-    canvara_env = os.environ['CANVARA_ENV']
+    sqlalchemy_url = sqlalchemy.engine.url.URL.create(
+        'postgresql',
+        username=os.environ['POSTGRES_USERNAME'],
+        password=os.environ['POSTGRES_PASSWORD'],
+        host=os.environ['POSTGRES_HOST'],
+        port=os.environ['POSTGRES_PORT'],
+        database=os.environ['POSTGRES_DATABASE']
+    )
 
-    # Directory containing all config files for the current environment
-    canvara_config_dir = os.path.join(canvara_configs_root_dir, canvara_env)
+    config['database'] = {
+        'sqlalchemy.url': sqlalchemy_url.render_as_string(hide_password=False)
+    }
 
-    path = os.path.join(canvara_config_dir, 'canvara_config.yaml')
-    with open(path) as config_file:
-        return yaml.load(config_file, Loader=yaml.SafeLoader)
+    return config

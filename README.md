@@ -5,30 +5,36 @@
 ## Setup Environment Variables
 | Environment Variable | Description|
 |-|-|
-| CANVARA_ROOT | Root directory of the backend repository. Helpeful for defining the other environment variables. |
-| CANVARA_CONFIGS_DIR | Path to the `configs` directory. Typically set to `$CANVARA_ROOT/configs` |
-| CANVARA_ENV | Current Canvara environment, e.g. local, production, ci etc. Config files for the current environment are expected to be in `$CANVARA_CONFIGS_DIR/$CANVARA_ENV` directory |
-| PYTHONPATH | (**system variable**) Search path for Python modules. Typically set to `$PYTHONPATH:$CANVARA_ROOT/src` |
+| PYTHONPATH | (**system variable**) Search path for Python modules. Typically set to `$PYTHONPATH:/path/to/canvara/backend/src` |
+| COGNITO_REGION | AWS Region for the Cognito user pool |
+| COGNITO_USERPOOL_ID | Cognito user pool used for authentication |
+| COGNITO_APP_CLIENT_ID | Cognito app client id |
+| S3_USER_UPLOADS_BUCKET | S3 bucket where the user uploads (images, videos) should be stored |
+| POSTGRES_USERNAME | Username for connecting to the postgres database. E.g. `postgres` |
+| POSTGRES_PASSWORD | Password for connecting to the postgres database |
+| POSTGRES_HOST | Hostname of the postgres database |
+| POSTGRES_PORT | Port of the postgres database. E.g. `5432` |
+| POSTGRES_DATABASE | Name of the Canvara database. e.g. `postgres` |
 
-Example:
+### (Optional) Set environment variables using .env file
+Instead of setting the environment variables manually, they can be managed using a .env file. Create a `.env` file using the existing `.env.example` file and make necessary changes.
+
 ```
-export CANVARA_ROOT=~/src/canvara/prototype
-export CANVARA_CONFIGS_DIR=$CANVARA_ROOT/configs
-export CANVARA_ENV=local
-export PYTHONPATH=$PYTHONPATH:$CANVARA_ROOT/src
+cp .env.example .env
+<update .env>
+export $(cat .env | xargs)
 ```
 
 ## Setup Python Virtual Environment
 ### Create Virtual Environment
 ```
-cd $CANVARA_ROOT
 python3 -m venv .venv/canvara
 source .venv/canvara/bin/activate
 ```
 
 ### Install Python dependencies
 ```
-pip install -r $CANVARA_ROOT/pip_requirements.txt
+pip install -r pip_requirements.txt
 ```
 
 ## Setup database
@@ -52,13 +58,13 @@ When running on your dev machine, the application can be run using Flask or Guni
 
 ### Run locally using Flask
 ```
-cd $CANVARA_ROOT/src
+cd src
 FLASK_APP=backend flask run
 ```
 
 ### Run locally using Gunicorn
 ```
-cd $CANVARA_ROOT/src
+cd src
 gunicorn backend:app
 ```
 

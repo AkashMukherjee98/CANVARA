@@ -77,13 +77,14 @@ class PostAPI(AuthenticatedAPIBase):
             owner = User.lookup(tx, current_cognito_jwt['sub'])
             post_type = PostType.lookup(tx, payload['post_type_id'])
             location = Location.lookup(tx, payload['location_id'])
+            post_name = payload['name']
             summary = payload['summary']
             post = Post(
                 id=post_id,
                 owner=owner,
                 created_at=now,
                 last_updated_at=now,
-                name=payload['name'],
+                name=post_name,
                 post_type=post_type,
                 status=Post.DEFAULT_INITIAL_POST_STATUS.value,
                 description=payload.get('description'),
@@ -95,7 +96,7 @@ class PostAPI(AuthenticatedAPIBase):
                 target_date=target_date,
                 expiration_date=expiration_date
             )
-            if payload['name'].length > 48:
+            if post_name.length > 48:
                 raise InvalidArgumentError("Invalid Entry: Name must be less than 48 characters.")
             if summary.length > 144:
                 raise InvalidArgumentError("Invalid Entry: Summary must be less than 144 characters.")

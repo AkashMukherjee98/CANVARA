@@ -10,6 +10,22 @@ def register_api(app, view, endpoint, url, methods):
     app.add_url_rule(url, view_func=view_func, methods=methods)
 
 
+def register_event_apis(app):
+    # pylint: disable=import-outside-toplevel
+    from backend.views.event import EventAPI, EventLogoAPI, EventLogoByIdAPI, EventVideoAPI, EventVideoByIdAPI
+    # pylint: disable=import-outside-toplevel
+
+    register_api(app, EventAPI, 'event_api', '/events', ['GET', 'POST'])
+
+    register_api(app, EventLogoAPI, 'event_logo_api', '/events/<event_id>/event_logo', ['PUT', ])
+    register_api(
+        app, EventLogoByIdAPI, 'event_logo_by_id_api', '/events/<event_id>/event_logo/<upload_id>', ['PUT', 'DELETE'])
+
+    register_api(app, EventVideoAPI, 'event_video_api', '/events/<event_id>/overview_video', ['PUT', ])
+    register_api(app, EventVideoByIdAPI, 'event_video_by_id_api', '/events/<event_id>/overview_video/<upload_id>', [
+        'PUT', 'DELETE'])
+
+
 def register_application_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.application import ApplicationAPI, PostApplicationAPI, ApplicationVideoAPI, ApplicationVideoByIdAPI
@@ -196,6 +212,7 @@ def create_app():  # pylint: disable=too-many-locals
     from backend.views.skill import SkillAPI
     # pylint: enable=import-outside-toplevel
 
+    register_event_apis(app)
     register_application_apis(app)
     register_customer_apis(app)
     register_feedback_apis(app)

@@ -4,6 +4,7 @@ import uuid
 from flask import request, jsonify
 from flask_cognito import current_cognito_jwt
 
+from backend.common.exceptions import InvalidArgumentError
 from backend.common.http import make_no_content_response
 from backend.common.datetime import DateTime
 from backend.models.db import transaction
@@ -21,6 +22,11 @@ class EventAPI(AuthenticatedAPIBase):
         payload = request.json
         event_id = str(uuid.uuid4())
         now = datetime.utcnow()
+
+        required_fields = {'name', 'event_date', 'start_time', 'end_time', 'location', 'language', 'overview'}
+        missing_fields = required_fields - set(payload.keys())
+        if missing_fields:
+            raise InvalidArgumentError(f"Parameter: {', '.join(missing_fields)} is required")
 
         event_date = DateTime.validate_and_convert_isoformat_to_date(payload['event_date'], 'event_date')
         start_time = DateTime.validate_and_convert_isoformat_to_time(payload['start_time'], 'start_time')
@@ -48,6 +54,8 @@ class EventAPI(AuthenticatedAPIBase):
                 last_updated_at=now,
             )
             tx.add(event)
+
+            event.update_details(payload)
 
             event_details = event.as_dict()
         return event_details

@@ -1,3 +1,4 @@
+import copy
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, relationship
 
@@ -14,6 +15,7 @@ class Event(ModelBase):
 
     event_logo = relationship(UserUpload, foreign_keys="[Event.logo_id]")
     overview_video = relationship(UserUpload, foreign_keys="[Event.overview_video_id]")
+    details = None
 
     EVENT_NAME_MAX_CHAR_LENGTH = 35
 
@@ -62,7 +64,53 @@ class Event(ModelBase):
         if self.overview_video:
             event['overview_video'] = self.overview_video.as_dict(method='get')
 
+        def add_if_not_none(key, value):
+            if value is not None:
+                event[key] = value
+
+        add_if_not_none('volunteer_event', self.details.get('volunteer_event'))
+        add_if_not_none('event_link', self.details.get('event_link'))
+        add_if_not_none('people_needed', self.details.get('people_needed'))
+        add_if_not_none('employee_only', self.details.get('employee_only'))
+        add_if_not_none('open_for_outsiders', self.details.get('open_for_outsiders'))
+        add_if_not_none('hashtags', self.details.get('hashtags'))
+        add_if_not_none('contact_email', self.details.get('contact_email'))
+        add_if_not_none('contact_phone', self.details.get('contact_phone'))
+        add_if_not_none('contact_messaging', self.details.get('contact_messaging'))
+        add_if_not_none('rsvp_required', self.details.get('rsvp_required'))
+        add_if_not_none('rsvp_link', self.details.get('rsvp_link'))
+
         return event
+
+    def update_details(self, payload):
+        details = copy.deepcopy(self.details) if self.details else {}
+        details_fields = [
+            'volunteer_event',
+            'event_link',
+            'people_needed',
+            'employee_only',
+            'open_for_outsiders',
+            'hashtags',
+            'contact_email',
+            'contact_phone',
+            'contact_messaging',
+            'rsvp_required',
+            'rsvp_link',
+        ]
+        for field_name in details_fields:
+            if payload.get(field_name) is not None:
+                if payload[field_name]:
+                    details[field_name] = payload[field_name]
+                elif field_name in details:
+                    del details[field_name]
+
+        if payload.get('hashtags') is not None:
+            if payload['hashtags']:
+                details['hashtags'] = payload.get('hashtags')
+            elif 'hashtags' in details:
+                del details['hashtags']
+
+        self.details = details
 
     @classmethod
     def validate_event_name(cls, name):

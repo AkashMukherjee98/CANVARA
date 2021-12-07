@@ -60,6 +60,7 @@ class PostAPI(AuthenticatedAPIBase):
         if missing_fields:
             raise InvalidArgumentError(f"Invalid request: {', '.join(missing_fields)} missing")
 
+        name = Post.validate_and_convert_name(payload['name'])
         target_date = Post.validate_and_convert_target_date(payload['target_date'])
         size = Post.validate_and_convert_size(payload['size'])
         language = Language.validate_and_convert_language(payload['language'])
@@ -82,7 +83,7 @@ class PostAPI(AuthenticatedAPIBase):
                 owner=owner,
                 created_at=now,
                 last_updated_at=now,
-                name=payload['name'],
+                name=name,
                 post_type=post_type,
                 status=Post.DEFAULT_INITIAL_POST_STATUS.value,
                 description=payload.get('description'),
@@ -135,7 +136,9 @@ class PostAPI(AuthenticatedAPIBase):
                 'language': {
                     'validate_and_convert': Language.validate_and_convert_language
                 },
-                'name': {},
+                'name': {
+                    'validate_and_convert': Post.validate_and_convert_name
+                },
                 'people_needed': {},
                 'required_skills': {
                     'validate_and_convert': Post.validate_required_skills,

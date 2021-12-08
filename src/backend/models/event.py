@@ -115,15 +115,15 @@ class Event(ModelBase):
     @classmethod
     def validate_event_name(cls, name):
         if len(name) > cls.EVENT_NAME_MAX_CHAR_LENGTH:
-            raise DoesNotExistError(
-                f"Event name '{name}' Should not be more than {cls.EVENT_NAME_MAX_CHAR_LENGTH} characters.")
+            raise InvalidArgumentError(
+                f"Event name must not be more than {cls.EVENT_NAME_MAX_CHAR_LENGTH} characters.")
 
         return name
 
     @classmethod
     def validate_and_return_organizers(cls, tx, user_id, organizers):
         if len(set(organizers)) < len(organizers):
-            raise InvalidArgumentError("Duplicate organizer found in organizers.")
+            raise InvalidArgumentError("Duplicate organizer found in organizer list.")
 
         if user_id in organizers:
             raise InvalidArgumentError(

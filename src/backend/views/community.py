@@ -60,15 +60,11 @@ class CommunityAPI(AuthenticatedAPIBase):
             if payload.get('name'):
                 community.name = payload['name']
 
-            if payload.get('Moderator_1'):
-                community.Moderator_1 = payload['Moderator_1']
+            if payload.get('moderator_id'):
+                community.moderator = User.lookup(tx, payload['moderator_id'])
 
-            if payload.get('Moderator_2'):
-                community.Moderator_2 = payload['Moderator_2']
-
-            if payload.get('location'):
-                location = Location.lookup(tx, payload['location'])
-                community.location_id = location.id
+            if payload.get('location_id'):
+                community.location = Location.lookup(tx, payload['location_id'])
 
             community.update_details(payload)
 

@@ -22,7 +22,7 @@ class CommunityAPI(AuthenticatedAPIBase):
         community_id = str(uuid.uuid4())
         now = datetime.utcnow()
 
-        required_fields = {'name', 'location_id', 'language', 'type', 'mission'}
+        required_fields = {'name', 'location_id', 'language', 'type', 'mission', 'membership_approval'}
         missing_fields = required_fields - set(payload.keys())
         if missing_fields:
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
@@ -39,7 +39,7 @@ class CommunityAPI(AuthenticatedAPIBase):
                 moderator=moderator,
                 location=location,
                 language=payload.get('language'),
-                status='active',
+                status=CommunityStatus.ACTIVE.value,
                 created_at=now,
                 last_updated_at=now
             )

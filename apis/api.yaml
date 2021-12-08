@@ -1,9 +1,10 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.8.0
+  version: 0.10.0
 servers: []
 tags:
+  - name: communities
   - name: applications
   - name: customers
   - name: matches
@@ -208,6 +209,345 @@ paths:
               required:
                 - user_id
                 - name
+  /communities:
+    get:
+      summary: List all communities
+      tags:
+        - communities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Community'
+              examples: {}
+      operationId: list_communities
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new community
+      tags:
+        - communities
+      operationId: create_community
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                owner_id:
+                  type: string
+                moderator_id:
+                  type: string
+                location_id:
+                  type: string
+                language:
+                  type: string
+                type:
+                  type: string
+                membership_approval:
+                  type: string
+                mission:
+                  type: string
+                target_audience:
+                  type: string
+                activities:
+                  type: string
+                announcements:
+                  type: string
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                contact_phone:
+                  type: string
+                contact_messaging:
+                  type: string
+              required:
+                - name
+                - location_id
+                - language
+                - type
+                - mission
+                - membership_approval
+  '/communities/{community_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a community
+      tags:
+        - communities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+      operationId: get_community
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a community
+      tags:
+        - communities
+      operationId: update_community
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                moderator_id:
+                  type: string
+                location_id:
+                  type: string
+                logo_id:
+                  type: string
+                video_overview_id:
+                  type: string
+                mission:
+                  type: string
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                target_audience:
+                  type: string
+                activities:
+                  type: string
+                language:
+                  type: string
+                type:
+                  type: string
+                contact_email:
+                  type: string
+                contact_phone:
+                  type: string
+                contact_messaging:
+                  type: string
+                membership_approval:
+                  type: string
+              required:
+                - name
+                - location_id
+                - language
+                - type
+                - mission
+    delete:
+      summary: Delete a community
+      tags:
+        - communities
+      operationId: delete_community
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/community_logo':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    put:
+      summary: Create request for a community logo upload
+      operationId: upload_logo_image
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_logo.jpg
+                  content_type: image/jpg
+  '/communities/{community_id}/community_logo/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community logo upload
+      operationId: finalize_community_logo_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a community logo
+      operationId: delete_community_logo
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/overview_video':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    put:
+      summary: Create request for a community video upload
+      operationId: upload_community_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_video.mp4
+                  content_type: video/mp4
+  '/communities/{community_id}/overview_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community video upload
+      operationId: finalize_community_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a community video
+      operationId: delete_community_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /posts:
     get:
       summary: List all posts
@@ -1769,6 +2109,92 @@ paths:
         - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
+    Community:
+      title: Community
+      type: object
+      properties:
+        community_id:
+          type: string
+          description: Unique identifier for this community.
+        name:
+          type: string
+          description: Name of this community.
+        owner:
+          type: object
+          description: Information about the owner of this community.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        moderator:
+          type: object
+          description: Information about the owner of this community.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        location_id:
+          $ref: '#/components/schemas/Location'
+        logo_id:
+          $ref: '#/components/schemas/UserUpload' 
+        video_overview_id:
+          $ref: '#/components/schemas/UserUpload'
+        mission:
+          type: string
+          description: Mission of this community.
+        target_audience:
+          type: string
+          description: Target audiences of this community.
+        activities:
+          type: string
+          description: Activities of this community.
+        announcements:
+          type: string
+        type:
+          type: string
+          description: Types of this community.
+        membership_approval:
+          type: string
+          description: Membership of this community.
+        hashtags:
+          type: array
+          description: Hashtags of this community.
+          items:
+            type: string
+        contact_email:
+          type: string
+          description: Email of this community.
+        contact_phone:
+          type: string
+          description: Phone number of this community.
+        contact_messaging:
+          type: string
+          description: Messaging id of this community.
+      required:
+        - name
+        - location_id
+        - language
+        - type
+        - mission
+        - membership_approval
     Customer:
       title: Customer
       type: object

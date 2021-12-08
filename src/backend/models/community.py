@@ -34,7 +34,12 @@ class Community(ModelBase):
         details_fields = [
             'mission',
             'target_audience',
-            'activities'
+            'activities',
+            'announcements',
+            'membership_approval',
+            'contact_email',
+            'contact_phone',
+            'contact_messaging'
         ]
 
         for field_name in details_fields:
@@ -83,11 +88,16 @@ class Community(ModelBase):
             if value is not None:
                 community[key] = value
 
-        add_if_not_none('type', self.details.get('type'))
-        add_if_not_none('mission', self.details.get('mission'))
+        community['type'] = self.details.get('type')
+        community['mission'] = self.details.get('mission')
         add_if_not_none('target_audience', self.details.get('target_audience'))
         add_if_not_none('activities', self.details.get('activities'))
+        add_if_not_none('announcements', self.details.get('announcements'))
+        community['membership_approval'] = self.details.get('membership_approval')
         add_if_not_none('hashtags', self.details.get('hashtags'))
+        add_if_not_none('contact_email', self.details.get('contact_email'))
+        add_if_not_none('contact_phone', self.details.get('contact_phone'))
+        add_if_not_none('contact_messaging', self.details.get('contact_messaging'))
 
         return community
 

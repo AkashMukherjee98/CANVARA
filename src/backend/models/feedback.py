@@ -44,7 +44,7 @@ class Feedback(ModelBase):
             raise DoesNotExistError(f"Feedback for performer '{performer_id}' for post '{post_id}' does not exist")
         return feedback
 
-    def as_dict(self):
+    def as_dict(self, comments_only=False):
         feedback = {
             'feedback_id': self.id,
             'post_id': self.post.id,
@@ -63,10 +63,11 @@ class Feedback(ModelBase):
         if 'comments' in self.feedback:
             feedback['comments'] = self.feedback['comments']
 
-        if 'concerns' in self.feedback:
-            feedback['concerns'] = self.feedback['concerns']
+        if not comments_only:
+            if 'concerns' in self.feedback:
+                feedback['concerns'] = self.feedback['concerns']
 
-        if 'additional_comments' in self.feedback:
-            feedback['additional_comments'] = self.feedback['additional_comments']
+            if 'additional_comments' in self.feedback:
+                feedback['additional_comments'] = self.feedback['additional_comments']
 
         return feedback

@@ -22,23 +22,22 @@ class CommunityAPI(AuthenticatedAPIBase):
         community_id = str(uuid.uuid4())
         now = datetime.utcnow()
 
-        required_fields = {'name', 'location_id', 'language', 'type', 'mission', 'membership_approval'}
+        required_fields = {'name', 'location_id', 'type', 'membership_approval_required', 'mission'}
         missing_fields = required_fields - set(payload.keys())
         if missing_fields:
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
 
         with transaction() as tx:
-            owner = User.lookup(tx, current_cognito_jwt['sub'])
-            moderator = User.lookup(tx, payload['moderator_id'])
+            primary_moderator = User.lookup(tx, current_cognito_jwt['sub'])
+            secondary_moderator = User.lookup(tx, payload['secondary_moderator_id'])
             location = Location.lookup(tx, payload['location_id'])
 
             community = Community(
                 id=community_id,
                 name=payload.get('name'),
-                owner=owner,
-                moderator=moderator,
+                primary_moderator=primary_moderator,
+                secondary_moderator=secondary_moderator,
                 location=location,
-                language=payload.get('language'),
                 status=CommunityStatus.ACTIVE.value,
                 created_at=now,
                 last_updated_at=now
@@ -52,6 +51,8 @@ class CommunityAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def put(community_id):
+        now = datetime.utcnow()
+
         with transaction() as tx:
             community = Community.lookup(tx, community_id)
 
@@ -60,12 +61,13 @@ class CommunityAPI(AuthenticatedAPIBase):
             if payload.get('name'):
                 community.name = payload['name']
 
-            if payload.get('moderator_id'):
-                community.moderator = User.lookup(tx, payload['moderator_id'])
+            if payload.get('secondary_moderator_id'):
+                community.secondary_moderator = User.lookup(tx, payload['secondary_moderator_id'])
 
             if payload.get('location_id'):
                 community.location = Location.lookup(tx, payload['location_id'])
 
+            community.last_updated_at = now
             community.update_details(payload)
 
         # Fetch the community again from the database so the updates made above are reflected in the response
@@ -76,14 +78,17 @@ class CommunityAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def delete(community_id):
+        now = datetime.utcnow()
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             community = Community.lookup(tx, community_id)
 
-            # For now, only the post owner is allowed to delete the post
-            if community.owner_id != user.id:
-                raise NotAllowedError(f"User '{user.id}' is not the community owner")
+            # For now, only the primary moderator is allowed to delete the community
+            if community.primary_moderator_id != user.id:
+                raise NotAllowedError(f"User '{user.id}' is not the community primary moderator")
             community.status = CommunityStatus.DELETED.value
+            community.last_updated_at = now
         return make_no_content_response()
 
     @staticmethod

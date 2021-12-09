@@ -223,7 +223,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Community'
-              examples: {}
       operationId: list_communities
       description: ''
       security:
@@ -250,36 +249,47 @@ paths:
               properties:
                 name:
                   type: string
-                owner_id:
+                  description: Name of this community.
+                secondary_moderator_id:
                   type: string
-                moderator_id:
-                  type: string
+                  description: Information about the secondary moderator of the community.
                 location_id:
                   type: string
-                language:
-                  type: string
+                  description: Location reference of this community.
                 type:
                   type: string
-                membership_approval:
-                  type: string
+                  description: Type of this community.
+                membership_approval_required:
+                  type: boolean
+                  description: Membership approval is required or not for the community.
                 mission:
                   type: string
+                  description: Mission of this community.
                 target_audience:
                   type: string
+                  description: Target audiences of this community.
                 activities:
                   type: string
+                  description: Activities of this community.
                 announcements:
-                  type: string
+                  type: array
+                  description: Announcements of this community.
+                  items:
+                    type: string
                 hashtags:
                   type: array
+                  description: Hashtags of this community.
                   items:
                     type: string
                 contact_email:
                   type: string
+                  description: Email of this community.
                 contact_phone:
                   type: string
+                  description: Phone number of this community.
                 contact_messaging:
                   type: string
+                  description: Messaging id of this community.
               required:
                 - name
                 - location_id
@@ -330,42 +340,47 @@ paths:
               properties:
                 name:
                   type: string
-                moderator_id:
+                  description: Name of this community.
+                secondary_moderator_id:
                   type: string
+                  description: Information about the secondary moderator of the community.
                 location_id:
                   type: string
-                logo_id:
-                  type: string
-                video_overview_id:
-                  type: string
-                mission:
-                  type: string
-                hashtags:
-                  type: array
-                  items:
-                    type: string
-                target_audience:
-                  type: string
-                activities:
-                  type: string
-                language:
-                  type: string
+                  description: Location reference of this community.
                 type:
                   type: string
+                  description: Type of this community.
+                membership_approval_required:
+                  type: boolean
+                  description: Membership approval is required or not for the community.
+                mission:
+                  type: string
+                  description: Mission of this community.
+                target_audience:
+                  type: string
+                  description: Target audiences of this community.
+                activities:
+                  type: string
+                  description: Activities of this community.
+                announcements:
+                  type: array
+                  description: Announcements of this community.
+                  items:
+                    type: string
+                hashtags:
+                  type: array
+                  description: Hashtags of this community.
+                  items:
+                    type: string
                 contact_email:
                   type: string
+                  description: Email of this community.
                 contact_phone:
                   type: string
+                  description: Phone number of this community.
                 contact_messaging:
                   type: string
-                membership_approval:
-                  type: string
-              required:
-                - name
-                - location_id
-                - language
-                - type
-                - mission
+                  description: Messaging id of this community.
     delete:
       summary: Delete a community
       tags:
@@ -2119,9 +2134,9 @@ components:
         name:
           type: string
           description: Name of this community.
-        owner:
+        primary_moderator:
           type: object
-          description: Information about the owner of this community.
+          description: Information about the owner/primary moderator of the community.
           required:
             - user_id
             - name
@@ -2135,9 +2150,9 @@ components:
             profile_picture_url:
               type: string
               description: The URL of user's profile picture.
-        moderator:
+        secondary_moderator:
           type: object
-          description: Information about the owner of this community.
+          description: Information about the secondary moderator of the community.
           required:
             - user_id
             - name
@@ -2151,12 +2166,18 @@ components:
             profile_picture_url:
               type: string
               description: The URL of user's profile picture.
-        location_id:
+        location:
           $ref: '#/components/schemas/Location'
-        logo_id:
+        community_logo:
           $ref: '#/components/schemas/UserUpload' 
-        video_overview_id:
+        overview_video:
           $ref: '#/components/schemas/UserUpload'
+        type:
+          type: string
+          description: Types of this community.
+        membership_approval_required:
+          type: boolean
+          description: Membership approval is required or not for the community.
         mission:
           type: string
           description: Mission of this community.
@@ -2167,13 +2188,12 @@ components:
           type: string
           description: Activities of this community.
         announcements:
-          type: string
-        type:
-          type: string
-          description: Types of this community.
-        membership_approval:
-          type: string
-          description: Membership of this community.
+          type: array
+          description: Announcements of this community.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/Announcement'
+              - type: string
         hashtags:
           type: array
           description: Hashtags of this community.
@@ -2191,10 +2211,21 @@ components:
       required:
         - name
         - location_id
-        - language
         - type
+        - membership_approval_required
         - mission
-        - membership_approval
+    Announcement:
+      title: Announcemen for a community.
+      type: object
+      properties:
+        date:
+          type: string
+          description: Date of the announcement.
+        announcement:
+          type: string
+          description: Announcement text.
+      required:
+        - announcement
     Customer:
       title: Customer
       type: object

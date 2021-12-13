@@ -5,9 +5,9 @@ from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 
 from backend.common.http import make_no_content_response
-from backend.common.exceptions import InvalidArgumentError, NotAllowedError
+from backend.common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
-from backend.models.community import Community, CommunityStatus
+from backend.models.community import Community, CommunityStatus, CommunityAnnouncement, CommunityAnnouncementStatus
 from backend.models.user import User
 from backend.models.location import Location
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -192,4 +192,85 @@ class CommunityVideoByIdAPI(AuthenticatedAPIBase):
 
             community.video_overview_id = None
             user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+
+class CommunityAnnouncementAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def post(community_id):
+        payload = request.json
+        community_announcement_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+
+            if community is None:
+                raise DoesNotExistError(f"Community '{community_id}' does not exist.")
+
+            if user not in [community.primary_moderator, community.secondary_moderator]:
+                raise NotAllowedError(f"User '{user.id}' is not allowed to add announcement for this community.")
+
+            if 'announcement' not in payload.keys():
+                raise InvalidArgumentError("Field: announcement is required.")
+
+            community_announcement = CommunityAnnouncement(
+                id=community_announcement_id,
+                community=community,
+                creator=user,
+                announcement=payload.get('announcement'),
+                status=CommunityAnnouncementStatus.ACTIVE.value,
+                created_at=now,
+                last_updated_at=now
+            )
+            tx.add(community_announcement)
+
+        return {
+            'announcement_id': community_announcement_id,
+        }
+
+    @staticmethod
+    def put(community_id, announcement_id):
+        payload = request.json
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community_announcement = CommunityAnnouncement.lookup(tx, announcement_id)
+
+            if community_announcement.community_id != community_id:
+                raise DoesNotExistError(f"Announcement '{announcement_id}' does not belongs to community '{community_id}'.")
+
+            community = community_announcement.community
+            if user not in [community.primary_moderator, community.secondary_moderator]:
+                raise NotAllowedError(f"User '{user.id}' is not allowed to update this announcement.")
+
+            if 'announcement' not in payload.keys():
+                raise InvalidArgumentError("Field: announcement is required.")
+
+            community_announcement.announcement = payload.get('announcement')
+            community_announcement.last_updated_at = now
+
+        return {
+            'announcement_id': community_announcement.id,
+        }
+
+    @staticmethod
+    def delete(community_id, announcement_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community_announcement = CommunityAnnouncement.lookup(tx, announcement_id)
+
+            if community_announcement.community_id != community_id:
+                raise DoesNotExistError(f"Announcement '{announcement_id}' does not belongs to Community '{community_id}'.")
+
+            community = community_announcement.community
+            if user not in [community.primary_moderator, community.secondary_moderator]:
+                raise NotAllowedError(f"User '{user.id}' is not allowed to delete this announcement.")
+
+            community_announcement.status = CommunityAnnouncementStatus.DELETED.value
+            community_announcement.last_updated_at = now
         return make_no_content_response()

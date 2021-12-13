@@ -13,7 +13,8 @@ def register_api(app, view, endpoint, url, methods):
 def register_community_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.community import (
-        CommunityAPI, CommunityLogoAPI, CommunityLogoByIdAPI, CommunityVideoAPI, CommunityVideoByIdAPI
+        CommunityAPI, CommunityLogoAPI, CommunityLogoByIdAPI, CommunityVideoAPI, CommunityVideoByIdAPI,
+        CommunityAnnouncementAPI
         )
     # pylint: enable=import-outside-toplevel
 
@@ -30,6 +31,12 @@ def register_community_apis(app):
     register_api(
         app, CommunityVideoByIdAPI, 'community_video_by_id_api', '/communities/<community_id>/overview_video/<upload_id>', [
             'PUT', 'DELETE'])
+
+    register_api(
+        app, CommunityAnnouncementAPI, 'community_announcement_api', '/communities/<community_id>/announcements', ['POST'])
+    register_api(
+        app, CommunityAnnouncementAPI, 'community_announcement_by_id_api',
+        '/communities/<community_id>/announcements/<announcement_id>', ['PUT', 'DELETE'])
 
 
 def register_application_apis(app):

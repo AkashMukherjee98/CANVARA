@@ -1,6 +1,5 @@
 import copy
 from enum import Enum
-from datetime import datetime
 
 from sqlalchemy import and_
 from sqlalchemy.orm import relationship, noload
@@ -34,18 +33,6 @@ class CommunityType():  # pylint: disable=too-few-public-methods
         return communty_type
 
 
-class Announcements:  # pylint: disable=too-few-public-methods
-    def __init__(self, text):
-        self.date = datetime.utcnow().date().isoformat()
-        self.text = text
-
-    def as_dict(self):
-        return {
-            'date': self.date,
-            'announcement': self.text
-        }
-
-
 class Community(ModelBase):
     __tablename__ = 'community'
 
@@ -54,6 +41,7 @@ class Community(ModelBase):
     location = relationship(Location)
     community_logo = relationship(UserUpload, foreign_keys="[Community.logo_id]")
     overview_video = relationship(UserUpload, foreign_keys="[Community.video_overview_id]")
+    announcements = relationship("CommunityAnnouncement")
     details = None
 
     def update_details(self, payload):
@@ -81,29 +69,10 @@ class Community(ModelBase):
             elif 'type' in details:
                 del details['type']
 
-        if payload.get('announcements') is not None:
-            self.update_announcements(payload, details)
-
         if payload.get('hashtags') is not None:
             self.update_hashtags(payload, details)
 
         self.details = details
-
-    @classmethod
-    def update_announcements(cls, payload, details):
-        if not isinstance(payload['announcements'], list):
-            raise InvalidArgumentError("Announcements should be a list of text.")
-
-        if len(payload['announcements']) > 0:
-            announcements = []
-            if 'announcements' in details:
-                announcements = details['announcements']
-
-            for announcement in payload['announcements']:
-                announcements.append(Announcements(announcement).as_dict())
-            details['announcements'] = announcements
-        else:
-            del details['announcements']
 
     @classmethod
     def update_hashtags(cls, payload, details):
@@ -140,12 +109,14 @@ class Community(ModelBase):
         community['mission'] = self.details.get('mission')
         add_if_not_none('target_audience', self.details.get('target_audience'))
         add_if_not_none('activities', self.details.get('activities'))
-        add_if_not_none('announcements', self.details.get('announcements'))
         community['membership_approval_required'] = self.details.get('membership_approval_required')
         add_if_not_none('hashtags', self.details.get('hashtags'))
         add_if_not_none('contact_email', self.details.get('contact_email'))
         add_if_not_none('contact_phone', self.details.get('contact_phone'))
         add_if_not_none('contact_messaging', self.details.get('contact_messaging'))
+
+        if self.announcements:
+            community['announcements'] = [announcement.as_dict() for announcement in self.announcements]
 
         return community
 
@@ -167,9 +138,43 @@ class Community(ModelBase):
         ))
 
         query_options = [
-            noload(Community.secondary_moderator)
+            noload(Community.secondary_moderator),
+            noload(Community.announcements)
         ]
 
         communities = communities.options(query_options)
 
         return communities
+
+
+class CommunityAnnouncementStatus(Enum):
+    # Community is available for users
+    ACTIVE = 'active'
+
+    # Community has been deleted
+    DELETED = 'deleted'
+
+
+class CommunityAnnouncement(ModelBase):
+    __tablename__ = 'community_announcement'
+
+    community = relationship(Community)
+    creator = relationship(User)
+
+    @classmethod
+    def lookup(cls, tx, community_announcement_id):
+        community_announcement = tx.query(cls).where(and_(
+            cls.id == community_announcement_id,
+            cls.status == CommunityAnnouncementStatus.ACTIVE.value
+        )).one_or_none()
+        if community_announcement is None:
+            raise DoesNotExistError(f"Announcement '{community_announcement_id}' does not exist or has been deleted.")
+        return community_announcement
+
+    def as_dict(self):
+        return {
+            'announcement_id': self.id,
+            'creator': self.creator.as_summary_dict(),
+            'date': self.created_at.isoformat(),
+            'announcement': self.announcement
+        }

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.10.0
+  version: 0.11.0
 servers: []
 tags:
   - name: communities
@@ -556,6 +556,92 @@ paths:
     delete:
       summary: Delete a community video
       operationId: delete_community_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/announcements':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    post:
+      summary: Add a community announcement
+      operationId: add_community_announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                community_id:
+                type: string
+                description: Unique identifier for this community.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcement:
+                  type: string
+                  description: Announcement text.
+              required:
+                - announcement
+  '/communities/{community_id}/announcements/{announcement_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: announcement_id
+        in: path
+        required: true
+        description: Unique id of the announcement.
+    put:
+      summary: Update community announcement
+      operationId: update_community_announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                community_id:
+                type: string
+                description: Unique identifier for this community.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcement:
+                  type: string
+                  description: Announcement text.
+              required:
+                - announcement
+    delete:
+      summary: Delete a community announcement
+      operationId: delete_community_announcement
       responses:
         '204':
           description: No Content
@@ -2192,7 +2278,7 @@ components:
           description: Announcements of this community.
           items:
             anyOf:
-              - $ref: '#/components/schemas/Announcement'
+              - $ref: '#/components/schemas/CommunityAnnouncement'
               - type: string
         hashtags:
           type: array
@@ -2214,13 +2300,19 @@ components:
         - type
         - membership_approval_required
         - mission
-    Announcement:
+    CommunityAnnouncement:
       title: Announcemen for a community.
       type: object
       properties:
+        announcement_id:
+          type: string
+          description: Unique identifier for the announcement.
+        creator:
+          $ref: '#/components/schemas/UserSummary'
+          description: Creator of the announcement.
         date:
           type: string
-          description: Date of the announcement.
+          description: 'Date of the announcement, in ISO 8601 format.'
         announcement:
           type: string
           description: Announcement text.
@@ -2331,6 +2423,19 @@ components:
         - customer_id
         - user_id
         - name
+    UserSummary:
+      title: User Summary
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier for the user.
+        name:
+          type: string
+          description: Name of the user.
+        profile_picture_url:
+          type: string
+          description: The URL of user's profile picture.
     Post:
       title: Post
       type: object

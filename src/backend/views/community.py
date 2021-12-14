@@ -322,3 +322,57 @@ class CommunityMembershipAPI(AuthenticatedAPIBase):
             community_membership.last_updated_at = now
 
         return make_no_content_response()
+
+
+class CommunityGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
+    @staticmethod
+    def put(community_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+        metadata = {
+            'resource': 'community',
+            'resource_id': community_id,
+            'type': 'community_gallery',
+        }
+        return CommunityGalleryAPI.create_user_upload(
+            user.id, request.json['filename'], request.json['content_type'], 'communities', metadata)
+
+
+class CommunityGalleryByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(community_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            community = Community.lookup(tx, community_id)
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+            if status == UserUploadStatus.UPLOADED:
+                community.add_gallery_media(user_upload)
+                user_upload.status = status.value
+
+        return {
+            'status': user_upload.status,
+        }
+
+    @staticmethod
+    def delete(community_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            community = Community.lookup(tx, community_id)
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+            community.gallery.remove(user_upload)
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()

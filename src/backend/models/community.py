@@ -45,7 +45,11 @@ class Community(ModelBase):
         "and_(CommunityAnnouncement.community_id==Community.id, CommunityAnnouncement.status=='active')"))
     members = relationship("CommunityMembership", primaryjoin=(
         "and_(CommunityMembership.community_id==Community.id, CommunityMembership.status=='joined')"))
+    gallery = relationship("UserUpload", secondary='community_gallery')
     details = None
+
+    MAX_GALLERY_IMAGE = 10
+    MAX_GALLERY_VIDEO = 1
 
     def update_details(self, payload):
         details = copy.deepcopy(self.details) if self.details else {}
@@ -124,6 +128,11 @@ class Community(ModelBase):
         if self.members:
             community['members'] = [member.as_dict() for member in self.members]
 
+        gallery = [media.as_dict(method='get') for media in self.gallery if media.is_video()]
+        gallery.extend([media.as_dict(method='get') for media in self.gallery if media.is_image()])
+        if gallery:
+            community['gallery'] = gallery
+
         return community
 
     @classmethod
@@ -146,12 +155,32 @@ class Community(ModelBase):
         query_options = [
             noload(Community.secondary_moderator),
             noload(Community.announcements),
-            noload(Community.members)
+            noload(Community.members),
+            noload(Community.gallery)
         ]
 
         communities = communities.options(query_options)
 
         return communities
+
+    def add_gallery_media(self, media):
+        # Community can have limited number of images and video for gallery
+        existing_gallery = []
+        max_size = -1
+        if media.is_video():
+            existing_gallery = [fact for fact in self.gallery if fact.is_video()]
+            max_size = self.MAX_GALLERY_VIDEO
+        elif media.is_image():
+            existing_gallery = [fact for fact in self.gallery if fact.is_image()]
+            max_size = self.MAX_GALLERY_IMAGE
+        else:
+            raise InvalidArgumentError(f"Invalid gallery media type: '{media.content_type}'")
+
+        if len(existing_gallery) >= max_size:
+            sorted_facts = sorted(existing_gallery, key=lambda fact: fact.created_at)
+            for fact in sorted_facts[:len(sorted_facts) - max_size + 1]:
+                self.gallery.remove(fact)
+        self.gallery.append(media)
 
 
 class CommunityAnnouncementStatus(Enum):

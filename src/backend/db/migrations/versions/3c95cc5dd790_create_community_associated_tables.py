@@ -44,7 +44,14 @@ def upgrade():
         sa.Column('last_updated_at', sa.DateTime, nullable=False)
     )
 
+    op.create_table(
+        'community_gallery',
+        sa.Column('community_id', UUID, sa.ForeignKey('community.id'), primary_key=True),
+        sa.Column('upload_id', UUID, sa.ForeignKey('user_upload.id'), primary_key=True),
+    )
+
 
 def downgrade():
     op.drop_table('community_announcement')
     op.drop_table('community_membership')
+    op.drop_table('community_gallery')

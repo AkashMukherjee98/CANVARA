@@ -683,6 +683,90 @@ paths:
         - communities
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/gallery':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a community gallery image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_image.jpg
+                  content_type: image/jpeg
+      tags:
+        - communities
+  '/communities/{community_id}/gallery/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community gallery image or video upload
+      operationId: finalize_community_gallery_media
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - communities
+    delete:
+      summary: Delete a community gallery image or video
+      operationId: delete_community_gallery_media
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - communities
   /posts:
     get:
       summary: List all posts
@@ -2320,6 +2404,12 @@ components:
           items:
             anyOf:
               - $ref: '#/components/schemas/CommunityMembers'
+              - type: string
+        gallery:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
               - type: string
         hashtags:
           type: array

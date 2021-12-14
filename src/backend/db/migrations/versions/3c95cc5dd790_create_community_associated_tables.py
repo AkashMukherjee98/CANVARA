@@ -18,6 +18,11 @@ depends_on = None
 
 
 def upgrade():
+    # Remove deprecated `announcements` key from community table
+    op.execute(
+        "UPDATE community SET details = details - 'announcements'"
+    )
+
     op.create_table(
         'community_announcement',
         sa.Column('id', UUID, primary_key=True),
@@ -29,6 +34,17 @@ def upgrade():
         sa.Column('last_updated_at', sa.DateTime, nullable=False)
     )
 
+    op.create_table(
+        'community_membership',
+        sa.Column('id', UUID, primary_key=True),
+        sa.Column('community_id', UUID, sa.ForeignKey('community.id'), nullable=False),
+        sa.Column('member_id', UUID, sa.ForeignKey('canvara_user.id'), nullable=False),
+        sa.Column('status', sa.String(127), nullable=False),
+        sa.Column('created_at', sa.DateTime, nullable=False),
+        sa.Column('last_updated_at', sa.DateTime, nullable=False)
+    )
+
 
 def downgrade():
     op.drop_table('community_announcement')
+    op.drop_table('community_membership')

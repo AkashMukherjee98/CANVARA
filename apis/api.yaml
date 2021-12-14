@@ -581,8 +581,8 @@ paths:
             application/json:
               properties:
                 community_id:
-                type: string
-                description: Unique identifier for this community.
+                  type: string
+                  description: Unique identifier for this community.
       tags:
         - communities
       security:
@@ -642,6 +642,40 @@ paths:
     delete:
       summary: Delete a community announcement
       operationId: delete_community_announcement
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/members':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    post:
+      summary: Join as a community member
+      operationId: join_community_member
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                status:
+                  type: string
+                  description: Status for successful joining.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Disjoin a community member
+      operationId: disjoin_community_member
       responses:
         '204':
           description: No Content
@@ -2280,6 +2314,13 @@ components:
             anyOf:
               - $ref: '#/components/schemas/CommunityAnnouncement'
               - type: string
+        members:
+          type: array
+          description: Members of this community.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/CommunityMembers'
+              - type: string
         hashtags:
           type: array
           description: Hashtags of this community.
@@ -2318,6 +2359,19 @@ components:
           description: Announcement text.
       required:
         - announcement
+    CommunityMembers:
+      title: Members for a community.
+      type: object
+      properties:
+        member_id:
+          type: string
+          description: Unique identifier for the membership.
+        member:
+          $ref: '#/components/schemas/UserSummary'
+          description: Profile of the member.
+        date:
+          type: string
+          description: 'Date of joining, in ISO 8601 format.'
     Customer:
       title: Customer
       type: object

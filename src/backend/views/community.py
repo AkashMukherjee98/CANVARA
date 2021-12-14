@@ -7,7 +7,9 @@ from flask_cognito import current_cognito_jwt
 from backend.common.http import make_no_content_response
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
-from backend.models.community import Community, CommunityStatus, CommunityAnnouncement, CommunityAnnouncementStatus
+from backend.models.community import Community, CommunityStatus
+from backend.models.community import CommunityAnnouncement, CommunityAnnouncementStatus
+from backend.models.community import CommunityMembership, CommunityMembershipStatus
 from backend.models.user import User
 from backend.models.location import Location
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -179,9 +181,9 @@ class CommunityVideoByIdAPI(AuthenticatedAPIBase):
                 community.video_overview_id = user_upload.id
                 user_upload.status = status.value
 
-        return {
-            'status': user_upload.status,
-        }
+            return {
+                'status': user_upload.status,
+            }
 
     @staticmethod
     def delete(community_id, upload_id):
@@ -226,9 +228,9 @@ class CommunityAnnouncementAPI(AuthenticatedAPIBase):
             )
             tx.add(community_announcement)
 
-        return {
-            'announcement_id': community_announcement_id,
-        }
+            return {
+                'announcement_id': community_announcement_id,
+            }
 
     @staticmethod
     def put(community_id, announcement_id):
@@ -252,9 +254,9 @@ class CommunityAnnouncementAPI(AuthenticatedAPIBase):
             community_announcement.announcement = payload.get('announcement')
             community_announcement.last_updated_at = now
 
-        return {
-            'announcement_id': community_announcement.id,
-        }
+            return {
+                'announcement_id': community_announcement.id,
+            }
 
     @staticmethod
     def delete(community_id, announcement_id):
@@ -273,4 +275,50 @@ class CommunityAnnouncementAPI(AuthenticatedAPIBase):
 
             community_announcement.status = CommunityAnnouncementStatus.DELETED.value
             community_announcement.last_updated_at = now
+        return make_no_content_response()
+
+
+class CommunityMembershipAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def post(community_id):
+        membership_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            member = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+            community_membership = CommunityMembership.lookup(tx, member.id, community.id)
+
+            if community_membership is not None:
+                raise InvalidArgumentError(f"User '{member.id}' is already a member of this community '{community_id}'")
+
+            membership_join = CommunityMembership(
+                id=membership_id,
+                member=member,
+                community=community,
+                status=CommunityMembershipStatus.JOINED.value,
+                created_at=now,
+                last_updated_at=now
+            )
+            tx.add(membership_join)
+
+            return {
+                'status': membership_join.status,
+            }
+
+    @staticmethod
+    def delete(community_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            member = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+            community_membership = CommunityMembership.lookup(tx, member.id, community.id)
+
+            if community_membership is None:
+                raise DoesNotExistError(f"User '{member.id}' is not a member of this community '{community_id}'")
+
+            community_membership.status = CommunityMembershipStatus.DISJOINED.value
+            community_membership.last_updated_at = now
+
         return make_no_content_response()

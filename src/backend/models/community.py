@@ -41,7 +41,10 @@ class Community(ModelBase):
     location = relationship(Location)
     community_logo = relationship(UserUpload, foreign_keys="[Community.logo_id]")
     overview_video = relationship(UserUpload, foreign_keys="[Community.video_overview_id]")
-    announcements = relationship("CommunityAnnouncement")
+    announcements = relationship("CommunityAnnouncement", primaryjoin=(
+        "and_(CommunityAnnouncement.community_id==Community.id, CommunityAnnouncement.status=='active')"))
+    members = relationship("CommunityMembership", primaryjoin=(
+        "and_(CommunityMembership.community_id==Community.id, CommunityMembership.status=='joined')"))
     details = None
 
     def update_details(self, payload):
@@ -118,6 +121,9 @@ class Community(ModelBase):
         if self.announcements:
             community['announcements'] = [announcement.as_dict() for announcement in self.announcements]
 
+        if self.members:
+            community['members'] = [member.as_dict() for member in self.members]
+
         return community
 
     @classmethod
@@ -139,7 +145,8 @@ class Community(ModelBase):
 
         query_options = [
             noload(Community.secondary_moderator),
-            noload(Community.announcements)
+            noload(Community.announcements),
+            noload(Community.members)
         ]
 
         communities = communities.options(query_options)
@@ -177,4 +184,42 @@ class CommunityAnnouncement(ModelBase):
             'creator': self.creator.as_summary_dict(),
             'date': self.created_at.isoformat(),
             'announcement': self.announcement
+        }
+
+
+class CommunityMembershipStatus(Enum):
+    # Community member has been joined
+    JOINED = 'joined'
+
+    # Community member has been disjoined
+    DISJOINED = 'disjoined'
+
+    @classmethod
+    def lookup(cls, status):
+        try:
+            return CommunityMembershipStatus(status.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported status: {status}.") from ex
+
+
+class CommunityMembership(ModelBase):
+    __tablename__ = 'community_membership'
+
+    community = relationship(Community)
+    member = relationship(User)
+
+    @classmethod
+    def lookup(cls, tx, user_id, community_id):
+        membership = tx.query(cls).where(and_(
+            cls.member_id == user_id,
+            cls.community_id == community_id,
+            cls.status == CommunityMembershipStatus.JOINED.value
+        )).one_or_none()
+        return membership
+
+    def as_dict(self):
+        return {
+            'member_id': self.id,
+            'member': self.member.as_summary_dict(),
+            'date': self.created_at.isoformat()
         }

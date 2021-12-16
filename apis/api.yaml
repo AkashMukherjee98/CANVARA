@@ -666,6 +666,9 @@ paths:
           content:
             application/json:
               properties:
+                membership_id:
+                  type: string
+                  description: Unique identifier for membership.
                 status:
                   type: string
                   description: Status for successful joining.
@@ -683,6 +686,51 @@ paths:
         - communities
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/members/{membership_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: membership_id
+        in: path
+        required: true
+        description: Unique identifier for membership.
+    put:
+      summary: Approve or Disapprove community membership
+      operationId: confirm_community_membership
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the approve or disapprove
+                  enum:
+                    - active
+                    - disapproved
+              required:
+                - status
   '/communities/{community_id}/gallery':
     parameters:
       - schema:
@@ -2403,7 +2451,7 @@ components:
           description: Members of this community.
           items:
             anyOf:
-              - $ref: '#/components/schemas/CommunityMembers'
+              - $ref: '#/components/schemas/CommunityMember'
               - type: string
         gallery:
           type: array
@@ -2432,7 +2480,7 @@ components:
         - membership_approval_required
         - mission
     CommunityAnnouncement:
-      title: Announcemen for a community.
+      title: Announcement for a community.
       type: object
       properties:
         announcement_id:
@@ -2449,16 +2497,19 @@ components:
           description: Announcement text.
       required:
         - announcement
-    CommunityMembers:
+    CommunityMember:
       title: Members for a community.
       type: object
       properties:
-        member_id:
+        membership_id:
           type: string
           description: Unique identifier for the membership.
         member:
           $ref: '#/components/schemas/UserSummary'
           description: Profile of the member.
+        status:
+          type: string
+          description: Membership status, either pending for approval or active.
         date:
           type: string
           description: 'Date of joining, in ISO 8601 format.'

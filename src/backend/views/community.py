@@ -287,23 +287,40 @@ class CommunityMembershipAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             member = User.lookup(tx, current_cognito_jwt['sub'])
             community = Community.lookup(tx, community_id)
-            community_membership = CommunityMembership.lookup(tx, member.id, community.id)
+            community_membership = CommunityMembership.find(
+                tx, community.id, member.id, [
+                    CommunityMembershipStatus.PENDINGAPPROVAL.value,
+                    CommunityMembershipStatus.DISAPPROVED.value,
+                    CommunityMembershipStatus.ACTIVE.value])
 
-            if community_membership is not None:
-                raise InvalidArgumentError(f"User '{member.id}' is already a member of this community '{community_id}'")
+            if (community_membership is not None
+                    and community_membership.status == CommunityMembershipStatus.PENDINGAPPROVAL.value):
+                raise InvalidArgumentError(f"Membership '{community_membership.id}' is pending for moderator approval.")
 
-            membership_join = CommunityMembership(
+            if (community_membership is not None
+                    and community_membership.status == CommunityMembershipStatus.DISAPPROVED.value):
+                raise InvalidArgumentError(f"Membership '{community_membership.id}' is disapproved by the moderator.")
+
+            if community_membership is not None and community_membership.status == CommunityMembershipStatus.ACTIVE.value:
+                raise InvalidArgumentError(f"Membership '{community_membership.id}' is already active for user.")
+
+            community_membership_status = CommunityMembershipStatus.ACTIVE.value
+            if community.details['membership_approval_required'] is True:
+                community_membership_status = CommunityMembershipStatus.PENDINGAPPROVAL.value
+
+            membership_create = CommunityMembership(
                 id=membership_id,
                 member=member,
                 community=community,
-                status=CommunityMembershipStatus.JOINED.value,
+                status=community_membership_status,
                 created_at=now,
                 last_updated_at=now
             )
-            tx.add(membership_join)
+            tx.add(membership_create)
 
             return {
-                'status': membership_join.status,
+                'membership_id': membership_create.id,
+                'status': membership_create.status,
             }
 
     @staticmethod
@@ -313,15 +330,42 @@ class CommunityMembershipAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             member = User.lookup(tx, current_cognito_jwt['sub'])
             community = Community.lookup(tx, community_id)
-            community_membership = CommunityMembership.lookup(tx, member.id, community.id)
+            community_membership = CommunityMembership.find(tx, community.id, member.id, [
+                CommunityMembershipStatus.PENDINGAPPROVAL.value, CommunityMembershipStatus.ACTIVE.value])
 
             if community_membership is None:
-                raise DoesNotExistError(f"User '{member.id}' is not a member of this community '{community_id}'")
+                raise DoesNotExistError(f"User is not a member of this community '{community_id}'")
 
             community_membership.status = CommunityMembershipStatus.DISJOINED.value
             community_membership.last_updated_at = now
 
         return make_no_content_response()
+
+
+class CommunityMembershipByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(community_id, membership_id):
+        now = datetime.utcnow()
+        status = CommunityMembershipStatus.lookup(request.json['status'])
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+            community_membership = CommunityMembership.lookup(tx, membership_id)
+
+            if community_membership is None:
+                raise DoesNotExistError(f"Membership ID for Community '{community.id}' is not valid.")
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+            if status in [CommunityMembershipStatus.DISAPPROVED, CommunityMembershipStatus.ACTIVE]:
+                community_membership.status = status.value
+                community_membership.last_updated_at = now
+
+        return {
+            'status': community_membership.status,
+        }
 
 
 class CommunityGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):

@@ -44,11 +44,14 @@ class Community(ModelBase):
     announcements = relationship("CommunityAnnouncement", primaryjoin=(
         "and_(CommunityAnnouncement.community_id==Community.id, CommunityAnnouncement.status=='active')"))
     members = relationship("CommunityMembership", primaryjoin=(
-        "and_(CommunityMembership.community_id==Community.id, CommunityMembership.status=='joined')"))
+        "and_(CommunityMembership.community_id==Community.id, "
+        "or_(CommunityMembership.status == 'pendingapproval', "
+        "CommunityMembership.status == 'disapproved', "
+        "CommunityMembership.status == 'active'))"))
     gallery = relationship("UserUpload", secondary='community_gallery')
     details = None
 
-    MAX_GALLERY_IMAGE = 10
+    MAX_GALLERY_IMAGE = 50
     MAX_GALLERY_VIDEO = 1
 
     def update_details(self, payload):
@@ -184,10 +187,10 @@ class Community(ModelBase):
 
 
 class CommunityAnnouncementStatus(Enum):
-    # Community is available for users
+    # Community announcement is available for community
     ACTIVE = 'active'
 
-    # Community has been deleted
+    # Community announcement has been deleted
     DELETED = 'deleted'
 
 
@@ -217,8 +220,14 @@ class CommunityAnnouncement(ModelBase):
 
 
 class CommunityMembershipStatus(Enum):
-    # Community member has been joined
-    JOINED = 'joined'
+    # Community membership is pending for approval
+    PENDINGAPPROVAL = 'pendingapproval'
+
+    # Community membership is declined by the approver
+    DISAPPROVED = 'disapproved'
+
+    # Community member has been active
+    ACTIVE = 'active'
 
     # Community member has been disjoined
     DISJOINED = 'disjoined'
@@ -238,17 +247,25 @@ class CommunityMembership(ModelBase):
     member = relationship(User)
 
     @classmethod
-    def lookup(cls, tx, user_id, community_id):
+    def lookup(cls, tx, membership_id):
         membership = tx.query(cls).where(and_(
-            cls.member_id == user_id,
+            cls.id == membership_id
+        )).one_or_none()
+        return membership
+
+    @classmethod
+    def find(cls, tx, community_id, user_id, status):
+        membership = tx.query(cls).where(and_(
             cls.community_id == community_id,
-            cls.status == CommunityMembershipStatus.JOINED.value
+            cls.member_id == user_id,
+            cls.status.in_(status)
         )).one_or_none()
         return membership
 
     def as_dict(self):
         return {
-            'member_id': self.id,
+            'membership_id': self.id,
             'member': self.member.as_summary_dict(),
-            'date': self.created_at.isoformat()
+            'status': self.status,
+            'create_date': self.created_at.isoformat()
         }

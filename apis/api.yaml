@@ -4,13 +4,13 @@ info:
   version: 0.9.0
 servers: []
 tags:
+  - name: events
   - name: applications
   - name: customers
   - name: matches
   - name: notifications
   - name: onboarding
   - name: posts
-  - name: events
   - name: users
 paths:
   /customers:
@@ -246,39 +246,31 @@ paths:
             schema:
               type: object
               properties:
+                secondary_organizer_id:
+                  type: string
+                  description: Information about the secondary organizer of the event.
                 name:
                   type: string
                   description: Name of the event.
-                organizers:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/User'
-                  description: List of organizers except creator of the event.
-                event_date:
+                start_datetime:
                   type: string
-                  description: Date of the event, in ISO 8601 format.
-                start_time:
+                  description: Start date & time of the event, in ISO 8601 format.
+                end_datetime:
                   type: string
-                  description: Start time of the event, in 24Hours format.
-                end_time:
+                  description: End date & time of the event, in ISO 8601 format.
+                location_id:
                   type: string
-                  description: End time of the event, in 24Hours format.
+                  description: Location reference of this event.
                 overview:
                   type: string
                   description: Description of the event.
-                location:
+                external_event_link:
                   type: string
-                  description: Location of the event.
-                language:
-                  type: string
-                  description: Language of the event.
+                  description: External event link.
                 volunteer_event:
                   type: boolean
                   description: Event type is volunteer or not.
-                event_link:
-                  type: string
-                  description: External event link.
-                people_needed:
+                maximum_participants:
                   type: integer
                   description: Number of people needed for the event.
                 employee_only:
@@ -308,12 +300,113 @@ paths:
                   description: RSVP external link.
               required:
                 - name
-                - event_date
-                - start_time
-                - end_time
-                - location
-                - language
+                - start_datetime
+                - end_datetime
+                - location_id
                 - overview
+  '/events/{event_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+    get:
+      summary: Get details of an event
+      tags:
+        - events
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      operationId: get_event
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of an event
+      tags:
+        - events
+      operationId: update_event
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secondary_organizer_id:
+                  type: string
+                  description: Information about the secondary organizer of the event.
+                name:
+                  type: string
+                  description: Name of the event.
+                start_datetime:
+                  type: string
+                  description: Start date & time of the event, in ISO 8601 format.
+                end_datetime:
+                  type: string
+                  description: End date & time of the event, in ISO 8601 format.
+                location_id:
+                  type: string
+                  description: Location reference of this event.
+                overview:
+                  type: string
+                  description: Description of the event.
+                external_event_link:
+                  type: string
+                  description: External event link.
+                volunteer_event:
+                  type: boolean
+                  description: Event type is volunteer or not.
+                maximum_participants:
+                  type: integer
+                  description: Number of people needed for the event.
+                employee_only:
+                  type: boolean
+                  description: Employee only event or not.
+                open_for_outsiders:
+                  type: boolean
+                  description: Open for outsiders or not.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Contact email.
+                contact_phone:
+                  type: string
+                  description: Contact phone.
+                contact_messaging:
+                  type: string
+                  description: Contact Slack or Teams messaging Id.
+                rsvp_required:
+                  type: boolean
+                  description: RSVP is required or not.
+                rsvp_link:
+                  type: string
+                  description: RSVP external link.
+    delete:
+      summary: Delete an event
+      tags:
+        - events
+      operationId: delete_event
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
   '/events/{event_id}/event_logo':
     parameters:
       - schema:
@@ -2157,39 +2250,59 @@ components:
       type: object
       description: ''
       properties:
+        primary_organizer:
+          type: object
+          description: Information about the primary organizer of the event.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        secondary_organizer:
+          type: object
+          description: Information about the secondary organizer of the event.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
         name:
           type: string
           description: Name of the event.
-        organizers:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-          description: List of organizers except creator of the event.
-        event_date:
+        start_datetime:
           type: string
-          description: Date of the event, in ISO 8601 format.
-        start_time:
+          description: Start date & time of the event, in ISO 8601 format.
+        end_datetime:
           type: string
-          description: Start time of the event, in 24Hours format.
-        end_time:
-          type: string
-          description: End time of the event, in 24Hours format.
+          description: End date & time of the event, in ISO 8601 format.
+        location:
+          $ref: '#/components/schemas/Location'
         overview:
           type: string
           description: Description of the event.
-        location:
+        external_event_link:
           type: string
-          description: Location of the event.
-        language:
-          type: string
-          description: Language of the event.
+          description: External event link.
         volunteer_event:
           type: boolean
           description: Event type is volunteer or not.
-        event_link:
-          type: string
-          description: External event link.
-        people_needed:
+        maximum_participants:
           type: integer
           description: Number of people needed for the event.
         employee_only:

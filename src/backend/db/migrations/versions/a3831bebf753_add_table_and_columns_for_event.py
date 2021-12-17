@@ -7,7 +7,7 @@ Create Date: 2021-12-02 13:11:52.957722
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 
 # revision identifiers, used by Alembic.
@@ -21,19 +21,14 @@ def upgrade():
     op.create_table(
         'event',
         sa.Column('id', UUID, primary_key=True),
-        # NOTE: (Santanu) To reduce number of tables I created UUID[] field for organizers(user),
-        # However PostgreSQL currently not supported for FK relationship for ARRAY type fields!
-        sa.Column('organizers', ARRAY(UUID)),
+        sa.Column('primary_organizer_id', UUID, sa.ForeignKey('canvara_user.id'), nullable=False),
+        sa.Column('secondary_organizer_id', UUID, sa.ForeignKey('canvara_user.id')),
         sa.Column('name', sa.String(255), nullable=False),
-        sa.Column('event_date', sa.Date),
-        sa.Column('start_time', sa.Time),
-        sa.Column('end_time', sa.Time),
-        sa.column('people_needed', sa.Integer),
-        sa.Column('location', sa.Text),
-        sa.Column('language', sa.String(255)),
+        sa.Column('start_datetime', sa.DateTime(timezone=True)),
+        sa.Column('end_datetime', sa.DateTime(timezone=True)),
+        sa.Column('location_id', UUID, sa.ForeignKey('location.id')),
         sa.Column('logo_id', UUID, sa.ForeignKey('user_upload.id')),
-        sa.Column('overview', sa.Text),
-        sa.Column('overview_video_id', UUID, sa.ForeignKey('user_upload.id')),
+        sa.Column('video_overview_id', UUID, sa.ForeignKey('user_upload.id')),
         sa.Column('details', JSONB),
         sa.Column('status', sa.String(127), default="active"),
         sa.Column('created_at', sa.DateTime, nullable=False),

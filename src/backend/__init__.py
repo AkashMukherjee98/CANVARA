@@ -13,9 +13,11 @@ def register_api(app, view, endpoint, url, methods):
 def register_event_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.event import EventAPI, EventLogoAPI, EventLogoByIdAPI, EventVideoAPI, EventVideoByIdAPI
-    # pylint: disable=import-outside-toplevel
+    # pylint: enable=import-outside-toplevel
 
-    register_api(app, EventAPI, 'event_api', '/events', ['GET', 'POST'])
+    event_view = EventAPI.as_view('event_api')
+    app.add_url_rule('/events', view_func=event_view, methods=['GET', 'POST'])
+    app.add_url_rule('/events/<event_id>', view_func=event_view, methods=['GET', 'PUT', 'DELETE'])
 
     register_api(app, EventLogoAPI, 'event_logo_api', '/events/<event_id>/event_logo', ['PUT', ])
     register_api(

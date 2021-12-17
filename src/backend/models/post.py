@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 import itertools
 
@@ -5,7 +6,6 @@ from sqlalchemy import and_, nullslast, or_
 from sqlalchemy.orm import contains_eager, joinedload, noload, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
-from backend.common.datetime import DateTime
 from .db import ModelBase
 from .location import Location
 from .match import UserPostMatch
@@ -239,12 +239,20 @@ class Post(ModelBase):
         return posts
 
     @classmethod
+    def __validate_and_convert_isoformat_date(cls, date, fieldname):
+        # date must be in ISO 8601 format (YYYY-MM-DD)
+        try:
+            return datetime.fromisoformat(date).date()
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unable to parse {fieldname}: {date}") from ex
+
+    @classmethod
     def validate_and_convert_target_date(cls, target_date):
-        return DateTime.validate_and_convert_isoformat_to_date(target_date, 'target_date')
+        return cls.__validate_and_convert_isoformat_date(target_date, 'target_date')
 
     @classmethod
     def validate_and_convert_expiration_date(cls, expiration_date):
-        return DateTime.validate_and_convert_isoformat_to_date(expiration_date, 'expiration_date')
+        return cls.__validate_and_convert_isoformat_date(expiration_date, 'expiration_date')
 
     @classmethod
     def validate_and_convert_size(cls, size):

@@ -4,13 +4,13 @@ import uuid
 from flask import request, jsonify
 from flask_cognito import current_cognito_jwt
 
-from backend.common.exceptions import InvalidArgumentError
+from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.common.datetime import DateTime
 from backend.models.db import transaction
 from backend.models.user import User
-from backend.models.language import Language
-from backend.models.event import Event
+from backend.models.location import Location
+from backend.models.event import Event, EventStatus
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
@@ -23,33 +23,29 @@ class EventAPI(AuthenticatedAPIBase):
         event_id = str(uuid.uuid4())
         now = datetime.utcnow()
 
-        required_fields = {'name', 'event_date', 'start_time', 'end_time', 'location', 'language', 'overview'}
+        required_fields = {'name', 'start_datetime', 'end_datetime', 'location_id', 'overview'}
         missing_fields = required_fields - set(payload.keys())
         if missing_fields:
             raise InvalidArgumentError(f"Parameter: {', '.join(missing_fields)} is required")
 
-        event_date = DateTime.validate_and_convert_isoformat_to_date(payload['event_date'], 'event_date')
-        start_time = DateTime.validate_and_convert_isoformat_to_time(payload['start_time'], 'start_time')
-        end_time = DateTime.validate_and_convert_isoformat_to_time(payload['end_time'], 'end_time')
-
-        language = Language.validate_and_convert_language(payload['language'])
+        start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['start_datetime'], 'start_datetime')
+        end_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['end_datetime'], 'end_datetime')
 
         with transaction() as tx:
             name = Event.validate_event_name(payload['name'])
-            organizers = Event.validate_and_return_organizers(
-                tx, current_cognito_jwt['sub'], payload['organizers'] if 'organizers' in payload else [])
+            primary_organizer = User.lookup(tx, current_cognito_jwt['sub'])
+            secondary_organizer = User.lookup(tx, payload['secondary_organizer_id'])
+            location = Location.lookup(tx, payload['location_id'])
 
             event = Event(
                 id=event_id,
-                organizers=organizers,
+                primary_organizer=primary_organizer,
+                secondary_organizer=secondary_organizer,
                 name=name,
-                event_date=event_date,
-                start_time=start_time,
-                end_time=end_time,
-                location=payload['location'],
-                language=language,
-                overview=payload['overview'],
-                status='active',
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                location=location,
+                status=EventStatus.ACTIVE.value,
                 created_at=now,
                 last_updated_at=now,
             )
@@ -59,6 +55,61 @@ class EventAPI(AuthenticatedAPIBase):
 
             event_details = event.as_dict()
         return event_details
+
+    @staticmethod
+    def put(event_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            event = Event.lookup(tx, event_id)
+
+            payload = request.json
+
+            if payload.get('secondary_organizer_id'):
+                event.secondary_organizer = User.lookup(tx, payload['secondary_organizer_id'])
+
+            if payload.get('name'):
+                event.name = payload['name']
+
+            if payload.get('start_datetime'):
+                event.start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(
+                    payload['start_datetime'], 'start_datetime')
+
+            if payload.get('end_datetime'):
+                event.end_datetime = DateTime.validate_and_convert_isoformat_to_datetime(
+                    payload['end_datetime'], 'end_datetime')
+
+            if payload.get('location_id'):
+                event.location = Location.lookup(tx, payload['location_id'])
+
+            event.last_updated_at = now
+            event.update_details(payload)
+
+        with transaction() as tx:
+            event = Event.lookup(tx, event_id)
+            event_details = event.as_dict()
+        return event_details
+
+    @staticmethod
+    def delete(event_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            event = Event.lookup(tx, event_id)
+
+            # For now, only the primary organizer is allowed to delete the event
+            if event.primary_organizer_id != user.id:
+                raise NotAllowedError(f"User '{user.id}' is not a primary organizer of the event.")
+            event.status = EventStatus.DELETED.value
+            event.last_updated_at = now
+        return make_no_content_response()
+
+    @staticmethod
+    def get(event_id=None):
+        if event_id is None:
+            return EventAPI.__list_events()
+        return EventAPI.__get_event(event_id)
 
     @staticmethod
     def __list_events():
@@ -73,8 +124,10 @@ class EventAPI(AuthenticatedAPIBase):
         return jsonify(events)
 
     @staticmethod
-    def get():
-        return EventAPI.__list_events()
+    def __get_event(event_id):
+        with transaction() as tx:
+            event = Event.lookup(tx, event_id)
+            return event.as_dict()
 
 
 class EventLogoAPI(AuthenticatedAPIBase, UserUploadMixin):

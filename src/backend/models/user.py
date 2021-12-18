@@ -188,7 +188,7 @@ class User(ModelBase):
             'profile_picture_url': self.profile_picture_url,
         }
 
-    def as_dict(self):
+    def as_dict(self, scrub_feedback=False):
         user = {
             'customer_id': self.customer_id,
             'user_id': self.id,
@@ -250,7 +250,7 @@ class User(ModelBase):
 
         # TODO: (sunil) add a max limit to the number of feedback items sent
         if self.feedback_list:
-            user['feedback'] = [feedback.as_dict() for feedback in self.feedback_list]
+            user['feedback'] = [feedback.as_dict(comments_only=scrub_feedback) for feedback in self.feedback_list]
 
         if self.mentorship_video:
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')

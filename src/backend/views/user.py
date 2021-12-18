@@ -56,7 +56,11 @@ class UserAPI(AuthenticatedAPIBase):
     def __get_user(user_id):
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_details = user.as_dict()
+
+            # If the user is viewing someone else's profile,
+            # remove concerns and additional_comments from the feedback
+            scrub_feedback = current_cognito_jwt['sub'] != user_id
+            user_details = user.as_dict(scrub_feedback=scrub_feedback)
             user_details['customer_name'] = user.customer.name
         return user_details
 

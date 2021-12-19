@@ -5,9 +5,11 @@ from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 
 from backend.common.http import make_no_content_response
-from backend.common.exceptions import InvalidArgumentError, NotAllowedError
+from backend.common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.community import Community, CommunityStatus
+from backend.models.community import CommunityAnnouncement, CommunityAnnouncementStatus
+from backend.models.community import CommunityMembership, CommunityMembershipStatus
 from backend.models.user import User
 from backend.models.location import Location
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -179,6 +181,228 @@ class CommunityVideoByIdAPI(AuthenticatedAPIBase):
                 community.video_overview_id = user_upload.id
                 user_upload.status = status.value
 
+            return {
+                'status': user_upload.status,
+            }
+
+    @staticmethod
+    def delete(community_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            community = Community.lookup(tx, community_id)
+
+            community.video_overview_id = None
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+
+class CommunityAnnouncementAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def post(community_id):
+        payload = request.json
+        community_announcement_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+
+            if community is None:
+                raise DoesNotExistError(f"Community '{community_id}' does not exist.")
+
+            if user not in [community.primary_moderator, community.secondary_moderator]:
+                raise NotAllowedError(f"User '{user.id}' is not allowed to add announcement for this community.")
+
+            if 'announcement' not in payload.keys():
+                raise InvalidArgumentError("Field: announcement is required.")
+
+            community_announcement = CommunityAnnouncement(
+                id=community_announcement_id,
+                community=community,
+                creator=user,
+                announcement=payload.get('announcement'),
+                status=CommunityAnnouncementStatus.ACTIVE.value,
+                created_at=now,
+                last_updated_at=now
+            )
+            tx.add(community_announcement)
+
+            return {
+                'announcement_id': community_announcement_id,
+            }
+
+    @staticmethod
+    def put(community_id, announcement_id):
+        payload = request.json
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community_announcement = CommunityAnnouncement.lookup(tx, announcement_id)
+
+            if community_announcement.community_id != community_id:
+                raise DoesNotExistError(f"Announcement '{announcement_id}' does not belongs to community '{community_id}'.")
+
+            community = community_announcement.community
+            if user not in [community.primary_moderator, community.secondary_moderator]:
+                raise NotAllowedError(f"User '{user.id}' is not allowed to update this announcement.")
+
+            if 'announcement' not in payload.keys():
+                raise InvalidArgumentError("Field: announcement is required.")
+
+            community_announcement.announcement = payload.get('announcement')
+            community_announcement.last_updated_at = now
+
+            return {
+                'announcement_id': community_announcement.id,
+            }
+
+    @staticmethod
+    def delete(community_id, announcement_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community_announcement = CommunityAnnouncement.lookup(tx, announcement_id)
+
+            if community_announcement.community_id != community_id:
+                raise DoesNotExistError(f"Announcement '{announcement_id}' does not belongs to Community '{community_id}'.")
+
+            community = community_announcement.community
+            if user not in [community.primary_moderator, community.secondary_moderator]:
+                raise NotAllowedError(f"User '{user.id}' is not allowed to delete this announcement.")
+
+            community_announcement.status = CommunityAnnouncementStatus.DELETED.value
+            community_announcement.last_updated_at = now
+        return make_no_content_response()
+
+
+class CommunityMembershipAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def post(community_id):
+        membership_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            member = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+            community_membership = CommunityMembership.find(
+                tx, community.id, member.id, [
+                    CommunityMembershipStatus.PENDINGAPPROVAL.value,
+                    CommunityMembershipStatus.DISAPPROVED.value,
+                    CommunityMembershipStatus.ACTIVE.value])
+
+            if (community_membership is not None
+                    and community_membership.status == CommunityMembershipStatus.PENDINGAPPROVAL.value):
+                raise InvalidArgumentError(f"Membership '{community_membership.id}' is pending for moderator approval.")
+
+            if (community_membership is not None
+                    and community_membership.status == CommunityMembershipStatus.DISAPPROVED.value):
+                raise InvalidArgumentError(f"Membership '{community_membership.id}' is disapproved by the moderator.")
+
+            if community_membership is not None and community_membership.status == CommunityMembershipStatus.ACTIVE.value:
+                raise InvalidArgumentError(f"Membership '{community_membership.id}' is already active for user.")
+
+            community_membership_status = CommunityMembershipStatus.ACTIVE.value
+            if community.details['membership_approval_required'] is True:
+                community_membership_status = CommunityMembershipStatus.PENDINGAPPROVAL.value
+
+            membership_create = CommunityMembership(
+                id=membership_id,
+                member=member,
+                community=community,
+                status=community_membership_status,
+                created_at=now,
+                last_updated_at=now
+            )
+            tx.add(membership_create)
+
+            return {
+                'membership_id': membership_create.id,
+                'status': membership_create.status,
+            }
+
+    @staticmethod
+    def delete(community_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            member = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+            community_membership = CommunityMembership.find(tx, community.id, member.id, [
+                CommunityMembershipStatus.PENDINGAPPROVAL.value, CommunityMembershipStatus.ACTIVE.value])
+
+            if community_membership is None:
+                raise DoesNotExistError(f"User is not a member of this community '{community_id}'")
+
+            community_membership.status = CommunityMembershipStatus.DISJOINED.value
+            community_membership.last_updated_at = now
+
+        return make_no_content_response()
+
+
+class CommunityMembershipByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(community_id, membership_id):
+        now = datetime.utcnow()
+        status = CommunityMembershipStatus.lookup(request.json['status'])
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+            community_membership = CommunityMembership.lookup(tx, membership_id)
+
+            if community_membership is None:
+                raise DoesNotExistError(f"Membership ID for Community '{community.id}' is not valid.")
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+            if status in [CommunityMembershipStatus.DISAPPROVED, CommunityMembershipStatus.ACTIVE]:
+                community_membership.status = status.value
+                community_membership.last_updated_at = now
+
+        return {
+            'status': community_membership.status,
+        }
+
+
+class CommunityGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
+    @staticmethod
+    def put(community_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id)
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+        metadata = {
+            'resource': 'community',
+            'resource_id': community_id,
+            'type': 'community_gallery',
+        }
+        return CommunityGalleryAPI.create_user_upload(
+            user.id, request.json['filename'], request.json['content_type'], 'communities', metadata)
+
+
+class CommunityGalleryByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(community_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            community = Community.lookup(tx, community_id)
+
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+            if status == UserUploadStatus.UPLOADED:
+                community.add_gallery_media(user_upload)
+                user_upload.status = status.value
+
         return {
             'status': user_upload.status,
         }
@@ -190,6 +414,9 @@ class CommunityVideoByIdAPI(AuthenticatedAPIBase):
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             community = Community.lookup(tx, community_id)
 
-            community.video_overview_id = None
+            if user.id not in [community.primary_moderator_id, community.secondary_moderator_id]:
+                raise NotAllowedError(f"User '{user.id}' is not a owner or moderator of the community'{community.id}'")
+
+            community.gallery.remove(user_upload)
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()

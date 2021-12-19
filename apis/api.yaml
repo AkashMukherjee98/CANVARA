@@ -5,6 +5,7 @@ info:
 servers: []
 tags:
   - name: communities
+  - name: events
   - name: applications
   - name: customers
   - name: matches
@@ -209,6 +210,368 @@ paths:
               required:
                 - user_id
                 - name
+  /events:
+    get:
+      summary: List all events
+      tags:
+        - events
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+      operationId: list_events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new event
+      tags:
+        - events
+      operationId: create_event
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secondary_organizer_id:
+                  type: string
+                  description: Information about the secondary organizer of the event.
+                name:
+                  type: string
+                  description: Name of the event.
+                start_datetime:
+                  type: string
+                  description: Start date & time of the event, in ISO 8601 format.
+                end_datetime:
+                  type: string
+                  description: End date & time of the event, in ISO 8601 format.
+                location_id:
+                  type: string
+                  description: Location reference of this event.
+                overview:
+                  type: string
+                  description: Description of the event.
+                external_event_link:
+                  type: string
+                  description: External event link.
+                volunteer_event:
+                  type: boolean
+                  description: Event type is volunteer or not.
+                maximum_participants:
+                  type: integer
+                  description: Number of people needed for the event.
+                employee_only:
+                  type: boolean
+                  description: Employee only event or not.
+                open_for_outsiders:
+                  type: boolean
+                  description: Open for outsiders or not.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Contact email.
+                contact_phone:
+                  type: string
+                  description: Contact phone.
+                contact_messaging:
+                  type: string
+                  description: Contact Slack or Teams messaging Id.
+                rsvp_required:
+                  type: boolean
+                  description: RSVP is required or not.
+                rsvp_link:
+                  type: string
+                  description: RSVP external link.
+              required:
+                - name
+                - start_datetime
+                - end_datetime
+                - location_id
+                - overview
+  '/events/{event_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+    get:
+      summary: Get details of an event
+      tags:
+        - events
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      operationId: get_event
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of an event
+      tags:
+        - events
+      operationId: update_event
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secondary_organizer_id:
+                  type: string
+                  description: Information about the secondary organizer of the event.
+                name:
+                  type: string
+                  description: Name of the event.
+                start_datetime:
+                  type: string
+                  description: Start date & time of the event, in ISO 8601 format.
+                end_datetime:
+                  type: string
+                  description: End date & time of the event, in ISO 8601 format.
+                location_id:
+                  type: string
+                  description: Location reference of this event.
+                overview:
+                  type: string
+                  description: Description of the event.
+                external_event_link:
+                  type: string
+                  description: External event link.
+                volunteer_event:
+                  type: boolean
+                  description: Event type is volunteer or not.
+                maximum_participants:
+                  type: integer
+                  description: Number of people needed for the event.
+                employee_only:
+                  type: boolean
+                  description: Employee only event or not.
+                open_for_outsiders:
+                  type: boolean
+                  description: Open for outsiders or not.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Contact email.
+                contact_phone:
+                  type: string
+                  description: Contact phone.
+                contact_messaging:
+                  type: string
+                  description: Contact Slack or Teams messaging Id.
+                rsvp_required:
+                  type: boolean
+                  description: RSVP is required or not.
+                rsvp_link:
+                  type: string
+                  description: RSVP external link.
+    delete:
+      summary: Delete an event
+      tags:
+        - events
+      operationId: delete_event
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/event_logo':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Create request for event logo upload
+      operationId: upload_event_logo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: event_logo.jpeg
+                  content_type: image/jpeg
+  '/events/{event_id}/event_logo/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize event logo upload
+      operationId: finalize_event_logo_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete event logo
+      operationId: delete_event_logo
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/overview_video':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Create request for a overview video upload
+      operationId: upload_event_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: event_video.mp4
+                  content_type: video/mp4
+  '/events/{event_id}/overview_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Finalize event overview video upload
+      operationId: finalize_event_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete event overview video
+      operationId: delete_event_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
   /communities:
     get:
       summary: List all communities
@@ -2618,6 +2981,99 @@ components:
         - customer_id
         - user_id
         - name
+    Event:
+      title: Event
+      type: object
+      description: ''
+      properties:
+        primary_organizer:
+          type: object
+          description: Information about the primary organizer of the event.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        secondary_organizer:
+          type: object
+          description: Information about the secondary organizer of the event.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        name:
+          type: string
+          description: Name of the event.
+        start_datetime:
+          type: string
+          description: Start date & time of the event, in ISO 8601 format.
+        end_datetime:
+          type: string
+          description: End date & time of the event, in ISO 8601 format.
+        location:
+          $ref: '#/components/schemas/Location'
+        overview:
+          type: string
+          description: Description of the event.
+        external_event_link:
+          type: string
+          description: External event link.
+        volunteer_event:
+          type: boolean
+          description: Event type is volunteer or not.
+        maximum_participants:
+          type: integer
+          description: Number of people needed for the event.
+        employee_only:
+          type: boolean
+          description: Employee only event or not.
+        open_for_outsiders:
+          type: boolean
+          description: Open for outsiders or not.
+        hashtags:
+          type: array
+          items:
+            type: string
+        contact_email:
+          type: string
+          description: Contact email.
+        contact_phone:
+          type: string
+          description: Contact phone.
+        contact_messaging:
+          type: string
+          description: Contact Slack or Teams messaging Id.
+        rsvp_required:
+          type: boolean
+          description: RSVP is required or not.
+        rsvp_link:
+          type: string
+          description: RSVP external link.
+      required:
+        - name
+        - event_date
+        - start_time
+        - end_time
+        - location
+        - language
+        - overview
     UserSummary:
       title: User Summary
       type: object

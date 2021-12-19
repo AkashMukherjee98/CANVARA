@@ -22,7 +22,8 @@ class CanvaraDB:
     @classmethod
     def init_db(cls):  # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import, import-outside-toplevel, unused-import
-        from .event import Event    # noqa: F401
+        from .community import Community        # noqa: F401
+        from .event import Event                # noqa: F401
         from .application import Application    # noqa: F401
         from .customer import Customer          # noqa: F401
         from .feedback import Feedback          # noqa: F401

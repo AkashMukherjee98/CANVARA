@@ -47,12 +47,12 @@ class Event(ModelBase):
             'rsvp_required',
             'rsvp_link',
         ]
-        for field_name in details_fields:
-            if payload.get(field_name) is not None:
-                if payload[field_name]:
-                    details[field_name] = payload[field_name]
-                elif field_name in details:
-                    del details[field_name]
+        for field_key in details_fields:
+            if payload.get(field_key) is not None:
+                if payload[field_key]:
+                    details[field_key] = payload[field_key]
+                elif field_key in details:
+                    del details[field_key]
 
         if payload.get('hashtags') is not None:
             if payload['hashtags']:

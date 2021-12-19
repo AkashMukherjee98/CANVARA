@@ -7,18 +7,12 @@ on:
   push:
     branches: [ main ]
     paths-ignore: '.github/**'
-    
-  pull_request:
-    branches: [ main ]
 
 env:
     REGISTRY: ghcr.io
     VERSION: master
     IMAGE_NAME: ${{ github.repository }}
     IMAGE_ID: $REGISTRY/$IMAGE_NAME
-    COGNITO_REGION: us-west-2
-    COGNITO_USERPOOL_ID: ${{ secrets.STAGE_COGNITO_USERPOOL_ID }}
-    COGNITO_APP_CLIENT_ID: ${{ secrets.STAGE_COGNITO_APP_CLIENT_ID }}
 
 jobs:
   checkout:
@@ -134,6 +128,17 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      COGNITO_REGION: us-west-2
+      COGNITO_USERPOOL_ID: ${{ secrets.STAGE_COGNITO_USERPOOL_ID }}
+      COGNITO_APP_CLIENT_ID: ${{ secrets.STAGE_COGNITO_APP_CLIENT_ID }}
+      S3_USER_UPLOADS_BUCKET: canvara-user-uploads-stage
+      POSTGRES_USERNAME: ${{ secrets.RDS_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+      POSTGRES_HOST: ${{ secrets.RDS_STAGE_HOST }}
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: ${{ secrets.RDS_DB_NAME }}
+
     steps:
       - name: Log in to the Container registry
         run: |
@@ -154,7 +159,7 @@ jobs:
 
       - name: Run the image
         run: |
-          docker run --detach -v /home/ubuntu/docker_logs:/canvara/logs --label canvara:svc=backend --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage --env COGNITO_REGION=$COGNITO_REGION --env COGNITO_USERPOOL_ID=$COGNITO_USERPOOL_ID --env COGNITO_APP_CLIENT_ID=$COGNITO_APP_CLIENT_ID -p 8000:8000 ghcr.io/canvarainc/backend:main
+          docker run --detach -v /home/ubuntu/docker_logs:/canvara/logs --label canvara:svc=backend --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage --env COGNITO_REGION=$COGNITO_REGION --env COGNITO_USERPOOL_ID=$COGNITO_USERPOOL_ID --env COGNITO_APP_CLIENT_ID=$COGNITO_APP_CLIENT_ID --env S3_USER_UPLOADS_BUCKET=$S3_USER_UPLOADS_BUCKET --env POSTGRES_USERNAME=$POSTGRES_USERNAME --env POSTGRES_PASSWORD=$POSTGRES_PASSWORD --env POSTGRES_HOST=$POSTGRES_HOST --env POSTGRES_PORT=$POSTGRES_PORT --env POSTGRES_DATABASE=$POSTGRES_DATABASE -p 8000:8000 ghcr.io/canvarainc/backend:main
           sleep 5
           new_container_id=$(docker container ls -q -f "label=canvara:svc=backend")
           if [ !$new_container_id ]; then
@@ -195,6 +200,7 @@ jobs:
         run: |
           export CANVARA_ENV=stage
           export AWS_CLIENT_ID=${{ secrets.AWS_CLIENT_ID }}
+          export AWS_STAGE_CLIENT_ID=${{ secrets.AWS_STAGE_CLIENT_ID }}
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           export AWS_COGNITO_ADMIN_USER=${{ secrets.AWS_COGNITO_ADMIN_USER }}

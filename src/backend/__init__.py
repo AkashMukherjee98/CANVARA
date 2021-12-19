@@ -10,6 +10,28 @@ def register_api(app, view, endpoint, url, methods):
     app.add_url_rule(url, view_func=view_func, methods=methods)
 
 
+def register_community_apis(app):
+    # pylint: disable=import-outside-toplevel
+    from backend.views.community import (
+        CommunityAPI, CommunityLogoAPI, CommunityLogoByIdAPI, CommunityVideoAPI, CommunityVideoByIdAPI
+        )
+    # pylint: enable=import-outside-toplevel
+
+    community_view = CommunityAPI.as_view('community_api')
+    app.add_url_rule('/communities', view_func=community_view, methods=['GET', 'POST'])
+    app.add_url_rule('/communities/<community_id>', view_func=community_view, methods=['GET', 'PUT', 'DELETE'])
+
+    register_api(app, CommunityLogoAPI, 'community_logo_api', '/communities/<community_id>/community_logo', ['PUT', ])
+    register_api(
+        app, CommunityLogoByIdAPI, 'community_logo_by_id_api', '/communities/<community_id>/community_logo/<upload_id>', [
+            'PUT', 'DELETE'])
+
+    register_api(app, CommunityVideoAPI, 'community_video_api', '/communities/<community_id>/overview_video', ['PUT', ])
+    register_api(
+        app, CommunityVideoByIdAPI, 'community_video_by_id_api', '/communities/<community_id>/overview_video/<upload_id>', [
+            'PUT', 'DELETE'])
+
+
 def register_event_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.event import EventAPI, EventLogoAPI, EventLogoByIdAPI, EventVideoAPI, EventVideoByIdAPI
@@ -214,6 +236,7 @@ def create_app():  # pylint: disable=too-many-locals
     from backend.views.skill import SkillAPI
     # pylint: enable=import-outside-toplevel
 
+    register_community_apis(app)
     register_event_apis(app)
     register_application_apis(app)
     register_customer_apis(app)

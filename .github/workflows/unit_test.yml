@@ -72,4 +72,10 @@ jobs:
         uses: docker://technosophos/slack-notify
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: Backend Deploy Failed at "checkout" job
+          SLACK_MESSAGE: Backend code checkout & UT FAILED!!
+          
+      - name: slack message notification
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend code checkout & UT Successful!!

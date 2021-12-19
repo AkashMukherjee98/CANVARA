@@ -1,6 +1,5 @@
 import copy
 from enum import Enum
-from datetime import datetime
 
 from sqlalchemy import and_
 from sqlalchemy.orm import relationship, noload
@@ -34,18 +33,6 @@ class CommunityType():  # pylint: disable=too-few-public-methods
         return communty_type
 
 
-class Announcements:  # pylint: disable=too-few-public-methods
-    def __init__(self, text):
-        self.date = datetime.utcnow().date().isoformat()
-        self.text = text
-
-    def as_dict(self):
-        return {
-            'date': self.date,
-            'announcement': self.text
-        }
-
-
 class Community(ModelBase):
     __tablename__ = 'community'
 
@@ -54,7 +41,18 @@ class Community(ModelBase):
     location = relationship(Location)
     community_logo = relationship(UserUpload, foreign_keys="[Community.logo_id]")
     overview_video = relationship(UserUpload, foreign_keys="[Community.video_overview_id]")
+    announcements = relationship("CommunityAnnouncement", primaryjoin=(
+        "and_(CommunityAnnouncement.community_id==Community.id, CommunityAnnouncement.status=='active')"))
+    members = relationship("CommunityMembership", primaryjoin=(
+        "and_(CommunityMembership.community_id==Community.id, "
+        "or_(CommunityMembership.status == 'pendingapproval', "
+        "CommunityMembership.status == 'disapproved', "
+        "CommunityMembership.status == 'active'))"))
+    gallery = relationship("UserUpload", secondary='community_gallery')
     details = None
+
+    MAX_GALLERY_IMAGE = 50
+    MAX_GALLERY_VIDEO = 1
 
     def update_details(self, payload):
         details = copy.deepcopy(self.details) if self.details else {}
@@ -81,29 +79,10 @@ class Community(ModelBase):
             elif 'type' in details:
                 del details['type']
 
-        if payload.get('announcements') is not None:
-            self.update_announcements(payload, details)
-
         if payload.get('hashtags') is not None:
             self.update_hashtags(payload, details)
 
         self.details = details
-
-    @classmethod
-    def update_announcements(cls, payload, details):
-        if not isinstance(payload['announcements'], list):
-            raise InvalidArgumentError("Announcements should be a list of text.")
-
-        if len(payload['announcements']) > 0:
-            announcements = []
-            if 'announcements' in details:
-                announcements = details['announcements']
-
-            for announcement in payload['announcements']:
-                announcements.append(Announcements(announcement).as_dict())
-            details['announcements'] = announcements
-        else:
-            del details['announcements']
 
     @classmethod
     def update_hashtags(cls, payload, details):
@@ -140,12 +119,22 @@ class Community(ModelBase):
         community['mission'] = self.details.get('mission')
         add_if_not_none('target_audience', self.details.get('target_audience'))
         add_if_not_none('activities', self.details.get('activities'))
-        add_if_not_none('announcements', self.details.get('announcements'))
         community['membership_approval_required'] = self.details.get('membership_approval_required')
         add_if_not_none('hashtags', self.details.get('hashtags'))
         add_if_not_none('contact_email', self.details.get('contact_email'))
         add_if_not_none('contact_phone', self.details.get('contact_phone'))
         add_if_not_none('contact_messaging', self.details.get('contact_messaging'))
+
+        if self.announcements:
+            community['announcements'] = [announcement.as_dict() for announcement in self.announcements]
+
+        if self.members:
+            community['members'] = [member.as_dict() for member in self.members]
+
+        gallery = [media.as_dict(method='get') for media in self.gallery if media.is_video()]
+        gallery.extend([media.as_dict(method='get') for media in self.gallery if media.is_image()])
+        if gallery:
+            community['gallery'] = gallery
 
         return community
 
@@ -167,9 +156,116 @@ class Community(ModelBase):
         ))
 
         query_options = [
-            noload(Community.secondary_moderator)
+            noload(Community.secondary_moderator),
+            noload(Community.announcements),
+            noload(Community.members),
+            noload(Community.gallery)
         ]
 
         communities = communities.options(query_options)
 
         return communities
+
+    def add_gallery_media(self, media):
+        # Community can have limited number of images and video for gallery
+        existing_gallery = []
+        max_size = -1
+        if media.is_video():
+            existing_gallery = [fact for fact in self.gallery if fact.is_video()]
+            max_size = self.MAX_GALLERY_VIDEO
+        elif media.is_image():
+            existing_gallery = [fact for fact in self.gallery if fact.is_image()]
+            max_size = self.MAX_GALLERY_IMAGE
+        else:
+            raise InvalidArgumentError(f"Invalid gallery media type: '{media.content_type}'")
+
+        if len(existing_gallery) >= max_size:
+            sorted_facts = sorted(existing_gallery, key=lambda fact: fact.created_at)
+            for fact in sorted_facts[:len(sorted_facts) - max_size + 1]:
+                self.gallery.remove(fact)
+        self.gallery.append(media)
+
+
+class CommunityAnnouncementStatus(Enum):
+    # Community announcement is available for community
+    ACTIVE = 'active'
+
+    # Community announcement has been deleted
+    DELETED = 'deleted'
+
+
+class CommunityAnnouncement(ModelBase):
+    __tablename__ = 'community_announcement'
+
+    community = relationship(Community)
+    creator = relationship(User)
+
+    @classmethod
+    def lookup(cls, tx, community_announcement_id):
+        community_announcement = tx.query(cls).where(and_(
+            cls.id == community_announcement_id,
+            cls.status == CommunityAnnouncementStatus.ACTIVE.value
+        )).one_or_none()
+        if community_announcement is None:
+            raise DoesNotExistError(f"Announcement '{community_announcement_id}' does not exist or has been deleted.")
+        return community_announcement
+
+    def as_dict(self):
+        return {
+            'announcement_id': self.id,
+            'creator': self.creator.as_summary_dict(),
+            'date': self.created_at.isoformat(),
+            'announcement': self.announcement
+        }
+
+
+class CommunityMembershipStatus(Enum):
+    # Community membership is pending for approval
+    PENDINGAPPROVAL = 'pendingapproval'
+
+    # Community membership is declined by the approver
+    DISAPPROVED = 'disapproved'
+
+    # Community member has been active
+    ACTIVE = 'active'
+
+    # Community member has been disjoined
+    DISJOINED = 'disjoined'
+
+    @classmethod
+    def lookup(cls, status):
+        try:
+            return CommunityMembershipStatus(status.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported status: {status}.") from ex
+
+
+class CommunityMembership(ModelBase):
+    __tablename__ = 'community_membership'
+
+    community = relationship(Community)
+    member = relationship(User)
+
+    @classmethod
+    def lookup(cls, tx, membership_id):
+        membership = tx.query(cls).where(and_(
+            cls.id == membership_id
+        )).one_or_none()
+        return membership
+
+    @classmethod
+    def find(cls, tx, community_id, user_id, status):
+        membership = tx.query(cls).where(and_(
+            cls.community_id == community_id,
+            cls.member_id == user_id,
+            cls.status.in_(status)
+        )).one_or_none()
+        return membership
+
+    def as_dict(self):
+        return {
+            'membership_id': self.id,
+            'member': self.member.as_summary_dict(),
+            'status': self.status,
+            'create_date': self.created_at.isoformat()
+        }

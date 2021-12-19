@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Canvara Backend API
-  version: 0.10.0
+  version: 0.11.0
 servers: []
 tags:
   - name: communities
@@ -926,6 +926,258 @@ paths:
         - communities
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/announcements':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    post:
+      summary: Add a community announcement
+      operationId: add_community_announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                community_id:
+                  type: string
+                  description: Unique identifier for this community.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcement:
+                  type: string
+                  description: Announcement text.
+              required:
+                - announcement
+  '/communities/{community_id}/announcements/{announcement_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: announcement_id
+        in: path
+        required: true
+        description: Unique id of the announcement.
+    put:
+      summary: Update community announcement
+      operationId: update_community_announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                community_id:
+                type: string
+                description: Unique identifier for this community.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcement:
+                  type: string
+                  description: Announcement text.
+              required:
+                - announcement
+    delete:
+      summary: Delete a community announcement
+      operationId: delete_community_announcement
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/members':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    post:
+      summary: Join as a community member
+      operationId: join_community_member
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                membership_id:
+                  type: string
+                  description: Unique identifier for membership.
+                status:
+                  type: string
+                  description: Status for successful joining.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Disjoin a community member
+      operationId: disjoin_community_member
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/members/{membership_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: membership_id
+        in: path
+        required: true
+        description: Unique identifier for membership.
+    put:
+      summary: Approve or Disapprove community membership
+      operationId: confirm_community_membership
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the approve or disapprove
+                  enum:
+                    - active
+                    - disapproved
+              required:
+                - status
+  '/communities/{community_id}/gallery':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a community gallery image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_image.jpg
+                  content_type: image/jpeg
+      tags:
+        - communities
+  '/communities/{community_id}/gallery/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community gallery image or video upload
+      operationId: finalize_community_gallery_media
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - communities
+    delete:
+      summary: Delete a community gallery image or video
+      operationId: delete_community_gallery_media
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - communities
   /posts:
     get:
       summary: List all posts
@@ -2555,7 +2807,20 @@ components:
           description: Announcements of this community.
           items:
             anyOf:
-              - $ref: '#/components/schemas/Announcement'
+              - $ref: '#/components/schemas/CommunityAnnouncement'
+              - type: string
+        members:
+          type: array
+          description: Members of this community.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/CommunityMember'
+              - type: string
+        gallery:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
               - type: string
         hashtags:
           type: array
@@ -2577,18 +2842,40 @@ components:
         - type
         - membership_approval_required
         - mission
-    Announcement:
-      title: Announcemen for a community.
+    CommunityAnnouncement:
+      title: Announcement for a community.
       type: object
       properties:
+        announcement_id:
+          type: string
+          description: Unique identifier for the announcement.
+        creator:
+          $ref: '#/components/schemas/UserSummary'
+          description: Creator of the announcement.
         date:
           type: string
-          description: Date of the announcement.
+          description: 'Date of the announcement, in ISO 8601 format.'
         announcement:
           type: string
           description: Announcement text.
       required:
         - announcement
+    CommunityMember:
+      title: Members for a community.
+      type: object
+      properties:
+        membership_id:
+          type: string
+          description: Unique identifier for the membership.
+        member:
+          $ref: '#/components/schemas/UserSummary'
+          description: Profile of the member.
+        status:
+          type: string
+          description: Membership status, either pending for approval or active.
+        date:
+          type: string
+          description: 'Date of joining, in ISO 8601 format.'
     Customer:
       title: Customer
       type: object
@@ -2787,6 +3074,19 @@ components:
         - location
         - language
         - overview
+    UserSummary:
+      title: User Summary
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier for the user.
+        name:
+          type: string
+          description: Name of the user.
+        profile_picture_url:
+          type: string
+          description: The URL of user's profile picture.
     Post:
       title: Post
       type: object

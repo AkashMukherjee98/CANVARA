@@ -13,7 +13,9 @@ def register_api(app, view, endpoint, url, methods):
 def register_community_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.community import (
-        CommunityAPI, CommunityLogoAPI, CommunityLogoByIdAPI, CommunityVideoAPI, CommunityVideoByIdAPI
+        CommunityAPI, CommunityLogoAPI, CommunityLogoByIdAPI, CommunityVideoAPI, CommunityVideoByIdAPI,
+        CommunityAnnouncementAPI, CommunityMembershipAPI, CommunityMembershipByIdAPI,
+        CommunityGalleryAPI, CommunityGalleryByIdAPI
         )
     # pylint: enable=import-outside-toplevel
 
@@ -29,6 +31,23 @@ def register_community_apis(app):
     register_api(app, CommunityVideoAPI, 'community_video_api', '/communities/<community_id>/overview_video', ['PUT', ])
     register_api(
         app, CommunityVideoByIdAPI, 'community_video_by_id_api', '/communities/<community_id>/overview_video/<upload_id>', [
+            'PUT', 'DELETE'])
+
+    register_api(
+        app, CommunityAnnouncementAPI, 'community_announcement_api', '/communities/<community_id>/announcements', ['POST'])
+    register_api(
+        app, CommunityAnnouncementAPI, 'community_announcement_by_id_api',
+        '/communities/<community_id>/announcements/<announcement_id>', ['PUT', 'DELETE'])
+
+    register_api(app, CommunityMembershipAPI, 'community_member_api', '/communities/<community_id>/members', [
+        'POST', 'DELETE'])
+    register_api(
+        app, CommunityMembershipByIdAPI, 'community_member_by_id_api', '/communities/<community_id>/members/<membership_id>', [
+            'PUT'])
+
+    register_api(app, CommunityGalleryAPI, 'community_gallery_api', '/communities/<community_id>/gallery', ['PUT', ])
+    register_api(
+        app, CommunityGalleryByIdAPI, 'community_gallery_by_id_api', '/communities/<community_id>/gallery/<upload_id>', [
             'PUT', 'DELETE'])
 
 

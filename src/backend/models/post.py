@@ -104,6 +104,8 @@ class Post(ModelBase):
 
     MAX_SKILLS = 20
 
+    MAX_NAME_LENGTH = 48
+
     @classmethod
     def lookup(cls, tx, post_id, must_exist=True):
         post = tx.query(cls).where(and_(
@@ -237,6 +239,11 @@ class Post(ModelBase):
 
         posts = posts.options(query_options)
         return posts
+
+    @classmethod
+    def validate_and_convert_name(cls, name):
+        if len(name) > cls.MAX_NAME_LENGTH:
+            raise InvalidArgumentError(f"Name must not be more than {cls.MAX_NAME_LENGTH} characters.")
 
     @classmethod
     def __validate_and_convert_isoformat_date(cls, date, fieldname):

@@ -572,6 +572,228 @@ paths:
           description: No Content
       tags:
         - events
+  '/events/{event_id}/comments':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    post:
+      summary: Add a comment for an event
+      operationId: add_event_comment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                event_id:
+                  type: string
+                  description: Unique identifier for this event.
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Comment text.
+              required:
+                - comment
+  '/events/{event_id}/comments/{comment_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+      - schema:
+          type: string
+        name: comment_id
+        in: path
+        required: true
+        description: Unique id of the comment.
+    put:
+      summary: Update comment for an event
+      operationId: update_event_comment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                comment_id:
+                type: string
+                description: Unique identifier for this comment.
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Comment text.
+              required:
+                - comment
+    delete:
+      summary: Delete a comment
+      operationId: delete_event_comment
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/rsvp':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Provide or update rsvp confirmation
+      operationId: add_update_rsvp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              properties:
+                rsvp_id:
+                  type: string
+                  description: Unique identifier for rsvp.
+                status:
+                  type: string
+                  description: Status for provided rsvp.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status for rsvp.
+                  enum:
+                    - yes
+                    - no
+                    - maybe
+              required:
+                - status
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Delete a rsvp
+      operationId: delete_rsvp
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/gallery':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a event gallery image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: event_image.jpg
+                  content_type: image/jpeg
+      tags:
+        - events
+  '/events/{event_id}/gallery/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize event gallery image or video upload
+      operationId: finalize_event_gallery_media
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - events
+    delete:
+      summary: Delete a event gallery image or video
+      operationId: delete_event_gallery_media
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - events
   /communities:
     get:
       summary: List all communities
@@ -3066,6 +3288,26 @@ components:
         rsvp_link:
           type: string
           description: RSVP external link.
+        comments:
+          type: array
+          description: Comments for the event.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/EventComment'
+              - type: string
+        rsvp:
+          type: array
+          description: Given rsvp consent by users.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/EventRSVP'
+              - type: string
+        gallery:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
+              - type: string
       required:
         - name
         - event_date
@@ -3074,6 +3316,35 @@ components:
         - location
         - language
         - overview
+    EventComment:
+      title: Comment for an event.
+      type: object
+      properties:
+        comment_id:
+          type: string
+          description: Unique identifier for the comment.
+        creator:
+          $ref: '#/components/schemas/UserSummary'
+          description: Creator of the comment.
+        date:
+          type: string
+          description: 'Date of the comment, in ISO 8601 format.'
+        comment:
+          type: string
+          description: Comment text.
+    EventRSVP:
+      title: RSVP of a user.
+      type: object
+      properties:
+        guest:
+          $ref: '#/components/schemas/UserSummary'
+          description: Consent provider of RSVP.
+        date:
+          type: string
+          description: 'Date of RSVP provided, in ISO 8601 format.'
+        status:
+          type: string
+          description: Status of RSVP.
     UserSummary:
       title: User Summary
       type: object

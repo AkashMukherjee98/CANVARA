@@ -53,7 +53,11 @@ def register_community_apis(app):
 
 def register_event_apis(app):
     # pylint: disable=import-outside-toplevel
-    from backend.views.event import EventAPI, EventLogoAPI, EventLogoByIdAPI, EventVideoAPI, EventVideoByIdAPI
+    from backend.views.event import (
+        EventAPI, EventLogoAPI, EventLogoByIdAPI, EventVideoAPI, EventVideoByIdAPI,
+        EventCommentAPI, EventRSVPAPI,
+        EventGalleryAPI, EventGalleryByIdAPI
+    )
     # pylint: enable=import-outside-toplevel
 
     event_view = EventAPI.as_view('event_api')
@@ -67,6 +71,19 @@ def register_event_apis(app):
     register_api(app, EventVideoAPI, 'event_video_api', '/events/<event_id>/overview_video', ['PUT', ])
     register_api(app, EventVideoByIdAPI, 'event_video_by_id_api', '/events/<event_id>/overview_video/<upload_id>', [
         'PUT', 'DELETE'])
+
+    register_api(
+        app, EventCommentAPI, 'event_comment_api', '/events/<event_id>/comments', ['POST'])
+    register_api(
+        app, EventCommentAPI, 'event_comment_by_id_api', '/events/<event_id>/comments/<comment_id>', [
+            'PUT', 'DELETE'])
+
+    register_api(app, EventRSVPAPI, 'event_rsvp_api', '/events/<event_id>/rsvp', ['PUT', 'DELETE'])
+
+    register_api(app, EventGalleryAPI, 'event_gallery_api', '/events/<event_id>/gallery', ['PUT', ])
+    register_api(
+        app, EventGalleryByIdAPI, 'event_gallery_by_id_api', '/events/<event_id>/gallery/<upload_id>', [
+            'PUT', 'DELETE'])
 
 
 def register_application_apis(app):

@@ -244,6 +244,7 @@ class Post(ModelBase):
     def validate_and_convert_name(cls, name):
         if len(name) > cls.MAX_NAME_LENGTH:
             raise InvalidArgumentError(f"Name must not be more than {cls.MAX_NAME_LENGTH} characters.")
+        return name
 
     @classmethod
     def __validate_and_convert_isoformat_date(cls, date, fieldname):

@@ -10,6 +10,7 @@ from backend.common.datetime import DateTime
 from backend.models.db import transaction
 from backend.models.user import User
 from backend.models.location import Location
+from backend.models.community import Community
 from backend.models.event import Event, EventStatus, EventComment, EventCommentStatus, EventRSVP, EventRSVPStatus
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -37,6 +38,9 @@ class EventAPI(AuthenticatedAPIBase):
             secondary_organizer = User.lookup(tx, payload['secondary_organizer_id'])
             location = Location.lookup(tx, payload['location_id'])
 
+            sponsor_community = Community.lookup(
+                tx, payload['sponsor_community_id']) if payload.get('sponsor_community_id') else None
+
             event = Event(
                 id=event_id,
                 primary_organizer=primary_organizer,
@@ -45,6 +49,7 @@ class EventAPI(AuthenticatedAPIBase):
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
                 location=location,
+                sponsor_community=sponsor_community,
                 status=EventStatus.ACTIVE.value,
                 created_at=now,
                 last_updated_at=now,
@@ -81,6 +86,9 @@ class EventAPI(AuthenticatedAPIBase):
 
             if payload.get('location_id'):
                 event.location = Location.lookup(tx, payload['location_id'])
+
+            if payload.get('sponsor_community_id'):
+                event.sponsor_community = Community.lookup(tx, payload['sponsor_community_id'])
 
             event.last_updated_at = now
             event.update_details(payload)

@@ -25,6 +25,7 @@ class Event(ModelBase):
     primary_organizer = relationship(User, foreign_keys="[Event.primary_organizer_id]")
     secondary_organizer = relationship(User, foreign_keys="[Event.secondary_organizer_id]")
     location = relationship(Location)
+    sponsor_community = relationship("Community")
     event_logo = relationship(UserUpload, foreign_keys="[Event.logo_id]")
     overview_video = relationship(UserUpload, foreign_keys="[Event.video_overview_id]")
     comments = relationship("EventComment", primaryjoin=(
@@ -85,6 +86,9 @@ class Event(ModelBase):
         if self.secondary_organizer:
             event['secondary_organizer'] = self.secondary_organizer.as_summary_dict()
 
+        if self.sponsor_community:
+            event['sponsor_community'] = self.sponsor_community.as_summary_dict()
+
         if self.event_logo:
             event['event_logo'] = self.event_logo.as_dict(method='get')
 
@@ -121,6 +125,12 @@ class Event(ModelBase):
 
         return event
 
+    def as_summary_dict(self):
+        return {
+            'event_id': self.id,
+            'name': self.name
+        }
+
     @classmethod
     def lookup(cls, tx, event_id, must_exist=True):
         event = tx.query(cls).where(and_(
@@ -142,6 +152,7 @@ class Event(ModelBase):
 
         query_options = [
             noload(Event.secondary_organizer),
+            noload(Event.sponsor_community),
             noload(Event.comments),
             noload(Event.rsvp),
             noload(Event.gallery)

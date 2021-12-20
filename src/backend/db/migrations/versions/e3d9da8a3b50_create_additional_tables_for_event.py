@@ -18,6 +18,8 @@ depends_on = None
 
 
 def upgrade():
+    op.add_column('event', sa.Column('sponsor_community_id', UUID, sa.ForeignKey('community.id')))
+
     op.create_table(
         'event_comment',
         sa.Column('id', UUID, primary_key=True),
@@ -47,6 +49,8 @@ def upgrade():
 
 
 def downgrade():
+    op.drop_column('event', 'sponsor_community_id')
+
     op.drop_table('event_comment')
     op.drop_table('event_rsvp')
     op.drop_table('event_gallery')

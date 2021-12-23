@@ -3,6 +3,7 @@ import uuid
 
 from flask import request, jsonify
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError, DoesNotExistError
 from backend.common.http import make_no_content_response
@@ -17,7 +18,23 @@ from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('event', __name__, url_prefix='/events')
+
+
+@blueprint.route('')
 class EventAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():
+        with transaction() as tx:
+            # This is the user making the request, for authorization purposes
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            events = Event.search(
+                tx,
+                user
+            )
+            events = [event.as_dict() for event in events]
+        return jsonify(events)
+
     @staticmethod
     def post():
         payload = request.json
@@ -60,6 +77,15 @@ class EventAPI(AuthenticatedAPIBase):
 
             event_details = event.as_dict()
         return event_details
+
+
+@blueprint.route('/<event_id>')
+class EventByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get(event_id):
+        with transaction() as tx:
+            event = Event.lookup(tx, event_id)
+            return event.as_dict()
 
     @staticmethod
     def put(event_id):
@@ -113,31 +139,8 @@ class EventAPI(AuthenticatedAPIBase):
             event.last_updated_at = now
         return make_no_content_response()
 
-    @staticmethod
-    def get(event_id=None):
-        if event_id is None:
-            return EventAPI.__list_events()
-        return EventAPI.__get_event(event_id)
 
-    @staticmethod
-    def __list_events():
-        with transaction() as tx:
-            # This is the user making the request, for authorization purposes
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-            events = Event.search(
-                tx,
-                user
-            )
-            events = [event.as_dict() for event in events]
-        return jsonify(events)
-
-    @staticmethod
-    def __get_event(event_id):
-        with transaction() as tx:
-            event = Event.lookup(tx, event_id)
-            return event.as_dict()
-
-
+@blueprint.route('/<event_id>/event_logo')
 class EventLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(event_id):
@@ -150,6 +153,7 @@ class EventLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'events', metadata)
 
 
+@blueprint.route('/<event_id>/event_logo/<upload_id>')
 class EventLogoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(event_id, upload_id):
@@ -178,6 +182,7 @@ class EventLogoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<event_id>/overview_video')
 class EventVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(event_id):
@@ -190,6 +195,7 @@ class EventVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'events', metadata)
 
 
+@blueprint.route('/<event_id>/overview_video/<upload_id>')
 class EventVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(event_id, upload_id):
@@ -218,6 +224,7 @@ class EventVideoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<event_id>/comments')
 class EventCommentAPI(AuthenticatedAPIBase):
     @staticmethod
     def post(event_id):
@@ -250,6 +257,9 @@ class EventCommentAPI(AuthenticatedAPIBase):
                 'comment_id': comment.id
             }
 
+
+@blueprint.route('/<event_id>/comments/<comment_id>')
+class EventCommentByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(event_id, comment_id):
         payload = request.json
@@ -294,6 +304,7 @@ class EventCommentAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<event_id>/rsvp')
 class EventRSVPAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(event_id):
@@ -348,6 +359,7 @@ class EventRSVPAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<event_id>/gallery')
 class EventGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(event_id):
@@ -367,6 +379,7 @@ class EventGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
             user.id, request.json['filename'], request.json['content_type'], 'events', metadata)
 
 
+@blueprint.route('/<event_id>/gallery/<upload_id>')
 class EventGalleryByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(event_id, upload_id):

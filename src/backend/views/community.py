@@ -3,6 +3,7 @@ import uuid
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.http import make_no_content_response
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
@@ -17,7 +18,22 @@ from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('community', __name__, url_prefix='/communities')
+
+
+@blueprint.route('')
 class CommunityAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            communities = Community.search(
+                tx,
+                user
+            )
+            communities = [community.as_dict() for community in communities]
+        return jsonify(communities)
+
     @staticmethod
     def post():
         payload = request.json
@@ -50,6 +66,15 @@ class CommunityAPI(AuthenticatedAPIBase):
             community_details = community.as_dict()
 
         return community_details
+
+
+@blueprint.route('/<community_id>')
+class CommunityByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get(community_id):
+        with transaction() as tx:
+            community = Community.lookup(tx, community_id)
+            return community.as_dict()
 
     @staticmethod
     def put(community_id):
@@ -93,30 +118,8 @@ class CommunityAPI(AuthenticatedAPIBase):
             community.last_updated_at = now
         return make_no_content_response()
 
-    @staticmethod
-    def get(community_id=None):
-        if community_id is None:
-            return CommunityAPI.__list_communities()
-        return CommunityAPI.__get_community(community_id)
 
-    @staticmethod
-    def __list_communities():
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-            communities = Community.search(
-                tx,
-                user
-            )
-            communities = [community.as_dict() for community in communities]
-        return jsonify(communities)
-
-    @staticmethod
-    def __get_community(community_id):
-        with transaction() as tx:
-            community = Community.lookup(tx, community_id)
-            return community.as_dict()
-
-
+@blueprint.route('/<community_id>/community_logo')
 class CommunityLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(community_id):
@@ -129,6 +132,7 @@ class CommunityLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'communities', metadata)
 
 
+@blueprint.route('/<community_id>/community_logo/<upload_id>')
 class CommunityLogoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(community_id, upload_id):
@@ -157,6 +161,7 @@ class CommunityLogoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<community_id>/overview_video')
 class CommunityVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(community_id):
@@ -169,6 +174,7 @@ class CommunityVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'communities', metadata)
 
 
+@blueprint.route('/<community_id>/overview_video/<upload_id>')
 class CommunityVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(community_id, upload_id):
@@ -197,6 +203,7 @@ class CommunityVideoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<community_id>/announcements')
 class CommunityAnnouncementAPI(AuthenticatedAPIBase):
     @staticmethod
     def post(community_id):
@@ -232,6 +239,9 @@ class CommunityAnnouncementAPI(AuthenticatedAPIBase):
                 'announcement_id': community_announcement_id,
             }
 
+
+@blueprint.route('/<community_id>/announcements/<announcement_id>')
+class CommunityAnnouncementByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(community_id, announcement_id):
         payload = request.json
@@ -278,6 +288,7 @@ class CommunityAnnouncementAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<community_id>/members')
 class CommunityMembershipAPI(AuthenticatedAPIBase):
     @staticmethod
     def post(community_id):
@@ -342,6 +353,7 @@ class CommunityMembershipAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<community_id>/members/<membership_id>')
 class CommunityMembershipByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(community_id, membership_id):
@@ -368,6 +380,7 @@ class CommunityMembershipByIdAPI(AuthenticatedAPIBase):
         }
 
 
+@blueprint.route('/<community_id>/gallery')
 class CommunityGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(community_id):
@@ -387,6 +400,7 @@ class CommunityGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
             user.id, request.json['filename'], request.json['content_type'], 'communities', metadata)
 
 
+@blueprint.route('/<community_id>/gallery/<upload_id>')
 class CommunityGalleryByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(community_id, upload_id):

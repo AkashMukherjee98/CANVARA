@@ -1,12 +1,17 @@
 from datetime import datetime
 
 from flask import jsonify, request
+from flask_smorest import Blueprint
 
 from backend.models.db import transaction
 from backend.models.performer import Performer, PerformerStatus
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('performer', __name__, url_prefix='/posts/<post_id>/performers')
+
+
+@blueprint.route('')
 class PerformerAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id):
@@ -15,6 +20,7 @@ class PerformerAPI(AuthenticatedAPIBase):
         return jsonify([performer.as_dict() for performer in performers])
 
 
+@blueprint.route('/<performer_id>')
 class PerformerByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id, performer_id):

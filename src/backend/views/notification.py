@@ -1,5 +1,6 @@
 from flask import request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
@@ -9,6 +10,10 @@ from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('notification', __name__, url_prefix='/notifications')
+
+
+@blueprint.route('')
 class NotificationAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
@@ -24,6 +29,7 @@ class NotificationAPI(AuthenticatedAPIBase):
             }
 
 
+@blueprint.route('/<notification_id>')
 class NotificationByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(notification_id):

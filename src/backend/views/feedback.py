@@ -3,6 +3,7 @@ import uuid
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.exceptions import NotAllowedError
 from backend.models.db import transaction
@@ -13,6 +14,10 @@ from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('feedback', __name__, url_prefix='/posts/<post_id>')
+
+
+@blueprint.route('/performers/<performer_id>/feedback')
 class PerformerFeedbackAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id, performer_id):
@@ -66,6 +71,7 @@ class PerformerFeedbackAPI(AuthenticatedAPIBase):
         return feedback.as_dict()
 
 
+@blueprint.route('/feedback')
 class PosterFeedbackAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id):

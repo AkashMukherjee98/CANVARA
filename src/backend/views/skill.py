@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.models.db import transaction
 from backend.models.skill import Skill
@@ -7,6 +8,10 @@ from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('skill', __name__, url_prefix='/skills')
+
+
+@blueprint.route('')
 class SkillAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():

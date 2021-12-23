@@ -4,6 +4,7 @@ info:
   version: 0.11.0
 servers: []
 tags:
+  - name: positions
   - name: communities
   - name: events
   - name: applications
@@ -210,6 +211,161 @@ paths:
               required:
                 - user_id
                 - name
+  /positions:
+    get:
+      summary: List all positions
+      tags:
+        - positions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Position'
+      operationId: list_positions
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new position
+      tags:
+        - positions
+      operationId: create_position
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                manager_id:
+                  type: string
+                  description: Reference about the manager.
+                location_id:
+                  type: string
+                  description: Location reference of this position.
+                role_type:
+                  type: string
+                  description: Role Type of this position.
+                  enum:
+                    - Full Time
+                    - Part Time
+                role:
+                  type: string
+                  description: Role of this position.
+                department:
+                  type: string
+                  description: Department for the position.
+                description:
+                  type: string
+                  description: Description of this position.
+                benefits:
+                  type: string
+                  description: Benefits for this position.
+                pay_minimum:
+                  type: integer
+                  description: Minimum payout for this position.
+                pay_maximum:
+                  type: integer
+                  description: Maximum payout for this position.
+              required:
+                - location_id
+                - role_type
+                - role
+                - department
+                - description
+  '/positions/{position_id}':
+    parameters:
+      - schema:
+          type: string
+        name: position_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a position
+      tags:
+        - positions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      operationId: get_position
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a position
+      tags:
+        - positions
+      operationId: update_position
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                manager_id:
+                  type: string
+                  description: Reference about the manager.
+                location_id:
+                  type: string
+                  description: Location reference of this position.
+                role_type:
+                  type: string
+                  description: Role Type of this position.
+                  enum:
+                    - Full Time
+                    - Part Time
+                role:
+                  type: string
+                  description: Role of this position.
+                department:
+                  type: string
+                  description: Department for the position.
+                description:
+                  type: string
+                  description: Description of this position.
+                benefits:
+                  type: string
+                  description: Benefits for this position.
+                pay_minimum:
+                  type: integer
+                  description: Minimum payout for this position.
+                pay_maximum:
+                  type: integer
+                  description: Maximum payout for this position.
+    delete:
+      summary: Delete a position
+      tags:
+        - positions
+      operationId: delete_position
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /events:
     get:
       summary: List all events
@@ -2739,6 +2895,61 @@ paths:
         - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
+    Position:
+      title: Position
+      type: object
+      properties:
+        position_id:
+          type: string
+          description: Unique identifier for position.
+        hiring_manager:
+          type: object
+          description: Information about the manager.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        location:
+          $ref: '#/components/schemas/Location'
+        role_type:
+          type: string
+          description: Role Type of this position.
+          enum:
+            - Full Time
+            - Part Time
+        role:
+          type: string
+          description: Role of this position.
+        department:
+          type: string
+          description: Department for the position.
+        description:
+          type: string
+          description: Description of this position.
+        benefits:
+          type: string
+          description: Benefits for this position.
+        pay_minimum:
+          type: integer
+          description: Minimum payout for this position.
+        pay_maximum:
+          type: integer
+          description: Maximum payout for this position.
+      required:
+        - location
+        - role_type
+        - role
+        - department
+        - description
     Community:
       title: Community
       type: object

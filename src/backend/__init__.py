@@ -10,6 +10,16 @@ def register_api(app, view, endpoint, url, methods):
     app.add_url_rule(url, view_func=view_func, methods=methods)
 
 
+def register_position_apis(app):
+    # pylint: disable=import-outside-toplevel
+    from backend.views.position import (PositionAPI)
+    # pylint: enable=import-outside-toplevel
+
+    position_view = PositionAPI.as_view('position_api')
+    app.add_url_rule('/positions', view_func=position_view, methods=['GET', 'POST'])
+    app.add_url_rule('/positions/<position_id>', view_func=position_view, methods=['GET', 'PUT', 'DELETE'])
+
+
 def register_community_apis(app):
     # pylint: disable=import-outside-toplevel
     from backend.views.community import (
@@ -255,6 +265,7 @@ def create_app():  # pylint: disable=too-many-locals
     from backend.views.skill import SkillAPI
     # pylint: enable=import-outside-toplevel
 
+    register_position_apis(app)
     register_community_apis(app)
     register_event_apis(app)
     register_application_apis(app)

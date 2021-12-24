@@ -126,10 +126,15 @@ class Event(ModelBase):
         return event
 
     def as_summary_dict(self):
-        return {
+        event = {
             'event_id': self.id,
             'name': self.name
         }
+
+        if self.event_logo:
+            event['event_logo'] = self.event_logo.as_dict(method='get')
+
+        return event
 
     @classmethod
     def lookup(cls, tx, event_id, must_exist=True):
@@ -217,7 +222,7 @@ class EventComment(ModelBase):
         return {
             'comment_id': self.id,
             'creator': self.creator.as_summary_dict(),
-            'date': self.created_at.isoformat(),
+            'datetime': self.created_at.isoformat(),
             'comment': self.comment
         }
 
@@ -269,5 +274,5 @@ class EventRSVP(ModelBase):
         return {
             'guest': self.guest.as_summary_dict(),
             'status': self.status,
-            'date': self.last_updated_at.isoformat()
+            'date_time': self.last_updated_at.isoformat()
         }

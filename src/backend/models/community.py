@@ -143,10 +143,15 @@ class Community(ModelBase):
         return community
 
     def as_summary_dict(self):
-        return {
+        community = {
             'community_id': self.id,
             'name': self.name
         }
+
+        if self.community_logo:
+            community['community_logo'] = self.community_logo.as_dict(method='get')
+
+        return community
 
     @classmethod
     def lookup(cls, tx, community_id, must_exist=True):
@@ -225,7 +230,7 @@ class CommunityAnnouncement(ModelBase):
         return {
             'announcement_id': self.id,
             'creator': self.creator.as_summary_dict(),
-            'date': self.created_at.isoformat(),
+            'date_time': self.created_at.isoformat(),
             'announcement': self.announcement
         }
 
@@ -278,5 +283,5 @@ class CommunityMembership(ModelBase):
             'membership_id': self.id,
             'member': self.member.as_summary_dict(),
             'status': self.status,
-            'create_date': self.created_at.isoformat()
+            'join_date': self.created_at.isoformat()
         }

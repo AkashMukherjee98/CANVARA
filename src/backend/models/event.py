@@ -79,8 +79,8 @@ class Event(ModelBase):
             'name': self.name,
             'primary_organizer': self.primary_organizer.as_summary_dict(),
             'location': self.location.as_dict(),
-            'start_datetime': self.start_datetime.isoformat(),
-            'end_datetime': self.end_datetime.isoformat()
+            'start_datetime': self.start_datetime.isoformat(timespec='milliseconds'),
+            'end_datetime': self.end_datetime.isoformat(timespec='milliseconds')
         }
 
         if self.secondary_organizer:

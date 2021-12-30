@@ -71,18 +71,24 @@ class Position(ModelBase):
         add_if_not_none('description', self.details.get('description'))
         add_if_not_none('benefits', self.details.get('benefits'))
 
-        if self.pay_range:
-            position['pay_minimum'] = self.pay_range.lower
-            position['pay_maximum'] = self.pay_range.upper
+        position['pay_currency'] = self.pay_currency
+        position['pay_minimum'] = float(self.pay_minimum)
+        position['pay_maximum'] = float(self.pay_maximum)
 
         return position
 
     @classmethod
-    def validate_pay_range(cls, pay_range):
-        if pay_range.lower > pay_range.upper:
-            raise InvalidArgumentError(f"Pay minimum '{pay_range.lower}' should be less than pay maximum '{pay_range.upper}'")
+    def validate_pay_range(cls, pay_currency, pay_minimum, pay_maximum):
+        if len(pay_currency) != 3:
+            raise InvalidArgumentError(f"Pay currency '{pay_currency}' should be 3 letter currency code")
+        if not isinstance(pay_minimum, (int, float)):
+            raise InvalidArgumentError(f"Pay minimum {pay_minimum} should be currency value")
+        if not isinstance(pay_maximum, (int, float)):
+            raise InvalidArgumentError(f"Pay maximum {pay_maximum} should be currency value")
+        if pay_minimum > pay_maximum:
+            raise InvalidArgumentError(f"Pay minimum {pay_minimum} should be less than pay maximum {pay_maximum}")
 
-        return pay_range
+        return True
 
     @classmethod
     def lookup(cls, tx, position_id, must_exist=True):

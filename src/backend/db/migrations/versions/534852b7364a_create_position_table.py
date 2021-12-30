@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 from sqlalchemy.sql.schema import ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, JSONB, INT8RANGE
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 
 # revision identifiers, used by Alembic.
@@ -28,7 +28,9 @@ def upgrade():
         sa.Column('role_type', sa.String(255), nullable=False),
         sa.Column('role', sa.String(255), nullable=False),
         sa.Column('department', sa.String(255), nullable=False),
-        sa.Column('pay_range', INT8RANGE),
+        sa.Column('pay_currency', sa.String(3)),
+        sa.Column('pay_minimum', sa.Numeric(10, 2)),
+        sa.Column('pay_maximum', sa.Numeric(10, 2)),
         sa.Column('details', JSONB),
         sa.Column('status', sa.String(127), nullable=False),
         sa.Column('created_at', sa.DateTime, nullable=False),

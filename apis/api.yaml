@@ -273,18 +273,26 @@ paths:
                 benefits:
                   type: string
                   description: Benefits for this position.
+                pay_currency:
+                  type: string
+                  description: Payout currency for this position.
                 pay_minimum:
-                  type: integer
+                  type: number
+                  multipleOf: 0.01
                   description: Minimum payout for this position.
                 pay_maximum:
-                  type: integer
+                  type: number
+                  multipleOf: 0.01
                   description: Maximum payout for this position.
               required:
+                - manager_id
                 - location_id
                 - role_type
                 - role
-                - department
                 - description
+                - pay_currency
+                - pay_minimum
+                - pay_maximum
   '/positions/{position_id}':
     parameters:
       - schema:
@@ -350,11 +358,16 @@ paths:
                 benefits:
                   type: string
                   description: Benefits for this position.
+                pay_currency:
+                  type: string
+                  description: Payout currency for this position.
                 pay_minimum:
-                  type: integer
+                  type: number
+                  multipleOf: 0.01
                   description: Minimum payout for this position.
                 pay_maximum:
-                  type: integer
+                  type: number
+                  multipleOf: 0.01
                   description: Maximum payout for this position.
     delete:
       summary: Delete a position
@@ -2938,18 +2951,26 @@ components:
         benefits:
           type: string
           description: Benefits for this position.
+        pay_currency:
+          type: string
+          description: Payout currency for this position.
         pay_minimum:
-          type: integer
+          type: number
+          multipleOf: 0.01
           description: Minimum payout for this position.
         pay_maximum:
-          type: integer
+          type: number
+          multipleOf: 0.01
           description: Maximum payout for this position.
       required:
+        - hiring_manager
         - location
         - role_type
         - role
-        - department
         - description
+        - pay_currency
+        - pay_minimum
+        - pay_maximum
     Community:
       title: Community
       type: object

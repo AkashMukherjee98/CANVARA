@@ -1,12 +1,11 @@
 from datetime import datetime
 import uuid
-from psycopg2.extras import NumericRange
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 
 from backend.common.http import make_no_content_response
-from backend.common.exceptions import InvalidArgumentError, NotAllowedError
+from backend.common.exceptions import InvalidArgumentError
 from backend.models.db import transaction
 from backend.models.location import Location
 from backend.models.position import Position, PositionStatus, PositionRoleType
@@ -47,7 +46,8 @@ class PositionAPI(AuthenticatedAPIBase):
 
         now = datetime.utcnow()
 
-        required_fields = {'location_id', 'role_type', 'role', 'department', 'description'}
+        required_fields = {
+            'manager_id', 'location_id', 'role_type', 'role', 'description', 'pay_minimum', 'pay_maximum', 'pay_currency'}
         missing_fields = required_fields - set(payload.keys())
         if missing_fields:
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
@@ -55,10 +55,13 @@ class PositionAPI(AuthenticatedAPIBase):
         roletype = PositionRoleType.validate_and_return_role_type(payload['role_type'])
 
         with transaction() as tx:
-            hiring_manager = User.lookup(tx, payload['manager_id']) \
-                if 'manager_id' in payload and payload['manager_id'] else User.lookup(tx, current_cognito_jwt['sub'])
+            hiring_manager = User.lookup(tx, payload['manager_id'])
             location = Location.lookup(tx, payload['location_id'])
-            pay_range = Position.validate_pay_range(NumericRange(payload['pay_minimum'], payload['pay_maximum']))
+
+            Position.validate_pay_range(payload['pay_currency'], payload['pay_minimum'], payload['pay_maximum'])
+            pay_currency = payload['pay_currency']
+            pay_minimum = payload['pay_minimum']
+            pay_maximum = payload['pay_maximum']
 
             position = Position(
                 id=position_id,
@@ -66,7 +69,9 @@ class PositionAPI(AuthenticatedAPIBase):
                 role=payload.get('role'),
                 role_type=roletype,
                 department=payload['department'],
-                pay_range=pay_range,
+                pay_currency=pay_currency,
+                pay_minimum=pay_minimum,
+                pay_maximum=pay_maximum,
                 location=location,
                 status=PositionStatus.ACTIVE.value,
                 created_at=now,
@@ -100,8 +105,17 @@ class PositionAPI(AuthenticatedAPIBase):
             if payload.get('department'):
                 position.department = payload['department']
 
-            if (payload.get('pay_minimum') and payload.get('pay_maximum')):
-                position.pay_range = Position.validate_pay_range(NumericRange(payload['pay_minimum'], payload['pay_maximum']))
+            Position.validate_pay_range(
+                payload['pay_currency'] if 'pay_currency' in payload else position.pay_currency,
+                payload['pay_minimum'] if 'pay_minimum' in payload else position.pay_minimum,
+                payload['pay_maximum'] if 'pay_maximum' in payload else position.pay_maximum
+            )
+            if payload.get('pay_currency'):
+                position.pay_currency = payload['pay_currency']
+            if payload.get('pay_minimum'):
+                position.pay_minimum = payload['pay_minimum']
+            if payload.get('pay_maximum'):
+                position.pay_maximum = payload['pay_maximum']
 
             if payload.get('location_id'):
                 position.location = Location.lookup(tx, payload['location_id'])
@@ -120,12 +134,9 @@ class PositionAPI(AuthenticatedAPIBase):
         now = datetime.utcnow()
 
         with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
             position = Position.lookup(tx, position_id)
 
-            # For now, only the hiring manager is allowed to delete the position
-            if position.manager_id != user.id:
-                raise NotAllowedError(f"User '{user.id}' is not a hiring manager")
+            # TODO: (santanu) System account can delete a position
 
             position.status = PositionStatus.DELETED.value
             position.last_updated_at = now

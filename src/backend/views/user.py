@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from sqlalchemy import select
 
@@ -12,6 +13,11 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 
 
+blueprint = Blueprint('user', __name__, url_prefix='/users')
+customer_user_blueprint = Blueprint('customer_user', __name__, url_prefix='/customers/<customer_id>/users')
+
+
+@customer_user_blueprint.route('')
 class CustomerUserAPI(AuthenticatedAPIBase):
 
     @staticmethod
@@ -50,10 +56,23 @@ class CustomerUserAPI(AuthenticatedAPIBase):
         return user_details
 
 
+@blueprint.route('/me')
 class UserAPI(AuthenticatedAPIBase):
 
     @staticmethod
-    def __get_user(user_id):
+    def get():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_details = user.as_dict()
+            user_details['customer_name'] = user.customer.name
+        return user_details
+
+
+@blueprint.route('/<user_id>')
+class UserByIdAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def get(user_id):
         with transaction() as tx:
             user = User.lookup(tx, user_id)
 
@@ -63,21 +82,6 @@ class UserAPI(AuthenticatedAPIBase):
             user_details = user.as_dict(scrub_feedback=scrub_feedback)
             user_details['customer_name'] = user.customer.name
         return user_details
-
-    @staticmethod
-    def __get_current_user():
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_details = user.as_dict()
-            user_details['customer_name'] = user.customer.name
-        return user_details
-
-    @staticmethod
-    def get(user_id=None):
-        if user_id is not None:
-            return UserAPI.__get_user(user_id)
-
-        return UserAPI.__get_current_user()
 
     @staticmethod
     def put(user_id):
@@ -140,6 +144,7 @@ class ProfilePictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
+@blueprint.route('/<user_id>/profile_picture')
 class ProfilePictureAPI(ProfilePictureAPIBase):
 
     @staticmethod
@@ -165,6 +170,7 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
         }
 
 
+@blueprint.route('/<user_id>/profile_picture/<upload_id>')
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
 
     @staticmethod
@@ -215,6 +221,7 @@ class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
         return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
 
 
+@blueprint.route('/<user_id>/fun_fact')
 class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
@@ -229,6 +236,7 @@ class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
+@blueprint.route('/<user_id>/fun_fact/<upload_id>')
 class FunFactByIdAPI(AuthenticatedAPIBase):
 
     @staticmethod
@@ -260,6 +268,7 @@ class FunFactByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<user_id>/mentorship_video')
 class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
@@ -273,6 +282,7 @@ class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
+@blueprint.route('/<user_id>/mentorship_video/<upload_id>')
 class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
 
     @staticmethod

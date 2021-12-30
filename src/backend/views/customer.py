@@ -1,6 +1,7 @@
 import uuid
 
 from flask import jsonify, request
+from flask_smorest import Blueprint
 
 from sqlalchemy import select
 
@@ -12,25 +13,17 @@ from backend.models.db import transaction
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('customer', __name__, url_prefix='/customers')
+
+
+@blueprint.route('')
 class CustomerAPI(AuthenticatedAPIBase):
 
     @staticmethod
-    def __list_customers():
+    def get():
         with transaction() as tx:
             customers = tx.execute(select(Customer)).scalars().all()
         return jsonify([customer.as_dict() for customer in customers])
-
-    @staticmethod
-    def __get_customer(customer_id):
-        with transaction() as tx:
-            customer = Customer.lookup(tx, customer_id)
-        return customer.as_dict()
-
-    @staticmethod
-    def get(customer_id=None):
-        if customer_id is None:
-            return CustomerAPI.__list_customers()
-        return CustomerAPI.__get_customer(customer_id)
 
     @staticmethod
     def post():
@@ -44,6 +37,16 @@ class CustomerAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             tx.add(customer)
+        return customer.as_dict()
+
+
+@blueprint.route('/<customer_id>')
+class CustomerByIdAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def get(customer_id):
+        with transaction() as tx:
+            customer = Customer.lookup(tx, customer_id)
         return customer.as_dict()
 
     @staticmethod

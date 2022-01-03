@@ -4,6 +4,7 @@ import uuid
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.common.http import make_no_content_response
@@ -18,9 +19,16 @@ from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('post', __name__, url_prefix='/posts')
+post_type_blueprint = Blueprint('post_type', __name__, url_prefix='/post_types')
+location_blueprint = Blueprint('location', __name__, url_prefix='/locations')
+language_blueprint = Blueprint('language', __name__, url_prefix='/languages')
+
+
+@blueprint.route('')
 class PostAPI(AuthenticatedAPIBase):
     @staticmethod
-    def __list_posts():
+    def get():
         post_filter = PostFilter.lookup(request.args.get('filter'))
 
         with transaction() as tx:
@@ -36,19 +44,6 @@ class PostAPI(AuthenticatedAPIBase):
             )
             posts = [post.as_dict(user=user) for post in posts]
         return jsonify(posts)
-
-    @staticmethod
-    def __get_post(post_id):
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-            post = Post.lookup(tx, post_id)
-            return post.as_dict(user=user)
-
-    @staticmethod
-    def get(post_id=None):
-        if post_id is None:
-            return PostAPI.__list_posts()
-        return PostAPI.__get_post(post_id)
 
     @staticmethod
     def post():
@@ -104,6 +99,17 @@ class PostAPI(AuthenticatedAPIBase):
                 Post.validate_desired_skills(payload['desired_skills'])
                 post.set_desired_skills(tx, payload['desired_skills'])
             return post.as_dict()
+
+
+@blueprint.route('/<post_id>')
+class PostByIdAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def get(post_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            post = Post.lookup(tx, post_id)
+            return post.as_dict(user=user)
 
     @staticmethod
     def put(post_id):
@@ -186,6 +192,7 @@ class PostAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<post_id>/video')
 class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(post_id):
@@ -199,6 +206,7 @@ class PostVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'posts', metadata)
 
 
+@blueprint.route('/<post_id>/video/<upload_id>')
 class PostVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id, upload_id):
@@ -231,6 +239,7 @@ class PostVideoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<post_id>/bookmark')
 class PostBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id):
@@ -255,6 +264,7 @@ class PostBookmarkAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<post_id>/like')
 class PostLikeAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(post_id):
@@ -279,6 +289,7 @@ class PostLikeAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@post_type_blueprint.route('')
 class PostTypeAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
@@ -287,6 +298,7 @@ class PostTypeAPI(AuthenticatedAPIBase):
             return jsonify([post_type.as_dict() for post_type in query])
 
 
+@location_blueprint.route('')
 class LocationAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
@@ -296,6 +308,7 @@ class LocationAPI(AuthenticatedAPIBase):
             return jsonify([location.as_dict() for location in query])
 
 
+@language_blueprint.route('')
 class LanguageAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():

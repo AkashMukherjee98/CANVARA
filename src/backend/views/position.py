@@ -3,6 +3,7 @@ import uuid
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError
@@ -13,17 +14,15 @@ from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('position', __name__, url_prefix='/positions')
+
+
+@blueprint.route('')
 class PositionAPI(AuthenticatedAPIBase):
-
     @staticmethod
-    def get(position_id=None):
-        if position_id is None:
-            return PositionAPI.__list_positions()
-        return PositionAPI.__get_position(position_id)
-
-    @staticmethod
-    def __list_positions():
+    def get():
         with transaction() as tx:
+            # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
             positions = Position.search(
                 tx,
@@ -31,12 +30,6 @@ class PositionAPI(AuthenticatedAPIBase):
             )
             positions = [position.as_dict() for position in positions]
         return jsonify(positions)
-
-    @staticmethod
-    def __get_position(position_id):
-        with transaction() as tx:
-            position = Position.lookup(tx, position_id)
-            return position.as_dict()
 
     @staticmethod
     def post():
@@ -83,6 +76,15 @@ class PositionAPI(AuthenticatedAPIBase):
             position_details = position.as_dict()
 
         return position_details
+
+
+@blueprint.route('/<position_id>')
+class PositionByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get(position_id):
+        with transaction() as tx:
+            position = Position.lookup(tx, position_id)
+            return position.as_dict()
 
     @staticmethod
     def put(position_id):

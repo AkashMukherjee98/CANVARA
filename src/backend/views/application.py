@@ -4,6 +4,7 @@ import uuid
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
@@ -18,6 +19,11 @@ from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
 
+post_application_blueprint = Blueprint('post_application', __name__, url_prefix='/posts/<post_id>/applications')
+blueprint = Blueprint('application', __name__, url_prefix='/applications')
+
+
+@post_application_blueprint.route('')
 class PostApplicationAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(post_id):
@@ -61,23 +67,22 @@ class PostApplicationAPI(AuthenticatedAPIBase):
             return application.as_dict()
 
 
+@blueprint.route('')
 class ApplicationAPI(AuthenticatedAPIBase):
     @staticmethod
-    def __list_applications():
+    def get():
         with transaction() as tx:
             return jsonify(Application.lookup_by_user(tx, current_cognito_jwt['sub']))
 
+
+@blueprint.route('/<application_id>')
+class ApplicationByIdAPI(AuthenticatedAPIBase):
+
     @staticmethod
-    def __get_application(application_id):
+    def get(application_id):
         with transaction() as tx:
             application = Application.lookup(tx, application_id)
             return application.as_dict()
-
-    @staticmethod
-    def get(application_id=None):
-        if application_id is None:
-            return ApplicationAPI.__list_applications()
-        return ApplicationAPI.__get_application(application_id)
 
     @staticmethod
     def put(application_id):
@@ -124,6 +129,7 @@ class ApplicationAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
+@blueprint.route('/<application_id>/video')
 class ApplicationVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(application_id):
@@ -137,6 +143,7 @@ class ApplicationVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'applications', metadata)
 
 
+@blueprint.route('/<application_id>/video/<upload_id>')
 class ApplicationVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(application_id, upload_id):

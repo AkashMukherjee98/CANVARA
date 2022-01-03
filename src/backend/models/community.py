@@ -39,6 +39,7 @@ class Community(ModelBase):
     primary_moderator = relationship(User, foreign_keys="[Community.primary_moderator_id]")
     secondary_moderator = relationship(User, foreign_keys="[Community.secondary_moderator_id]")
     location = relationship(Location)
+    sponsor_events = relationship("Event")
     community_logo = relationship(UserUpload, foreign_keys="[Community.logo_id]")
     overview_video = relationship(UserUpload, foreign_keys="[Community.video_overview_id]")
     announcements = relationship("CommunityAnnouncement", primaryjoin=(
@@ -105,6 +106,9 @@ class Community(ModelBase):
         if self.secondary_moderator:
             community['secondary_moderator'] = self.secondary_moderator.as_summary_dict()
 
+        if self.sponsor_events:
+            community['sponsor_events'] = [sponsor_event.as_summary_dict() for sponsor_event in self.sponsor_events]
+
         if self.community_logo:
             community['community_logo'] = self.community_logo.as_dict(method='get')
 
@@ -138,6 +142,17 @@ class Community(ModelBase):
 
         return community
 
+    def as_summary_dict(self):
+        community = {
+            'community_id': self.id,
+            'name': self.name
+        }
+
+        if self.community_logo:
+            community['community_logo'] = self.community_logo.as_dict(method='get')
+
+        return community
+
     @classmethod
     def lookup(cls, tx, community_id, must_exist=True):
         community = tx.query(cls).where(and_(
@@ -157,6 +172,7 @@ class Community(ModelBase):
 
         query_options = [
             noload(Community.secondary_moderator),
+            noload(Community.sponsor_events),
             noload(Community.announcements),
             noload(Community.members),
             noload(Community.gallery)
@@ -214,7 +230,7 @@ class CommunityAnnouncement(ModelBase):
         return {
             'announcement_id': self.id,
             'creator': self.creator.as_summary_dict(),
-            'date': self.created_at.isoformat(),
+            'date_time': self.created_at.isoformat(),
             'announcement': self.announcement
         }
 
@@ -267,5 +283,5 @@ class CommunityMembership(ModelBase):
             'membership_id': self.id,
             'member': self.member.as_summary_dict(),
             'status': self.status,
-            'create_date': self.created_at.isoformat()
+            'join_date': self.created_at.isoformat()
         }

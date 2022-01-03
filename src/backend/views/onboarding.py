@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 from sqlalchemy import select
 
 from backend.common.exceptions import InvalidArgumentError
@@ -8,6 +9,9 @@ from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
 from backend.views.base import AuthenticatedAPIBase
 from backend.views.user import ProfilePictureAPIBase, ProfilePictureByIdAPIBase
+
+
+blueprint = Blueprint('onboarding', __name__, url_prefix='/onboarding')
 
 
 def set_onboarding_complete(user, onboarding_complete):
@@ -21,6 +25,7 @@ def set_onboarding_complete(user, onboarding_complete):
     user.profile = profile
 
 
+@blueprint.route('/product_preferences')
 class ProductPreferenceAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
@@ -58,6 +63,7 @@ class ProductPreferenceAPI(AuthenticatedAPIBase):
         return jsonify([product.as_dict() for product in user.product_preferences])
 
 
+@blueprint.route('/linkedin')
 class LinkedInAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
@@ -84,6 +90,7 @@ class LinkedInAPI(AuthenticatedAPIBase):
         }
 
 
+@blueprint.route('/current_skills')
 class CurrentSkillAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
@@ -97,6 +104,7 @@ class CurrentSkillAPI(AuthenticatedAPIBase):
         return jsonify([skill.as_dict() for skill in user.current_skills])
 
 
+@blueprint.route('/desired_skills')
 class DesiredSkillAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
@@ -110,12 +118,14 @@ class DesiredSkillAPI(AuthenticatedAPIBase):
         return jsonify([skill.as_dict() for skill in user.desired_skills])
 
 
+@blueprint.route('/profile_picture')
 class ProfilePictureAPI(ProfilePictureAPIBase):
     @staticmethod
     def put():
         return ProfilePictureAPIBase._put(current_cognito_jwt['sub'])
 
 
+@blueprint.route('/profile_picture/<upload_id>')
 class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
     @staticmethod
     def put(upload_id):

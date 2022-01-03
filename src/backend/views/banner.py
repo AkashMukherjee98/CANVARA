@@ -2,12 +2,17 @@ import random
 
 from flask import jsonify
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 
 from backend.models.db import transaction
 from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('banner', __name__, url_prefix='/banners')
+
+
+@blueprint.route('')
 class BannerAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():

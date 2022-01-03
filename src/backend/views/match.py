@@ -3,6 +3,7 @@ import uuid
 
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
+from flask_smorest import Blueprint
 import sqlalchemy.exc
 
 from backend.common.exceptions import InvalidArgumentError
@@ -14,23 +15,18 @@ from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
 
+blueprint = Blueprint('match', __name__, url_prefix='/matches')
+
+
+@blueprint.route('')
 class MatchAPI(AuthenticatedAPIBase):
     @staticmethod
-    def __list_matches(user_id=None, post_id=None):
+    def get():
+        user_id = request.args.get('user_id')
+        post_id = request.args.get('post_id')
         with transaction() as tx:
             matches = UserPostMatch.lookup_multiple(tx, user_id=user_id, post_id=post_id)
             return jsonify([match.as_dict() for match in matches])
-
-    @staticmethod
-    def __get_match(match_id):
-        with transaction() as tx:
-            return UserPostMatch.lookup(tx, match_id).as_dict()
-
-    @staticmethod
-    def get(match_id=None):
-        if match_id is None:
-            return MatchAPI.__list_matches(request.args.get('user_id'), request.args.get('post_id'))
-        return MatchAPI.__get_match(match_id)
 
     @staticmethod
     def post():
@@ -58,6 +54,14 @@ class MatchAPI(AuthenticatedAPIBase):
                 return match.as_dict()
         except sqlalchemy.exc.IntegrityError as ex:
             raise InvalidArgumentError(f"Match already exists for user '{user_id}' and post '{post_id}'") from ex
+
+
+@blueprint.route('/<match_id>')
+class MatchByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get(match_id):
+        with transaction() as tx:
+            return UserPostMatch.lookup(tx, match_id).as_dict()
 
     @staticmethod
     def put(match_id):

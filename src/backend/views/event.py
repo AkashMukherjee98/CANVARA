@@ -52,7 +52,8 @@ class EventAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             name = Event.validate_event_name(payload['name'])
             primary_organizer = User.lookup(tx, current_cognito_jwt['sub'])
-            secondary_organizer = User.lookup(tx, payload['secondary_organizer_id'])
+            secondary_organizer = User.lookup(tx, payload['secondary_organizer_id']) \
+                if payload.get('secondary_organizer_id') else None
             location = Location.lookup(tx, payload['location_id'])
 
             sponsor_community = Community.lookup(

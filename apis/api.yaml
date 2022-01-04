@@ -2575,6 +2575,80 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       tags:
         - users
+  '/users/{user_id}/background_picture':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a background picture upload
+      operationId: upload_background_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: background_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/background_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize background picture upload
+      operationId: finalize_background_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
   /users/me:
     get:
       summary: Get details of the current authenticated user
@@ -2847,6 +2921,69 @@ paths:
       tags:
         - onboarding
       operationId: finalize_profile_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /onboarding/background_picture:
+    put:
+      summary: Create request for a background picture upload
+      tags:
+        - onboarding
+      operationId: upload_background_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: background_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/onboarding/background_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize background picture upload
+      tags:
+        - onboarding
+      operationId: finalize_background_picture_upload
       requestBody:
         content:
           application/json:
@@ -3365,6 +3502,8 @@ components:
         title:
           type: string
         profile_picture_url:
+          type: string
+        background_picture_url:
           type: string
         location:
           type: string

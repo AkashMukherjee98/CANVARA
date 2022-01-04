@@ -8,7 +8,9 @@ from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
 from backend.views.base import AuthenticatedAPIBase
-from backend.views.user import ProfilePictureAPIBase, ProfilePictureByIdAPIBase
+from backend.views.user import (
+    ProfilePictureAPIBase, ProfilePictureByIdAPIBase, BackgroundPictureAPIBase, BackgroundPictureByIdAPIBase
+)
 
 
 blueprint = Blueprint('onboarding', __name__, url_prefix='/onboarding')
@@ -130,6 +132,28 @@ class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
     @staticmethod
     def put(upload_id):
         response = ProfilePictureByIdAPIBase._put(current_cognito_jwt['sub'], upload_id)
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            # Make sure onboarding is not marked as complete
+            set_onboarding_complete(user, False)
+
+        return response
+
+
+@blueprint.route('/background_picture')
+class BackgroundPictureAPI(BackgroundPictureAPIBase):
+    @staticmethod
+    def put():
+        return BackgroundPictureAPIBase._put(current_cognito_jwt['sub'])
+
+
+@blueprint.route('/background_picture/<upload_id>')
+class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
+    @staticmethod
+    def put(upload_id):
+        response = BackgroundPictureByIdAPIBase._put(current_cognito_jwt['sub'], upload_id)
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])

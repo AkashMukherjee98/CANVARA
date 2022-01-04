@@ -191,6 +191,7 @@ class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
+@blueprint.route('/<user_id>/background_picture')
 class BackgroundPictureAPI(BackgroundPictureAPIBase):
 
     @staticmethod
@@ -214,6 +215,7 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
         }
 
 
+@blueprint.route('/<user_id>/background_picture/<upload_id>')
 class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
 
     @staticmethod

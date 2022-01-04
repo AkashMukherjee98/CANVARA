@@ -56,6 +56,7 @@ def create_app():  # pylint: disable=too-many-locals
     from .views.match import blueprint as match_blueprint
     from .views.notification import blueprint as notification_blueprint
     from .views.onboarding import blueprint as onboarding_blueprint
+    from .views.position import blueprint as position_blueprint
     from .views.performer import blueprint as performer_blueprint
     from .views.post import blueprint as post_blueprint, language_blueprint, location_blueprint, post_type_blueprint
     from .views.skill import blueprint as skill_blueprint
@@ -74,6 +75,7 @@ def create_app():  # pylint: disable=too-many-locals
     api.register_blueprint(match_blueprint)
     api.register_blueprint(notification_blueprint)
     api.register_blueprint(onboarding_blueprint)
+    api.register_blueprint(position_blueprint)
     api.register_blueprint(performer_blueprint)
     api.register_blueprint(post_blueprint)
     api.register_blueprint(post_application_blueprint)

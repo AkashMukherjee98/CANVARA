@@ -47,7 +47,8 @@ class CommunityAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             primary_moderator = User.lookup(tx, current_cognito_jwt['sub'])
-            secondary_moderator = User.lookup(tx, payload['secondary_moderator_id'])
+            secondary_moderator = User.lookup(tx, payload['secondary_moderator_id']) \
+                if payload.get('secondary_moderator_id') else None
             location = Location.lookup(tx, payload['location_id'])
 
             community = Community(

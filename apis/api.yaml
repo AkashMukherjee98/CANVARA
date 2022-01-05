@@ -1971,6 +1971,32 @@ paths:
                   type: string
                 additional_comments:
                   type: string
+    put:
+      summary: update feedback for a performer
+      tags:
+        - posts
+      operationId: update_performer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
   '/posts/{post_id}/video':
     parameters:
       - schema:
@@ -2148,6 +2174,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Feedback'
       operationId: create_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
+    put:
+      summary: update feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: update_post_feedback
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:

@@ -7,11 +7,11 @@ from flask_smorest import Api
 
 
 API_TITLE = 'Canvara Backend API'
-API_VERSION = '0.12.0'
+API_VERSION = '0.15.0'
 OPENAPI_VERSION = '3.0.0'
 
 
-def create_app():  # pylint: disable=too-many-locals
+def create_app():  # pylint: disable=too-many-locals, disable=too-many-statements
     import backend.common.logging  # pylint: disable=import-outside-toplevel
     backend.common.logging.initialize_flask_logging()
 
@@ -55,12 +55,14 @@ def create_app():  # pylint: disable=too-many-locals
     from .views.feedback import blueprint as feedback_blueprint
     from .views.match import blueprint as match_blueprint
     from .views.notification import blueprint as notification_blueprint
+    from .views.offer import blueprint as offer_blueprint
     from .views.onboarding import blueprint as onboarding_blueprint
     from .views.position import blueprint as position_blueprint
     from .views.performer import blueprint as performer_blueprint
     from .views.post import blueprint as post_blueprint, language_blueprint, location_blueprint, post_type_blueprint
     from .views.skill import blueprint as skill_blueprint
     from .views.user import blueprint as user_blueprint, customer_user_blueprint
+    from .views.backgroundpicture import blueprint as backgroundimage_blueprint
     # pylint: enable=import-outside-toplevel
 
     api.register_blueprint(application_blueprint)
@@ -74,6 +76,7 @@ def create_app():  # pylint: disable=too-many-locals
     api.register_blueprint(location_blueprint)
     api.register_blueprint(match_blueprint)
     api.register_blueprint(notification_blueprint)
+    api.register_blueprint(offer_blueprint)
     api.register_blueprint(onboarding_blueprint)
     api.register_blueprint(position_blueprint)
     api.register_blueprint(performer_blueprint)
@@ -82,5 +85,6 @@ def create_app():  # pylint: disable=too-many-locals
     api.register_blueprint(post_type_blueprint)
     api.register_blueprint(skill_blueprint)
     api.register_blueprint(user_blueprint)
+    api.register_blueprint(backgroundimage_blueprint)
 
     return app

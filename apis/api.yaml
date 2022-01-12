@@ -4,6 +4,7 @@ info:
   version: 0.11.0
 servers: []
 tags:
+  - name: offers
   - name: positions
   - name: communities
   - name: events
@@ -14,6 +15,7 @@ tags:
   - name: onboarding
   - name: posts
   - name: users
+  - name: backgroundpictures
 paths:
   /customers:
     get:
@@ -211,6 +213,206 @@ paths:
               required:
                 - user_id
                 - name
+  /offers:
+    get:
+      summary: List all offers
+      tags:
+        - offers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+      operationId: list_offers
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Create a new offer
+      tags:
+        - offers
+      operationId: create_offer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the offer.
+                overview_text:
+                  type: string
+                  description: Description of the offer.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hashtags.
+              required:
+                - name
+                - overview_text
+  '/offers/{offer_id}':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a offer
+      tags:
+        - offers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+      operationId: get_offer
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a offer
+      tags:
+        - offers
+      operationId: update_offer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the offer.
+                overview_text:
+                  type: string
+                  description: Description of the offer.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hashtags.
+    delete:
+      summary: Delete an offer
+      tags:
+        - offers
+      operationId: delete_offer
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/offers/{offer_id}/offer_video':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+        description: Unique identifier of the offer.
+    put:
+      summary: Create request for a offer video upload
+      operationId: upload_offer_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: offer_video.mp4
+                  content_type: video/mp4
+  '/offers/{offer_id}/offer_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+        description: Unique identifier of the offer.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize offer video upload
+      operationId: finalize_offer_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a offer video
+      operationId: delete_offer_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /positions:
     get:
       summary: List all positions
@@ -1971,6 +2173,32 @@ paths:
                   type: string
                 additional_comments:
                   type: string
+    put:
+      summary: update feedback for a performer
+      tags:
+        - posts
+      operationId: update_performer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
   '/posts/{post_id}/video':
     parameters:
       - schema:
@@ -2148,6 +2376,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Feedback'
       operationId: create_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
+    put:
+      summary: update feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: update_post_feedback
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:
@@ -2417,6 +2671,9 @@ paths:
                   type: boolean
                 mentorship_description:
                   type: string
+                background_picture_id:
+                  type: string
+                  description: Background picture reference.
   '/users/{user_id}/fun_fact':
     parameters:
       - schema:
@@ -2946,12 +3203,38 @@ paths:
                     type: string
       security:
         - AWSCognitoCanvaraPrototype: []
-  /onboarding/background_picture:
+  /backgroundpictures:
+    get:
+      summary: List all background pictures
+      tags:
+        - backgroundpictures
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BackgroundPicture'
+      operationId: list_backgroundpictures
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
     put:
       summary: Create request for a background picture upload
+      operationId: upload_backgroundpicture
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
       tags:
-        - onboarding
-      operationId: upload_background_picture
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
       requestBody:
         content:
           application/json:
@@ -2960,18 +3243,9 @@ paths:
             examples:
               Example:
                 value:
-                  filename: background_image.jpeg
-                  content_type: image/jpeg
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserUploadResponse'
-      security:
-        - AWSCognitoCanvaraPrototype: []
-  '/onboarding/background_picture/{upload_id}':
+                  filename: bg_picture.jpg
+                  content_type: image/jpg
+  '/backgroundpictures/{upload_id}':
     parameters:
       - schema:
           type: string
@@ -2981,9 +3255,21 @@ paths:
         description: Unique identifier of the file upload.
     put:
       summary: Finalize background picture upload
+      operationId: finalize_backgroundpicture_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
       tags:
-        - onboarding
-      operationId: finalize_background_picture_upload
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
       requestBody:
         content:
           application/json:
@@ -2997,16 +3283,14 @@ paths:
                     - uploaded
               required:
                 - status
+    delete:
+      summary: Delete a background picture
+      operationId: delete_backgroundpicture
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
+        '204':
+          description: No Content
+      tags:
+        - backgroundpictures
       security:
         - AWSCognitoCanvaraPrototype: []
   /skills:
@@ -3595,6 +3879,54 @@ components:
         profile_picture_url:
           type: string
           description: The URL of user's profile picture.
+    Offer:
+      title: Offer
+      type: object
+      properties:
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        name:
+          type: string
+          description: Name of this offer.
+        overview_text:
+          type: string
+          description: Description of the offer.
+        offerer:
+          type: object
+          description: Information about the owner/offerer of the offer.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture. 
+        overview_video:
+          $ref: '#/components/schemas/UserUpload'
+        hashtags:
+          type: array
+          description: Hashtags of this offer.
+          items:
+            type: string
+        status:
+          type: string
+          description: Current status of this offer.
+        created_at:
+          type: string
+          description: 'Date and time when this offer was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+      required:
+        - name
+        - overview_text
     Event:
       title: Event
       type: object
@@ -3954,6 +4286,16 @@ components:
           properties:
             level:
               type: integer
+    BackgroundPicture:
+      title: BackgroundPicture
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url for the uploaded file.
     ProductPreference:
       title: ProductPreference
       type: object

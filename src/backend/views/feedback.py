@@ -70,6 +70,27 @@ class PerformerFeedbackAPI(AuthenticatedAPIBase):
             tx.add(feedback)
         return feedback.as_dict()
 
+    @staticmethod
+    def put(post_id, performer_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            author = User.lookup(tx, current_cognito_jwt['sub'])
+            performer = User.lookup(tx, performer_id)
+            post = Post.lookup(tx, post_id)
+            feedback = Feedback.lookup_by_feedback(tx, author.id, post.id, performer.id)
+
+            payload = request.json
+
+            feedback.last_updated_at = now
+            feedback.update_feedback(payload)
+
+        # Fetch the feedback again from the database so the updates made above are reflected in the response
+        with transaction() as tx:
+            feedback = Feedback.lookup_by_feedback(tx, author.id, post.id, performer.id)
+            feedback_details = feedback.as_dict()
+        return feedback_details
+
 
 @blueprint.route('/feedback')
 class PosterFeedbackAPI(AuthenticatedAPIBase):
@@ -114,3 +135,23 @@ class PosterFeedbackAPI(AuthenticatedAPIBase):
             )
             tx.add(feedback)
         return feedback.as_dict()
+
+    @staticmethod
+    def put(post_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            author = User.lookup(tx, current_cognito_jwt['sub'])
+            post = Post.lookup(tx, post_id)
+            feedback = Feedback.lookup_by_feedback(tx, author.id, post.id, post.owner.id)
+
+            payload = request.json
+
+            feedback.last_updated_at = now
+            feedback.update_feedback(payload)
+
+        # Fetch the feedback again from the database so the updates made above are reflected in the response
+        with transaction() as tx:
+            feedback = Feedback.lookup_by_feedback(tx, author.id, post.id, post.owner.id)
+            feedback_details = feedback.as_dict()
+        return feedback_details

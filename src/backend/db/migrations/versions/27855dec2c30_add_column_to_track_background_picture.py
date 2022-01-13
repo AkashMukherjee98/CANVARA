@@ -1,7 +1,7 @@
 """add column to track background picture
 
 Revision ID: 27855dec2c30
-Revises: 616a12786534
+Revises: 8ee49b91feae
 Create Date: 2022-01-04 15:05:35.991163
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '27855dec2c30'
-down_revision = '616a12786534'
+down_revision = '8ee49b91feae'
 branch_labels = None
 depends_on = None
 

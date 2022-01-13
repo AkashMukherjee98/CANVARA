@@ -8,7 +8,9 @@ from backend.models.db import transaction
 from backend.models.product_preference import ProductPreference
 from backend.models.user import User, SkillType
 from backend.views.base import AuthenticatedAPIBase
-from backend.views.user import ProfilePictureAPIBase, ProfilePictureByIdAPIBase
+from backend.views.user import (
+    ProfilePictureAPIBase, ProfilePictureByIdAPIBase
+)
 
 
 blueprint = Blueprint('onboarding', __name__, url_prefix='/onboarding')

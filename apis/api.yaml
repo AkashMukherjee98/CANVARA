@@ -4,6 +4,7 @@ info:
   version: 0.11.0
 servers: []
 tags:
+  - name: marketplaces
   - name: offers
   - name: positions
   - name: communities
@@ -17,6 +18,100 @@ tags:
   - name: users
   - name: backgroundpictures
 paths:
+  '/marketplaces/opportunities':
+    get:
+      summary: List all opportunities
+      operationId: get_opportunities
+      description: ''
+      tags:
+        - marketplaces
+      parameters:
+        - schema:
+            type: string
+            default: recommended
+            enum:
+            - recommended
+            - latest
+          in: query
+          name: sortby
+          description: 'Sort items in each category'
+        - schema:
+            type: number
+          in: query
+          name: limit
+          description: 'Limit of the items in each category'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gigs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+                    description: List of gigs.
+                  offers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Offer'
+                    description: List of offers.
+                  positions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                    description: List of positions.
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/marketplaces/connections':
+    get:
+      summary: List all connections
+      operationId: get_connections
+      description: ''
+      tags:
+        - marketplaces
+      parameters:
+        - schema:
+            type: string
+            default: recommended
+            enum:
+            - recommended
+            - latest
+          in: query
+          name: sortby
+          description: 'Sort items in each category'
+        - schema:
+            type: number
+          in: query
+          name: limit
+          description: 'Limit of the items in each category'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  peoples:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                    description: List of peoples.
+                  communities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Community'
+                    description: List of offers.
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    description: List of positions.
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /customers:
     get:
       summary: List all customers

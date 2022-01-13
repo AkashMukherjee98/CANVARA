@@ -2,7 +2,7 @@ from enum import Enum
 import copy
 
 from sqlalchemy import and_
-from sqlalchemy.orm import relationship, noload, contains_eager
+from sqlalchemy.orm import relationship, noload
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -97,19 +97,21 @@ class Offer(ModelBase):
 
 class OfferProposalStatus(Enum):
     NEW = 'new'
-    SHORTLISTED = 'shortlisted'
     SELECTED = 'selected'
     DELETED = 'deleted'
+    IN_PROGRESS = 'in_progress'
+    SUSPENDED = 'suspended'
+    COMPLETED = 'completed'
 
     @classmethod
-    def lookup(cls, offer_status):
-        if offer_status is None:
+    def lookup(cls, proposal_status):
+        if proposal_status is None:
             return None
 
         try:
-            return cls(offer_status.lower())
+            return cls(proposal_status.lower())
         except ValueError as ex:
-            raise InvalidArgumentError(f"Invalid proposal status: {offer_status}.") from ex
+            raise InvalidArgumentError(f"Invalid proposal status: {proposal_status}.") from ex
 
 
 class OfferProposal(ModelBase):
@@ -153,6 +155,12 @@ class OfferProposal(ModelBase):
                 proposal[key] = value
 
         add_if_not_none('overview_text', self.details.get('overview_text'))
+        add_if_not_none('proposer_feedback', self.proposer_feedback)
+        add_if_not_none('offerer_feedback', self.offerer_feedback)
+        add_if_not_none('proposer_feedback_at', self.proposer_feedback_at.isoformat() if self.proposer_feedback_at else None)
+        add_if_not_none('offerer_feedback_at', self.offerer_feedback_at.isoformat() if self.offerer_feedback_at else None)
+        add_if_not_none('selected_at', self.selected_at.isoformat() if self.selected_at else None)
+        add_if_not_none('in_progress_at', self.in_progress_at.isoformat() if self.in_progress_at else None)
 
         return proposal
 
@@ -178,60 +186,4 @@ class OfferProposal(ModelBase):
         ]
 
         proposals = proposals.options(query_options)
-
         return proposals
-
-
-class OfferProposalProgressStatus(Enum):
-    IN_PROGRESS = 'in_progress'
-    SUSPENDED = 'suspended'
-    COMPLETE = 'complete'
-
-    @classmethod
-    def lookup(cls, proposal_status):
-        if proposal_status is None:
-            return None
-
-        try:
-            return cls(proposal_status.lower())
-        except ValueError as ex:
-            raise InvalidArgumentError(f"Invalid performer status: {proposal_status}.") from ex
-
-
-class OfferProposalProgress(ModelBase):
-    __tablename__ = 'offer_proposal_progress'
-
-    proposal = relationship("OfferProposal")
-
-    @classmethod
-    def lookup_by_offer(cls, tx, offer_id):
-        query_options = [
-            contains_eager(cls.proposal).joinedload(OfferProposal.offer, innerjoin=True),
-            contains_eager(cls.proposal).joinedload(OfferProposal.proposer, innerjoin=True)
-        ]
-
-        return tx.query(cls).join(cls.proposal).join(OfferProposal.offer).where(
-            Offer.id == offer_id).options(query_options).order_by(cls.created_at.desc())
-
-    @classmethod
-    def lookup(cls, tx, offer_id, proposer_id, must_exist=True):
-        query_options = [
-            contains_eager(cls.proposal).joinedload(OfferProposal.offer, innerjoin=True),
-            contains_eager(cls.proposal).joinedload(OfferProposal.proposer, innerjoin=True)
-        ]
-
-        proposer = tx.query(cls).join(cls.proposal).join(OfferProposal.offer).join(OfferProposal.proposer).where(and_(
-            Offer.id == offer_id,
-            User.id == proposer_id
-        )).options(query_options).one_or_none()
-
-        if proposer is None and must_exist:
-            raise DoesNotExistError(f"Proposer '{proposer_id}' does not exist for post '{offer_id}'")
-        return proposer
-
-    def as_dict(self):
-        return {
-            'offer_id': self.proposal.offer.id,
-            'proposer_id': self.proposal.proposer.id,
-            'status': self.status
-        }

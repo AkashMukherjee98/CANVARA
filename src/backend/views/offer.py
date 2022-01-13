@@ -7,12 +7,10 @@ from flask_smorest import Blueprint
 
 from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
-from backend.common.datetime import DateTime
 from backend.models.db import transaction
 from backend.models.offer import (
     Offer, OfferStatus,
-    OfferProposal, OfferProposalStatus,
-    OfferProposalProgress, OfferProposalProgressStatus
+    OfferProposal, OfferProposalStatus
 )
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -174,7 +172,7 @@ class OfferProposalAPI(AuthenticatedAPIBase):
         proposal_id = str(uuid.uuid4())
         now = datetime.utcnow()
 
-        required_fields = {'name'}
+        required_fields = {'name', 'overview_text'}
         missing_fields = required_fields - set(payload.keys())
         if missing_fields:
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
@@ -213,29 +211,24 @@ class OfferProposalByIdAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             proposal = OfferProposal.lookup(tx, proposal_id)
-
             payload = request.json
-            start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['start_date'], 'start_date')
-            end_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['end_date'], 'end_date')
 
             if payload.get('name'):
                 proposal.name = payload['name']
 
-            proposal.last_updated_at = now
             proposal.update_details(payload)
 
             if 'status' in payload:
                 new_status = OfferProposalStatus.lookup(payload['status'])
-                proposal.status = new_status.value
 
-                if proposal.status != new_status and new_status == OfferProposalStatus.SELECTED:
-                    tx.add(OfferProposalProgress(
-                        proposal=proposal,
-                        status=OfferProposalProgressStatus.IN_PROGRESS.value,
-                        start_date=start_datetime,
-                        end_date=end_datetime,
-                        created_at=now,
-                        last_updated_at=now))
+                if proposal.status != new_status:
+                    proposal.status = new_status.value
+
+                    if new_status in [OfferProposalStatus.IN_PROGRESS]:
+                        proposal.in_progress_at = now
+                    elif new_status in [OfferProposalStatus.SELECTED]:
+                        proposal.selected_at = now
+
             proposal.last_updated_at = now
 
         # Fetch the proposal again from the database so the updates made above are reflected in the response
@@ -300,3 +293,71 @@ class OfferProposalVideoByIdAPI(AuthenticatedAPIBase):
             proposal.overview_video_id = None
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()
+
+
+@blueprint_proposal.route('/<proposal_id>/offerer-feedback')
+class OfferFeedbackAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(proposal_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            author = User.lookup(tx, current_cognito_jwt['sub'])
+            proposal = OfferProposal.lookup(tx, proposal_id)
+
+            if author.id != proposal.proposer.id:
+                raise NotAllowedError(f"User '{author.id}' is not the proposal owner.")
+
+            payload = request.json
+            offerer_feedback_details = {}
+            if 'comments' in payload:
+                offerer_feedback_details['comments'] = payload['comments']
+
+            if 'concerns' in payload:
+                offerer_feedback_details['concerns'] = payload['concerns']
+
+            if 'additional_comments' in payload:
+                offerer_feedback_details['additional_comments'] = payload['additional_comments']
+
+            proposal.offerer_feedback = offerer_feedback_details
+            proposal.offerer_feedback_at = now
+            proposal.last_updated_at = now
+
+        with transaction() as tx:
+            proposal = OfferProposal.lookup(tx, proposal_id)
+            proposal_details = proposal.as_dict()
+        return proposal_details
+
+
+@blueprint_proposal.route('/<proposal_id>/proposer-feedback')
+class ProposerFeedbackAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(proposal_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            author = User.lookup(tx, current_cognito_jwt['sub'])
+            proposal = OfferProposal.lookup(tx, proposal_id)
+
+            if author.id != proposal.offer.offerer.id:
+                raise NotAllowedError(f"User '{author.id}' is not the offer owner.")
+
+            payload = request.json
+            proposer_feedback_details = {}
+            if 'comments' in payload:
+                proposer_feedback_details['comments'] = payload['comments']
+
+            if 'concerns' in payload:
+                proposer_feedback_details['concerns'] = payload['concerns']
+
+            if 'additional_comments' in payload:
+                proposer_feedback_details['additional_comments'] = payload['additional_comments']
+
+            proposal.proposer_feedback = proposer_feedback_details
+            proposal.proposer_feedback_at = now
+            proposal.last_updated_at = now
+
+        with transaction() as tx:
+            proposal = OfferProposal.lookup(tx, proposal_id)
+            proposal_details = proposal.as_dict()
+        return proposal_details

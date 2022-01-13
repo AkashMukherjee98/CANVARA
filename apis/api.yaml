@@ -412,6 +412,278 @@ paths:
         - offers
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/offers/{offer_id}/proposals':
+    get:
+      summary: List all proposals
+      tags:
+        - offers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Proposal'
+      operationId: list_proposals
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Create a new proposal
+      tags:
+        - offers
+      operationId: create_proposal
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the project.
+                overview_text:
+                  type: string
+                  description: Description of the proposal.
+              required:
+                - name
+                - overview_text
+  '/proposals/{proposal_id}':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a proposal
+      tags:
+        - offers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      operationId: get_proposal
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a proposal
+      tags:
+        - offers
+      operationId: update_proposal
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the project.
+                overview_text:
+                  type: string
+                  description: Description of the proposal.
+                status:
+                  type: string
+                  description: Current status of this proposal.
+                  enum:
+                    - selected
+                    - in_progress
+                    - suspended
+                    - completed
+    delete:
+      summary: Delete an proposal
+      tags:
+        - offers
+      operationId: delete_proposal
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/proposals/{proposal_id}/proposal_video':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+    put:
+      summary: Create request for a proposal video upload
+      operationId: upload_proposal_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: proposal_video.mp4
+                  content_type: video/mp4
+  '/proposals/{proposal_id}/proposal_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize proposal video upload
+      operationId: finalize_proposal_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a proposal video
+      operationId: delete_proposal_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/proposals/{proposal_id}/offerer-feedback':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+    put:
+      summary: Add feedback for offerer
+      operationId: add_offerer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  description: Feedback comment
+                concerns:
+                  type: string
+                  description: Feedback concern
+                additional_comments:
+                  type: string
+                  description: Feedback additional comment
+  '/proposals/{proposal_id}/propser-feedback':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+    put:
+      summary: Add feedback for proposer
+      operationId: add_proposer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  description: Feedback comment
+                concerns:
+                  type: string
+                  description: Feedback concern
+                additional_comments:
+                  type: string
+                  description: Feedback additional comment
   /positions:
     get:
       summary: List all positions
@@ -3716,12 +3988,6 @@ components:
         offer_id:
           type: string
           description: Unique identifier for this offer.
-        name:
-          type: string
-          description: Name of this offer.
-        overview_text:
-          type: string
-          description: Description of the offer.
         offerer:
           type: object
           description: Information about the owner/offerer of the offer.
@@ -3737,7 +4003,13 @@ components:
               description: Name of the user.
             profile_picture_url:
               type: string
-              description: The URL of user's profile picture. 
+              description: The URL of user's profile picture.
+        name:
+          type: string
+          description: Name of this offer.
+        overview_text:
+          type: string
+          description: Description of the offer.
         overview_video:
           $ref: '#/components/schemas/UserUpload'
         hashtags:
@@ -3748,6 +4020,90 @@ components:
         status:
           type: string
           description: Current status of this offer.
+        created_at:
+          type: string
+          description: 'Date and time when this offer was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+      required:
+        - name
+        - overview_text
+    Proposal:
+      title: Proposal
+      type: object
+      properties:
+        proposal_id:
+          type: string
+          description: Unique identifier for this proposal.
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        proposer:
+          type: object
+          description: Information about the owner/proposer of the proposal.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture. 
+        name:
+          type: string
+          description: Name of this project.
+        overview_text:
+          type: string
+          description: Description of the proposal.
+        overview_video:
+          $ref: '#/components/schemas/UserUpload'
+        status:
+          type: string
+          description: Current status of this proposal.
+        proposer_feedback:
+          type: object
+          description: Feedback for the proposer.
+          properties:
+            comments:
+              type: string
+              description: Feedback comment
+            concerns:
+              type: string
+              description: Feedback concern
+            additional_comments:
+              type: string
+              description: Feedback additional comments
+        offerer_feedback:
+          type: object
+          description: Feedback for the offerer.
+          properties:
+            comments:
+              type: string
+              description: Feedback comment
+            concerns:
+              type: string
+              description: Feedback concern
+            additional_comments:
+              type: string
+              description: Feedback additional comments
+        proposer_feedback_at:
+          type: string
+          description: 'Date and time when feedback for proposer was given, in ISO 8601 format.'
+        offerer_feedback_at:
+          type: string
+          description: 'Date and time when feedback for offerer was given, in ISO 8601 format.'
+        selected_at:
+          type: string
+          description: 'Date and time when the status of the proposal is "selected", in ISO 8601 format.'
+        in_progress_at:
+          type: string
+          description: 'Date and time when the status of the proposal is "in_progress", in ISO 8601 format.'
         created_at:
           type: string
           description: 'Date and time when this offer was created, in ISO 8601 format.'

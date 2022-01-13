@@ -23,8 +23,8 @@ blueprint = Blueprint('marketplace', __name__, url_prefix='/marketplaces')
 class OpportunityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
-        sortBy = request.args.get('sortby')
-        MarketplaceSort.lookup(sortBy)
+        sort_by = request.args.get('sortby')
+        MarketplaceSort.lookup(sort_by)
 
         limit = request.args.get('limit')
         if not limit.isnumeric() or int(limit) < 0:
@@ -58,12 +58,13 @@ class OpportunityAPI(AuthenticatedAPIBase):
             }
         return jsonify(opportunities)
 
+
 @blueprint.route('/connections')
-class OpportunityAPI(AuthenticatedAPIBase):
+class ConnectionAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
-        sortBy = request.args.get('sortby')
-        MarketplaceSort.lookup(sortBy)
+        sort_by = request.args.get('sortby')
+        MarketplaceSort.lookup(sort_by)
 
         limit = request.args.get('limit')
         if not limit.isnumeric() or int(limit) < 0:

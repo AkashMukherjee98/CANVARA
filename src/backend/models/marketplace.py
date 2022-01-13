@@ -8,11 +8,11 @@ class MarketplaceSort(Enum):
     LATEST = 'latest'
 
     @classmethod
-    def lookup(cls, name):
-        if name is None:
+    def lookup(cls, term):
+        if term is None:
             return None
 
         try:
-            return MarketplaceSort(name.lower())
+            return MarketplaceSort(term.lower())
         except ValueError as ex:
-            raise InvalidArgumentError(f"Unsupported filter: {name}.") from ex
+            raise InvalidArgumentError(f"Unsupported filter: {term}.") from ex

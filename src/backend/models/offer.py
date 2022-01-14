@@ -12,7 +12,6 @@ from .user_upload import UserUpload
 
 class OfferStatus(Enum):
     # Offer is available for proposer
-
     ACTIVE = 'active'
 
     # Offer has been deleted
@@ -97,11 +96,13 @@ class Offer(ModelBase):
 
 class OfferProposalStatus(Enum):
     NEW = 'new'
+    UNDER_REVIEW = 'under_review'
     SELECTED = 'selected'
-    DELETED = 'deleted'
+    REJECTED = 'rejected'
     IN_PROGRESS = 'in_progress'
     SUSPENDED = 'suspended'
     COMPLETED = 'completed'
+    DELETED = 'deleted'
 
     @classmethod
     def lookup(cls, proposal_status):
@@ -155,12 +156,15 @@ class OfferProposal(ModelBase):
                 proposal[key] = value
 
         add_if_not_none('overview_text', self.details.get('overview_text'))
+
         add_if_not_none('proposer_feedback', self.proposer_feedback)
-        add_if_not_none('offerer_feedback', self.offerer_feedback)
         add_if_not_none('proposer_feedback_at', self.proposer_feedback_at.isoformat() if self.proposer_feedback_at else None)
+
+        add_if_not_none('offerer_feedback', self.offerer_feedback)
         add_if_not_none('offerer_feedback_at', self.offerer_feedback_at.isoformat() if self.offerer_feedback_at else None)
-        add_if_not_none('selected_at', self.selected_at.isoformat() if self.selected_at else None)
-        add_if_not_none('in_progress_at', self.in_progress_at.isoformat() if self.in_progress_at else None)
+
+        add_if_not_none('decided_at', self.decided_at.isoformat() if self.decided_at else None)
+        add_if_not_none('closed_at', self.closed_at.isoformat() if self.closed_at else None)
 
         return proposal
 

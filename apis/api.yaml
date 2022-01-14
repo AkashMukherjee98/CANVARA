@@ -510,7 +510,9 @@ paths:
                   type: string
                   description: Current status of this proposal.
                   enum:
+                    - under_review
                     - selected
+                    - rejected
                     - in_progress
                     - suspended
                     - completed
@@ -647,7 +649,7 @@ paths:
                 additional_comments:
                   type: string
                   description: Feedback additional comment
-  '/proposals/{proposal_id}/propser-feedback':
+  '/proposals/{proposal_id}/proposer-feedback':
     parameters:
       - schema:
           type: string

@@ -19,7 +19,7 @@ from backend.views.base import AuthenticatedAPIBase
 
 
 blueprint = Blueprint('offer', __name__, url_prefix='/offers')
-blueprint_proposal = Blueprint('offer_proposal', __name__, url_prefix='/proposals')
+proposal_blueprint = Blueprint('offer_proposal', __name__, url_prefix='/proposals')
 
 
 @blueprint.route('')
@@ -197,7 +197,7 @@ class OfferProposalAPI(AuthenticatedAPIBase):
         return proposal_details
 
 
-@blueprint_proposal.route('/<proposal_id>')
+@proposal_blueprint.route('/<proposal_id>')
 class OfferProposalByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(proposal_id):
@@ -224,10 +224,10 @@ class OfferProposalByIdAPI(AuthenticatedAPIBase):
                 if proposal.status != new_status:
                     proposal.status = new_status.value
 
-                    if new_status in [OfferProposalStatus.IN_PROGRESS]:
-                        proposal.in_progress_at = now
-                    elif new_status in [OfferProposalStatus.SELECTED]:
-                        proposal.selected_at = now
+                    if new_status in [OfferProposalStatus.SELECTED, OfferProposalStatus.REJECTED]:
+                        proposal.decided_at = now
+                    if new_status in [OfferProposalStatus.COMPLETED, OfferProposalStatus.SUSPENDED]:
+                        proposal.closed_at = now
 
             proposal.last_updated_at = now
 
@@ -253,7 +253,7 @@ class OfferProposalByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
-@blueprint_proposal.route('/<proposal_id>/proposal_video')
+@proposal_blueprint.route('/<proposal_id>/proposal_video')
 class OfferProposalVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(proposal_id):
@@ -266,7 +266,7 @@ class OfferProposalVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'proposals', metadata)
 
 
-@blueprint_proposal.route('/<proposal_id>/proposal_video/<upload_id>')
+@proposal_blueprint.route('/<proposal_id>/proposal_video/<upload_id>')
 class OfferProposalVideoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(proposal_id, upload_id):
@@ -295,7 +295,7 @@ class OfferProposalVideoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
-@blueprint_proposal.route('/<proposal_id>/offerer-feedback')
+@proposal_blueprint.route('/<proposal_id>/offerer-feedback')
 class OfferFeedbackAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(proposal_id):
@@ -329,7 +329,7 @@ class OfferFeedbackAPI(AuthenticatedAPIBase):
         return proposal_details
 
 
-@blueprint_proposal.route('/<proposal_id>/proposer-feedback')
+@proposal_blueprint.route('/<proposal_id>/proposer-feedback')
 class ProposerFeedbackAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(proposal_id):

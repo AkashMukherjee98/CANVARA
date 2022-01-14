@@ -15,6 +15,7 @@ tags:
   - name: onboarding
   - name: posts
   - name: users
+  - name: backgroundpictures
 paths:
   /customers:
     get:
@@ -2944,6 +2945,9 @@ paths:
                   type: boolean
                 mentorship_description:
                   type: string
+                background_picture_id:
+                  type: string
+                  description: Background picture reference.
   '/users/{user_id}/fun_fact':
     parameters:
       - schema:
@@ -3075,6 +3079,80 @@ paths:
     put:
       summary: Finalize profile picture upload
       operationId: finalize_profile_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/background_picture':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a background picture upload
+      operationId: upload_background_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: background_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/background_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize background picture upload
+      operationId: finalize_background_picture_upload
       requestBody:
         content:
           application/json:
@@ -3397,6 +3475,96 @@ paths:
                 properties:
                   status:
                     type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /backgroundpictures:
+    get:
+      summary: List all background pictures
+      tags:
+        - backgroundpictures
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BackgroundPicture'
+      operationId: list_backgroundpictures
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Create request for a background picture upload
+      operationId: upload_backgroundpicture
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: bg_picture.jpg
+                  content_type: image/jpg
+  '/backgroundpictures/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize background picture upload
+      operationId: finalize_backgroundpicture_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a background picture
+      operationId: delete_backgroundpicture
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - backgroundpictures
       security:
         - AWSCognitoCanvaraPrototype: []
   /skills:
@@ -3892,6 +4060,8 @@ components:
         title:
           type: string
         profile_picture_url:
+          type: string
+        background_picture_url:
           type: string
         location:
           type: string
@@ -4474,6 +4644,16 @@ components:
           properties:
             level:
               type: integer
+    BackgroundPicture:
+      title: BackgroundPicture
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url for the uploaded file.
     ProductPreference:
       title: ProductPreference
       type: object

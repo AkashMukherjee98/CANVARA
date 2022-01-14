@@ -100,6 +100,9 @@ class UserByIdAPI(AuthenticatedAPIBase):
                 manager = User.lookup(tx, payload['manager_id'])
                 user.manager = user.validate_manager(manager)
 
+            if payload.get('background_picture_id'):
+                user.background_picture = UserUpload.lookup(tx, payload['background_picture_id'], user.customer_id)
+
             # TODO: (sunil) Error if current_skills was given but set to empty list
             if payload.get('current_skills'):
                 User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
@@ -191,6 +194,7 @@ class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
             user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
 
 
+@blueprint.route('/<user_id>/background_picture')
 class BackgroundPictureAPI(BackgroundPictureAPIBase):
 
     @staticmethod
@@ -214,6 +218,7 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
         }
 
 
+@blueprint.route('/<user_id>/background_picture/<upload_id>')
 class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
 
     @staticmethod

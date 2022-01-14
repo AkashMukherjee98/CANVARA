@@ -37,6 +37,7 @@ class User(ModelBase):
     post_bookmarks = relationship("UserPostBookmark", back_populates="user")
     post_likes = relationship("UserPostLike", back_populates="user")
     profile_picture = relationship(UserUpload, foreign_keys="[User.profile_picture_id]")
+    background_picture = relationship(UserUpload, foreign_keys="[User.background_picture_id]")
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
@@ -48,6 +49,9 @@ class User(ModelBase):
 
     DEFAULT_PROFILE_PICTURE_PATH = 'public/users/blank_profile_picture.png'
     DEFAULT_PROFILE_PICTURE_CONTENT_TYPE = 'image/png'
+
+    DEFAULT_BACKGROUND_PICTURE_PATH = 'public/users/blank_background_picture.png'
+    DEFAULT_BACKGROUND_PICTURE_CONTENT_TYPE = 'image/png'
 
     MAX_VIDEO_FUN_FACTS = 1
     MAX_IMAGE_FUN_FACTS = 10
@@ -62,6 +66,19 @@ class User(ModelBase):
             UserUpload.get_bucket_name(),
             User.DEFAULT_PROFILE_PICTURE_PATH,
             User.DEFAULT_PROFILE_PICTURE_CONTENT_TYPE,
+            signed=False
+        )
+
+    @property
+    def background_picture_url(self):
+        if self.background_picture:
+            return self.background_picture.generate_get_url(signed=False)
+
+        return UserUpload.generate_url(
+            'get_object',
+            UserUpload.get_bucket_name(),
+            User.DEFAULT_BACKGROUND_PICTURE_PATH,
+            User.DEFAULT_BACKGROUND_PICTURE_CONTENT_TYPE,
             signed=False
         )
 
@@ -198,6 +215,7 @@ class User(ModelBase):
         user['current_skills'] = [skill.as_dict() for skill in self.current_skills]
         user['desired_skills'] = [skill.as_dict() for skill in self.desired_skills]
         user['profile_picture_url'] = self.profile_picture_url
+        user['background_picture_url'] = self.background_picture_url
 
         def add_if_not_none(key, value):
             if value is not None:

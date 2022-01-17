@@ -47,6 +47,7 @@ def create_app():  # pylint: disable=too-many-locals, disable=too-many-statement
     CanvaraDB.init_db()
 
     # pylint: disable=import-outside-toplevel
+    from .views.marketplace import blueprint as marketplace_blueprint
     from .views.application import blueprint as application_blueprint, post_application_blueprint
     from .views.banner import blueprint as banner_blueprint
     from .views.community import blueprint as community_blueprint
@@ -65,6 +66,7 @@ def create_app():  # pylint: disable=too-many-locals, disable=too-many-statement
     from .views.backgroundpicture import blueprint as backgroundpicture_blueprint
     # pylint: enable=import-outside-toplevel
 
+    api.register_blueprint(marketplace_blueprint)
     api.register_blueprint(application_blueprint)
     api.register_blueprint(banner_blueprint)
     api.register_blueprint(community_blueprint)

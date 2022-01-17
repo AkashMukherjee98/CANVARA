@@ -180,7 +180,7 @@ class Post(ModelBase):
 
     @classmethod
     def search(
-        cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None
+        cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None, limit=None
     ):  # pylint: disable=too-many-arguments
         if post_filter is None:
             post_filter = cls.DEFAULT_FILTER
@@ -212,7 +212,10 @@ class Post(ModelBase):
         # Eagerload UserPostMatch since we will need it later on
         # Filter the join by user id to force the relationship to be one-to-zero-or-one,
         # so that eagerloading doesn't bring in any additional rows
-        posts = posts.outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id))
+        if limit is not None:
+            posts = posts.outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id)).limit(limit)
+        else:
+            posts = posts.outerjoin(Post.user_matches.and_(UserPostMatch.user_id == user.id))
 
         # Eagerload other columns
         # Avoid loading the more expensive attributes like skills, which are one-to-many,

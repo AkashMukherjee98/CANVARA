@@ -164,11 +164,17 @@ class Community(ModelBase):
         return community
 
     @classmethod
-    def search(cls, tx, user):  # pylint: disable=too-many-arguments
-        communities = tx.query(cls).where(and_(
-            User.customer_id == user.customer_id,
-            cls.status == CommunityStatus.ACTIVE.value
-        ))
+    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
+        if limit is not None:
+            communities = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == CommunityStatus.ACTIVE.value
+            )).limit(limit)
+        else:
+            communities = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == CommunityStatus.ACTIVE.value
+            ))
 
         query_options = [
             noload(Community.secondary_moderator),

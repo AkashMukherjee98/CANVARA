@@ -7,6 +7,8 @@ class MarketplaceSort(Enum):
     RECOMMENDED = 'recommended'
     LATEST = 'latest'
 
+    DEFAULT_LIMIT = 5
+
     @classmethod
     def lookup(cls, term):
         if term is None:

@@ -148,12 +148,18 @@ class Event(ModelBase):
 
     @classmethod
     def search(
-        cls, tx, user
+        cls, tx, user, limit=None
     ):  # pylint: disable=too-many-arguments
-        events = tx.query(cls).where(and_(
-            User.customer_id == user.customer_id,
-            cls.status == EventStatus.ACTIVE.value
-        ))
+        if limit is not None:
+            events = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == EventStatus.ACTIVE.value
+            )).limit(limit)
+        else:
+            events = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == EventStatus.ACTIVE.value
+            ))
 
         query_options = [
             noload(Event.secondary_organizer),

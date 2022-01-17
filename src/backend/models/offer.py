@@ -79,18 +79,23 @@ class Offer(ModelBase):
         return offer
 
     @classmethod
-    def search(cls, tx, user):  # pylint: disable=too-many-arguments
-        offers = tx.query(cls).where(and_(
-            User.customer_id == user.customer_id,
-            cls.status == OfferStatus.ACTIVE.value
-        ))
+    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
+        if limit is not None:
+            offers = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == OfferStatus.ACTIVE.value
+            )).limit(limit)
+        else:
+            offers = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == OfferStatus.ACTIVE.value
+            ))
 
         query_options = [
             noload(Offer.offer_overview_video)
         ]
 
         offers = offers.options(query_options)
-
         return offers
 
 

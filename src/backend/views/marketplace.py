@@ -6,7 +6,6 @@ from sqlalchemy import select
 
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.db import transaction
-from backend.common.exceptions import NotAllowedError
 from backend.models.user import User
 from backend.models.post import Post
 from backend.models.offer import Offer
@@ -23,32 +22,32 @@ blueprint = Blueprint('marketplace', __name__, url_prefix='/marketplaces')
 class OpportunityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
-        sort_by = request.args.get('sortby')
+        sort_by = request.args.get('sortby', None) or MarketplaceSort.RECOMMENDED.value
         MarketplaceSort.lookup(sort_by)
 
-        limit = request.args.get('limit')
-        if not limit.isnumeric() or int(limit) < 0:
-            raise NotAllowedError(f"Limit '{limit}' should be positive interger value.")
+        limit = request.args.get('limit', None) or MarketplaceSort.DEFAULT_LIMIT.value
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
             # Get list of gigs
             gigs = Post.search(
                 tx,
-                user
+                user,
+                limit=int(limit)
             )
 
             # Get list of offers
             offers = Offer.search(
                 tx,
-                user
+                user,
+                limit=int(limit)
             )
 
             # Get list of positions
             positions = Position.search(
                 tx,
-                user
+                user,
+                limit=int(limit)
             )
 
             opportunities = {
@@ -63,29 +62,29 @@ class OpportunityAPI(AuthenticatedAPIBase):
 class ConnectionAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
-        sort_by = request.args.get('sortby')
+        sort_by = request.args.get('sortby', None) or MarketplaceSort.RECOMMENDED.value
         MarketplaceSort.lookup(sort_by)
 
-        limit = request.args.get('limit')
-        if not limit.isnumeric() or int(limit) < 0:
-            raise NotAllowedError(f"Limit '{limit}' should be positive interger value.")
+        limit = request.args.get('limit', None) or MarketplaceSort.DEFAULT_LIMIT.value
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
             # Get list of peoples
-            peoples = tx.execute(select(User).where(User.customer_id == user.customer_id)).scalars().all()
+            peoples = tx.execute(select(User).where(User.customer_id == user.customer_id).limit(limit)).scalars().all()
 
             # Get list of communities
             communities = Community.search(
                 tx,
-                user
+                user,
+                limit=int(limit)
             )
 
             # Get list of events
             events = Event.search(
                 tx,
-                user
+                user,
+                limit=int(limit)
             )
 
             opportunities = {

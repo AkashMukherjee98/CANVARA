@@ -101,10 +101,16 @@ class Position(ModelBase):
         return position
 
     @classmethod
-    def search(cls, tx, user):  # pylint: disable=too-many-arguments
-        positions = tx.query(cls).where(and_(
-            User.customer_id == user.customer_id,
-            cls.status == PositionStatus.ACTIVE.value
-        ))
+    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
+        if limit is not None:
+            positions = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == PositionStatus.ACTIVE.value
+            )).limit(limit)
+        else:
+            positions = tx.query(cls).where(and_(
+                User.customer_id == user.customer_id,
+                cls.status == PositionStatus.ACTIVE.value
+            ))
 
         return positions

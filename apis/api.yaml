@@ -104,12 +104,120 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Community'
-                    description: List of offers.
+                    description: List of communities.
                   events:
                     type: array
                     items:
                       $ref: '#/components/schemas/Event'
-                    description: List of positions.
+                    description: List of events.
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/marketplaces/activities':
+    get:
+      summary: List my activities
+      operationId: get_activities
+      description: ''
+      tags:
+        - marketplaces
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: object
+                    description: List of all posts.
+                    properties:
+                      gigs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Offer'
+                        description: List of offers.
+                  applications:
+                    type: object
+                    description: List of applications.
+                    properties:
+                      applications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Application'
+                        description: List of applications.
+                      proposals:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Proposal'
+                        description: List of proposals.
+                  tasks:
+                    type: object
+                    description: List of tasks.
+                    properties:
+                      applications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Application'
+                        description: List of applications.
+                      proposals:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Proposal'
+                        description: List of proposals.
+                  connections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                    description: List of connections.
+                  communities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Community'
+                    description: List of communities.
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    description: List of events.
+                  bookmarks:
+                    type: object
+                    description: List of all bookmarks.
+                    properties:
+                      gigs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Offer'
+                        description: List of offers.
+                      positions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                        description: List of positions.
+                      communities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Community'
+                        description: List of communities.
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        description: List of events.
+                      peoples:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                        description: List of peoples.
       security:
         - AWSCognitoCanvaraPrototype: []
   /customers:

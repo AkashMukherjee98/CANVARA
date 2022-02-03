@@ -5,6 +5,7 @@ info:
 servers: []
 tags:
   - name: marketplaces
+  - name: myactivities
   - name: offers
   - name: positions
   - name: communities
@@ -112,13 +113,13 @@ paths:
                     description: List of events.
       security:
         - AWSCognitoCanvaraPrototype: []
-  '/marketplaces/activities':
+  '/myactivities':
     get:
       summary: List my activities
       operationId: get_activities
       description: ''
       tags:
-        - marketplaces
+        - myactivities
       responses:
         '200':
           description: OK
@@ -141,15 +142,20 @@ paths:
                         items:
                           $ref: '#/components/schemas/Offer'
                         description: List of offers.
+                      positions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                        description: List of positions.
                   applications:
                     type: object
                     description: List of applications.
                     properties:
-                      applications:
+                      gigs:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Application'
-                        description: List of applications.
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
                       proposals:
                         type: array
                         items:

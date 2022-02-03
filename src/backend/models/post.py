@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 import itertools
+import copy
 
 from sqlalchemy import and_, nullslast, or_
 from sqlalchemy.orm import contains_eager, joinedload, noload, relationship
@@ -13,6 +14,7 @@ from .post_type import PostType
 from .skill import SkillWithLevelMixin
 from .user import User
 from .user_upload import UserUpload
+from .community import Community
 
 
 class PostFilter(Enum):
@@ -92,10 +94,12 @@ class Post(ModelBase):
 
     required_skills = relationship("PostSkill", primaryjoin='and_(Post.id == PostSkill.post_id, PostSkill.is_required)')
     desired_skills = relationship("PostSkill", primaryjoin='and_(Post.id == PostSkill.post_id, not_(PostSkill.is_required))')
+    highlighted_communities = relationship("Community", secondary='post_community')
     user_matches = relationship("UserPostMatch", back_populates="post")
     description_video = relationship(UserUpload)
     bookmark_users = relationship("UserPostBookmark", back_populates="post")
     like_users = relationship("UserPostLike", back_populates="post")
+    details = None
 
     DEFAULT_INITIAL_POST_STATUS = PostStatus.ACTIVE
     VALID_SIZES = {'S', 'M', 'L'}
@@ -104,7 +108,8 @@ class Post(ModelBase):
 
     MAX_SKILLS = 20
 
-    MAX_NAME_LENGTH = 48
+    MAX_NAME_LENGTH = 64
+    MAX_DESCRIPTION_LENGTH = 48
 
     @classmethod
     def lookup(cls, tx, post_id, must_exist=True):
@@ -250,6 +255,12 @@ class Post(ModelBase):
         return name
 
     @classmethod
+    def validate_and_convert_description(cls, description):
+        if len(description) > cls.MAX_DESCRIPTION_LENGTH:
+            raise InvalidArgumentError(f"Description must not be more than {cls.MAX_DESCRIPTION_LENGTH} characters.")
+        return description
+
+    @classmethod
     def __validate_and_convert_isoformat_date(cls, date, fieldname):
         # date must be in ISO 8601 format (YYYY-MM-DD)
         try:
@@ -278,6 +289,12 @@ class Post(ModelBase):
             return PostStatus(status.lower()).value
         except ValueError as ex:
             raise InvalidArgumentError(f"Invalid status: {status}.") from ex
+
+    def set_highlighted_communities(self, tx, communities):
+        self.highlighted_communities = []
+        for community_id in communities:
+            community = Community.lookup(tx, community_id)
+            self.highlighted_communities.append(community)
 
     @classmethod
     def __validate_skills(cls, skills, skill_type):
@@ -325,7 +342,29 @@ class Post(ModelBase):
                 unmatched_skills.append(post_skill)
         return matched_skills, unmatched_skills
 
-    def as_dict(self, user=None):
+    def update_details(self, payload):
+        existing = copy.deepcopy(self.details) if self.details else {}
+        details_fields = [
+            'auto_assign',
+            'canvara_kudos'
+        ]
+
+        for field_item in details_fields:
+            if payload.get(field_item) is not None:
+                if payload[field_item]:
+                    existing[field_item] = payload[field_item]
+                elif field_item in existing:
+                    del existing[field_item]
+
+        if payload.get('hashtags') is not None:
+            if payload['hashtags']:
+                existing['hashtags'] = payload['hashtags']
+            elif 'hashtags' in existing:
+                del existing['hashtags']
+
+        self.details = existing
+
+    def as_dict(self, user=None):  # noqa
         post = {
             'post_id': self.id,
             'name': self.name,
@@ -341,6 +380,9 @@ class Post(ModelBase):
             'last_updated_at': self.last_updated_at.isoformat(),
         }
 
+        if self.highlighted_communities:
+            post['highlighted_communities'] = [community.as_summary_dict() for community in self.highlighted_communities]
+
         if self.required_skills:
             post['required_skills'] = [skill.as_dict() for skill in self.required_skills]
 
@@ -352,6 +394,14 @@ class Post(ModelBase):
 
         if self.candidate_description:
             post['candidate_description'] = self.candidate_description
+
+        def add_if_not_none(key, value):
+            if value is not None:
+                post[key] = value
+
+        add_if_not_none('auto_assign', self.details.get('auto_assign'))
+        add_if_not_none('canvara_kudos', self.details.get('canvara_kudos'))
+        add_if_not_none('hashtags', self.details.get('hashtags'))
 
         if self.description_video:
             # TODO: (sunil) remove this once Frontend has been updated
@@ -385,6 +435,13 @@ class Post(ModelBase):
         }
 
         return post
+
+
+class PostCommunity(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'post_community'
+
+    post = relationship(Post, foreign_keys="[PostCommunity.post_id]")
+    community = relationship(Community, foreign_keys="[PostCommunity.community_id]")
 
 
 class UserPostBookmark(ModelBase):  # pylint: disable=too-few-public-methods

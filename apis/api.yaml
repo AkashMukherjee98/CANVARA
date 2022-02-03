@@ -2361,6 +2361,22 @@ paths:
                 candidate_description:
                   type: string
                   description: Description of an ideal candidate for this post.
+                auto_assign:
+                  type: boolean
+                  description: Automatically select applications or not.
+                canvara_kudos:
+                  type: boolean
+                  description: Canvara kudos true or false.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hastags or keywords.
+                highlighted_communities:
+                  type: array
+                  description: Highlighted Community ids for gig.
+                  items:
+                    type: string
               required:
                 - name
                 - post_type_id
@@ -2460,6 +2476,22 @@ paths:
                 candidate_description:
                   type: string
                   description: Description of an ideal candidate for this post.
+                auto_assign:
+                  type: boolean
+                  description: Automatically select applications or not.
+                canvara_kudos:
+                  type: boolean
+                  description: Canvara kudos true or false.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hastags or keywords.
+                highlighted_communities:
+                  type: array
+                  description: Highlighted Community ids for gig.
+                  items:
+                    type: string
     delete:
       summary: Delete a post
       tags:
@@ -4748,6 +4780,36 @@ components:
         candidate_description:
           type: string
           description: Description of an ideal candidate for this post.
+        auto_assign:
+          type: boolean
+          description: Automatically select applications or not.
+        canvara_kudos:
+          type: boolean
+          description: Canvara kudos true or false.
+        hashtags:
+          type: array
+          items:
+            type: string
+          description: List of hastags or keywords.
+        highlighted_communities:
+          type: array
+          description: Highlighted Community ids for gig.
+          items:
+            type: object
+            description: Information about the community.
+            required:
+              - community_id
+              - name
+            properties:
+              community_id:
+                type: string
+                description: Unique identifier for the community.
+              name:
+                type: string
+                description: Name of the community.
+              community_logo:
+                type: string
+                description: The URL of community logo.
         match_level:
           type: number
           description: A number between 0 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.

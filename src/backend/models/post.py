@@ -399,9 +399,10 @@ class Post(ModelBase):
             if value is not None:
                 post[key] = value
 
-        add_if_not_none('auto_assign', self.details.get('auto_assign'))
-        add_if_not_none('canvara_kudos', self.details.get('canvara_kudos'))
-        add_if_not_none('hashtags', self.details.get('hashtags'))
+        if self.details:
+            add_if_not_none('auto_assign', self.details.get('auto_assign'))
+            add_if_not_none('canvara_kudos', self.details.get('canvara_kudos'))
+            add_if_not_none('hashtags', self.details.get('hashtags'))
 
         if self.description_video:
             # TODO: (sunil) remove this once Frontend has been updated

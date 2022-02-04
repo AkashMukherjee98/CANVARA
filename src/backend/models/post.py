@@ -108,7 +108,7 @@ class Post(ModelBase):
 
     MAX_SKILLS = 20
 
-    MAX_NAME_LENGTH = 64
+    MAX_NAME_LENGTH = 100
     MAX_DESCRIPTION_LENGTH = 2500
 
     @classmethod

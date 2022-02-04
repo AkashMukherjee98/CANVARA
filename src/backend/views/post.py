@@ -46,7 +46,7 @@ class PostAPI(AuthenticatedAPIBase):
         return jsonify(posts)
 
     @staticmethod
-    def post():
+    def post():  # pylint: disable=too-many-locals
         payload = request.json
 
         # TODO: (sunil) Need a better way to validate the request
@@ -56,6 +56,7 @@ class PostAPI(AuthenticatedAPIBase):
             raise InvalidArgumentError(f"Invalid request: {', '.join(missing_fields)} missing")
 
         name = Post.validate_and_convert_name(payload['name'])
+        description = Post.validate_and_convert_description(payload['description'])
         target_date = Post.validate_and_convert_target_date(payload['target_date'])
         size = Post.validate_and_convert_size(payload['size'])
         language = Language.validate_and_convert_language(payload['language'])
@@ -81,7 +82,7 @@ class PostAPI(AuthenticatedAPIBase):
                 name=name,
                 post_type=post_type,
                 status=Post.DEFAULT_INITIAL_POST_STATUS.value,
-                description=payload.get('description'),
+                description=description,
                 size=size,
                 language=language,
                 location=location,
@@ -90,6 +91,10 @@ class PostAPI(AuthenticatedAPIBase):
                 target_date=target_date,
                 expiration_date=expiration_date
             )
+            post.update_details(payload)
+
+            if payload.get('highlighted_communities'):
+                post.set_highlighted_communities(tx, payload['highlighted_communities'])
 
             if payload.get('required_skills'):
                 Post.validate_required_skills(payload['required_skills'])
@@ -98,6 +103,7 @@ class PostAPI(AuthenticatedAPIBase):
             if payload.get('desired_skills'):
                 Post.validate_desired_skills(payload['desired_skills'])
                 post.set_desired_skills(tx, payload['desired_skills'])
+
             return post.as_dict()
 
 
@@ -131,7 +137,9 @@ class PostByIdAPI(AuthenticatedAPIBase):
             # TODO: (sunil) Move this to the Post model
             settables = {
                 'candidate_description': {},
-                'description': {},
+                'description': {
+                    'validate_and_convert': Post.validate_and_convert_description
+                },
                 'desired_skills': {
                     'validate_and_convert': Post.validate_desired_skills,
                     'setter': partial(post.set_desired_skills, tx)
@@ -171,6 +179,11 @@ class PostByIdAPI(AuthenticatedAPIBase):
                         settables[field]['setter'](value)
                     else:
                         setattr(post, field, value)
+
+            post.update_details(payload)
+
+            if 'highlighted_communities' in payload:
+                post.set_highlighted_communities(tx, payload['highlighted_communities'])
 
             post.last_updated_at = datetime.utcnow()
 

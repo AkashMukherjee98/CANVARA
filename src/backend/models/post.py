@@ -109,7 +109,7 @@ class Post(ModelBase):
     MAX_SKILLS = 20
 
     MAX_NAME_LENGTH = 64
-    MAX_DESCRIPTION_LENGTH = 48
+    MAX_DESCRIPTION_LENGTH = 2500
 
     @classmethod
     def lookup(cls, tx, post_id, must_exist=True):

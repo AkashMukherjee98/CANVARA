@@ -42,6 +42,9 @@ class User(ModelBase):
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
     mentorship_video = relationship(UserUpload, foreign_keys="[User.mentorship_video_id]")
+    community_memberships = relationship("Community", secondary='community_membership', primaryjoin=(
+        "and_(CommunityMembership.community_id==Community.id, "
+        "CommunityMembership.status == 'active')"))
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -196,6 +199,9 @@ class User(ModelBase):
             else:
                 raise InvalidArgumentError(
                     f"Mentorship Offered accepts true or false, you have provided: {payload['mentorship_offered']}")
+
+        profile['mentorship_hashtags'] = (
+            payload['mentorship_hashtags'] if payload.get('mentorship_hashtags') is not None else [])
         self.profile = profile
 
     def as_summary_dict(self):
@@ -205,7 +211,7 @@ class User(ModelBase):
             'profile_picture_url': self.profile_picture_url,
         }
 
-    def as_dict(self, scrub_feedback=False):
+    def as_dict(self, scrub_feedback=False):  # noqa: C901
         user = {
             'customer_id': self.customer_id,
             'user_id': self.id,
@@ -242,6 +248,7 @@ class User(ModelBase):
         add_if_not_none('slack_teams_messaging_id', self.profile.get('slack_teams_messaging_id'))
         add_if_not_none('mentorship_offered', self.profile.get('mentorship_offered'))
         add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
+        add_if_not_none('mentorship_hashtags', self.profile.get('mentorship_hashtags'))
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()
@@ -272,5 +279,9 @@ class User(ModelBase):
 
         if self.mentorship_video:
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')
+
+        community_memberships = [community.as_summary_dict() for community in self.community_memberships]
+        if community_memberships:
+            user['community_memberships'] = community_memberships
 
         return user

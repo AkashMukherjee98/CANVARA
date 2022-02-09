@@ -378,7 +378,7 @@ paths:
                 current_skills:
                   type: array
                   items:
-                    $ref: '#/components/schemas/SkillWithLevel'
+                    $ref: '#/components/schemas/SkillWithLevelAndExpert'
                 desired_skills:
                   type: array
                   items:
@@ -419,6 +419,10 @@ paths:
                   type: boolean
                 mentorship_description:
                   type: string
+                mentorship_hashtags:
+                  type: array
+                  items:
+                    type: string
               required:
                 - user_id
                 - name
@@ -3145,7 +3149,7 @@ paths:
                 current_skills:
                   type: array
                   items:
-                    $ref: '#/components/schemas/SkillWithLevel'
+                    $ref: '#/components/schemas/SkillWithLevelAndExpert'
                 desired_skills:
                   type: array
                   items:
@@ -3186,6 +3190,10 @@ paths:
                   type: boolean
                 mentorship_description:
                   type: string
+                mentorship_hashtags:
+                  type: array
+                  items:
+                    type: string
                 background_picture_id:
                   type: string
                   description: Background picture reference.
@@ -3591,7 +3599,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SkillWithLevel'
+                  $ref: '#/components/schemas/SkillWithLevelAndExpert'
       security:
         - AWSCognitoCanvaraPrototype: []
       requestBody:
@@ -3600,7 +3608,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/SkillWithLevel'
+                $ref: '#/components/schemas/SkillWithLevelAndExpert'
   /onboarding/desired_skills:
     post:
       summary: Set desired skills during onboarding
@@ -4240,6 +4248,19 @@ components:
         - type
         - membership_approval_required
         - mission
+    CommunitySummary:
+      title: Community Summary
+      type: object
+      properties:
+        community_id:
+          type: string
+          description: Unique identifier for the community.
+        name:
+          type: string
+          description: Name of this community.
+        community_logo:
+          type: string
+          description: The URL of community logo.
     CommunityAnnouncement:
       title: Announcement for a community.
       type: object
@@ -4328,7 +4349,7 @@ components:
         current_skills:
           type: array
           items:
-            $ref: '#/components/schemas/SkillWithLevel'
+            $ref: '#/components/schemas/SkillWithLevelAndExpert'
         desired_skills:
           type: array
           items:
@@ -4375,8 +4396,19 @@ components:
           type: boolean
         mentorship_description:
           type: string
+        mentorship_hashtags:
+          type: array
+          items:
+            type: string
         mentorship_video:
           $ref: '#/components/schemas/UserUpload'
+        community_memberships:
+          type: array
+          description: Community memberships for user.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/CommunitySummary'
+              - type: string
       required:
         - customer_id
         - user_id
@@ -4915,6 +4947,18 @@ components:
           properties:
             level:
               type: integer
+    SkillWithLevelAndExpert:
+      title: SkillWithLevelAndExpert
+      allOf:
+        - $ref: '#/components/schemas/Skill'
+        - type: object
+          properties:
+            level:
+              type: integer
+              description: Level of skill.
+            is_expert:
+              type: boolean
+              description: Expert in this skill or not.
     BackgroundPicture:
       title: BackgroundPicture
       type: object

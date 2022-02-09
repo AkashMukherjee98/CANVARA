@@ -163,6 +163,8 @@ class SkillWithLevelMixin(SkillWithoutLevelMixin):
     def as_dict(self):
         details = self.skill.as_dict()
         details['level'] = self.level
+        if hasattr(self, 'is_expert'):
+            details['is_expert'] = False if self.is_expert is None else self.is_expert
         return details
 
     @classmethod
@@ -186,7 +188,10 @@ class SkillWithLevelMixin(SkillWithoutLevelMixin):
         for skill_data in skills:
             # TODO: (sunil) Handle IntegrityError if multiple users add the same new skill at the same time
             skill = Skill.lookup_or_add(tx, customer_id, skill_id=skill_data.get('skill_id'), name=skill_data.get('name'))
-            selected_skills.append(factory(level=skill_data['level'], skill=skill))
+            if 'is_expert' in skill_data:
+                selected_skills.append(factory(level=skill_data['level'], is_expert=skill_data['is_expert'], skill=skill))
+            else:
+                selected_skills.append(factory(level=skill_data['level'], skill=skill))
 
         existing_skill_ids = [skill.id for skill in existing_skills]
         selected_skill_ids = [skill.id for skill in selected_skills]

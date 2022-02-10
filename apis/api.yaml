@@ -4190,9 +4190,11 @@ components:
               - $ref: '#/components/schemas/EventSummary'
               - type: string
         community_logo:
-          $ref: '#/components/schemas/UserUpload' 
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the community.
         overview_video:
           $ref: '#/components/schemas/UserUpload'
+          description: Overview video of the community.
         type:
           type: string
           description: Types of this community.
@@ -4640,6 +4642,12 @@ components:
         overview:
           type: string
           description: Description of the event.
+        event_logo:
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the event.
+        overview_video:
+          $ref: '#/components/schemas/UserUpload'
+          description: Overview video of the event.
         external_event_link:
           type: string
           description: External event link.

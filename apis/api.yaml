@@ -4487,9 +4487,6 @@ components:
         proposer:
           type: object
           description: Information about the owner/proposer of the proposal.
-          required:
-            - user_id
-            - name
           properties:
             user_id:
               type: string
@@ -4499,7 +4496,25 @@ components:
               description: Name of the user.
             profile_picture_url:
               type: string
-              description: The URL of user's profile picture. 
+              description: The URL of user's profile picture.
+            username:
+              type: string
+              description: Username of the user.
+            title:
+              type: string
+              description: Title of the user.
+            location:
+              type: string
+              description: Location of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
         name:
           type: string
           description: Name of this project.
@@ -4897,6 +4912,37 @@ components:
         application_id:
           type: string
           description: Unique identifier for this application.
+        applicant:
+          type: object
+          description: Information about the applicant.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            username:
+              type: string
+              description: Username of the user.
+            title:
+              type: string
+              description: Title of the user.
+            location:
+              type: string
+              description: Location of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
         description:
           type: string
           description: Additional information for this application.

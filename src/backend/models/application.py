@@ -119,7 +119,8 @@ class Application(ModelBase):
         application = {
             'application_id': self.id,
             'post_id': self.post_id,
-            'applicant_id': self.user_id,
+            'applicant_id': self.user_id,  # TODO: (santanu) remove this once Frontend has been updated
+            'applicant': self.applicant.as_precis_dict(),
             'description': self.details['description'],
             'status': self.status,
         }

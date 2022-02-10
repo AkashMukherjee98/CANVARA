@@ -147,7 +147,7 @@ class OfferProposal(ModelBase):
         proposal = {
             'proposal_id': self.id,
             'name': self.name,
-            'proposer': self.proposer.as_summary_dict(),
+            'proposer': self.proposer.as_precis_dict(),
             'offer_id': self.offer.id,
             'status': self.status,
             'created_at': self.created_at.isoformat()

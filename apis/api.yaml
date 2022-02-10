@@ -631,6 +631,22 @@ paths:
       summary: List all proposals
       tags:
         - offers
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - new
+              - under_review
+              - selected
+              - rejected
+              - in_progress
+              - suspended
+              - completed
+            default: all
+          in: query
+          name: filter
+          description: Filter for the results.
       responses:
         '200':
           description: OK

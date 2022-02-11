@@ -120,7 +120,9 @@ class Application(ModelBase):
             'application_id': self.id,
             'post_id': self.post_id,
             'applicant_id': self.user_id,  # TODO: (santanu) remove this once Frontend has been updated
-            'applicant': self.applicant.as_precis_dict(),
+            'applicant': self.applicant.as_custom_dict([
+                'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
+            ]),
             'description': self.details['description'],
             'status': self.status,
         }

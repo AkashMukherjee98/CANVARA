@@ -211,6 +211,28 @@ class User(ModelBase):
             'profile_picture_url': self.profile_picture_url,
         }
 
+    def as_custom_dict(self, labels=None):
+        user = {
+            'user_id': self.id,
+            'name': self.name,
+            'profile_picture_url': self.profile_picture_url,
+        }
+
+        def add_if_not_none(key, value):
+            if (labels is not None and key in labels) and value is not None:
+                user[key] = value
+
+        add_if_not_none('title', self.profile.get('title'))
+        add_if_not_none('pronoun', self.profile.get('pronoun'))
+        add_if_not_none('location', self.profile.get('location'))
+        add_if_not_none('department', self.profile.get('department'))
+        add_if_not_none('email', self.profile.get('email'))
+        add_if_not_none('phone_number', self.profile.get('phone_number'))
+
+        add_if_not_none('slack_teams_messaging_id', self.profile.get('slack_teams_messaging_id'))
+
+        return user
+
     def as_dict(self, scrub_feedback=False):  # noqa: C901
         user = {
             'customer_id': self.customer_id,

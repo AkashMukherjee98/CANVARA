@@ -99,6 +99,28 @@ class Offer(ModelBase):
         return offers
 
 
+class OfferProposalFilter(Enum):
+    ALL = 'all'
+
+    NEW = 'new'
+    UNDER_REVIEW = 'under_review'
+    SELECTED = 'selected'
+    REJECTED = 'rejected'
+    IN_PROGRESS = 'in_progress'
+    SUSPENDED = 'suspended'
+    COMPLETED = 'completed'
+
+    @classmethod
+    def lookup(cls, proposal_filter):
+        if proposal_filter is None:
+            return None
+
+        try:
+            return cls(proposal_filter.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported filter: {proposal_filter}.") from ex
+
+
 class OfferProposalStatus(Enum):
     NEW = 'new'
     UNDER_REVIEW = 'under_review'
@@ -147,7 +169,8 @@ class OfferProposal(ModelBase):
         proposal = {
             'proposal_id': self.id,
             'name': self.name,
-            'proposer': self.proposer.as_summary_dict(),
+            'proposer': self.proposer.as_custom_dict([
+                'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id']),
             'offer_id': self.offer.id,
             'status': self.status,
             'created_at': self.created_at.isoformat()
@@ -184,12 +207,28 @@ class OfferProposal(ModelBase):
         return proposal
 
     @classmethod
-    def search(cls, tx, user, offer_id):  # pylint: disable=too-many-arguments
+    def search(cls, tx, user, offer_id, proposal_filter=None):  # pylint: disable=too-many-arguments
         proposals = tx.query(cls).where(and_(
             User.customer_id == user.customer_id,
             cls.offer_id == offer_id,
             cls.status != OfferProposalStatus.DELETED.value
         ))
+
+        if proposal_filter == OfferProposalFilter.NEW:
+            proposals = proposals.where(cls.status == OfferProposalStatus.NEW.value)
+        elif proposal_filter == OfferProposalFilter.UNDER_REVIEW:
+            proposals = proposals.where(cls.status == OfferProposalStatus.UNDER_REVIEW.value)
+        elif proposal_filter == OfferProposalFilter.SELECTED:
+            proposals = proposals.where(cls.status == OfferProposalStatus.SELECTED.value)
+        elif proposal_filter == OfferProposalFilter.REJECTED:
+            proposals = proposals.where(cls.status == OfferProposalStatus.REJECTED.value)
+        elif proposal_filter == OfferProposalFilter.IN_PROGRESS:
+            proposals = proposals.where(cls.status == OfferProposalStatus.IN_PROGRESS.value)
+        elif proposal_filter == OfferProposalFilter.SUSPENDED:
+            proposals = proposals.where(cls.status == OfferProposalStatus.SUSPENDED.value)
+        elif proposal_filter == OfferProposalFilter.COMPLETED:
+            proposals = proposals.where(cls.status == OfferProposalStatus.COMPLETED.value)
+
         query_options = [
             noload(OfferProposal.proposal_overview_video)
         ]

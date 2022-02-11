@@ -10,7 +10,7 @@ from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.offer import (
     Offer, OfferStatus,
-    OfferProposal, OfferProposalStatus
+    OfferProposal, OfferProposalStatus, OfferProposalFilter
 )
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -156,12 +156,15 @@ class OfferVideoByIdAPI(AuthenticatedAPIBase):
 class OfferProposalAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(offer_id):
+        proposal_filter = OfferProposalFilter.lookup(request.args.get('filter'))
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             proposals = OfferProposal.search(
                 tx,
                 user,
-                offer_id
+                offer_id,
+                proposal_filter=proposal_filter
             )
             proposals = [proposal.as_dict() for proposal in proposals]
         return jsonify(proposals)

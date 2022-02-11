@@ -631,6 +631,22 @@ paths:
       summary: List all proposals
       tags:
         - offers
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - new
+              - under_review
+              - selected
+              - rejected
+              - in_progress
+              - suspended
+              - completed
+            default: all
+          in: query
+          name: filter
+          description: Filter for the results.
       responses:
         '200':
           description: OK
@@ -4190,9 +4206,11 @@ components:
               - $ref: '#/components/schemas/EventSummary'
               - type: string
         community_logo:
-          $ref: '#/components/schemas/UserUpload' 
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the community.
         overview_video:
           $ref: '#/components/schemas/UserUpload'
+          description: Overview video of the community.
         type:
           type: string
           description: Types of this community.
@@ -4487,9 +4505,6 @@ components:
         proposer:
           type: object
           description: Information about the owner/proposer of the proposal.
-          required:
-            - user_id
-            - name
           properties:
             user_id:
               type: string
@@ -4499,7 +4514,28 @@ components:
               description: Name of the user.
             profile_picture_url:
               type: string
-              description: The URL of user's profile picture. 
+              description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            slack_teams_messaging_id:
+              type: string
+              description: Messaging handle of the user.
         name:
           type: string
           description: Name of this project.
@@ -4625,6 +4661,12 @@ components:
         overview:
           type: string
           description: Description of the event.
+        event_logo:
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the event.
+        overview_video:
+          $ref: '#/components/schemas/UserUpload'
+          description: Overview video of the event.
         external_event_link:
           type: string
           description: External event link.
@@ -4897,6 +4939,40 @@ components:
         application_id:
           type: string
           description: Unique identifier for this application.
+        applicant:
+          type: object
+          description: Information about the applicant.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            slack_teams_messaging_id:
+              type: string
+              description: Messaging handle of the user.
         description:
           type: string
           description: Additional information for this application.

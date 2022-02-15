@@ -92,7 +92,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
             now = datetime.utcnow()
 
             # TODO: (sunil) add authorization -
-            #   Only the post owner can change status to rejected/shortlisted/selected
+            #   Only the post owner can change status to rejected/active_read/selected
             #   Only the manager of the applicant can change status to approved or denied
             #   Only the applicant can update other values
 

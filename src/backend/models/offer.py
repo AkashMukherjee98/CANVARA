@@ -100,10 +100,12 @@ class Offer(ModelBase):
 
 
 class OfferProposalFilter(Enum):
+    # All proposals except deleted
     ALL = 'all'
 
-    NEW = 'new'
-    UNDER_REVIEW = 'under_review'
+    # New and active_read applications
+    ACTIVE = 'active'
+
     SELECTED = 'selected'
     REJECTED = 'rejected'
     IN_PROGRESS = 'in_progress'
@@ -116,6 +118,10 @@ class OfferProposalFilter(Enum):
             return None
 
         try:
+            # For now jump to in_progress
+            if proposal_filter == 'selected':
+                proposal_filter = 'in_progress'
+
             return cls(proposal_filter.lower())
         except ValueError as ex:
             raise InvalidArgumentError(f"Unsupported filter: {proposal_filter}.") from ex
@@ -123,7 +129,7 @@ class OfferProposalFilter(Enum):
 
 class OfferProposalStatus(Enum):
     NEW = 'new'
-    UNDER_REVIEW = 'under_review'
+    ACTIVE_READ = 'active_read'
     SELECTED = 'selected'
     REJECTED = 'rejected'
     IN_PROGRESS = 'in_progress'
@@ -137,6 +143,10 @@ class OfferProposalStatus(Enum):
             return None
 
         try:
+            # For now jump to in_progress
+            if proposal_status == 'selected':
+                proposal_status = 'in_progress'
+
             return cls(proposal_status.lower())
         except ValueError as ex:
             raise InvalidArgumentError(f"Invalid proposal status: {proposal_status}.") from ex
@@ -214,10 +224,9 @@ class OfferProposal(ModelBase):
             cls.status != OfferProposalStatus.DELETED.value
         ))
 
-        if proposal_filter == OfferProposalFilter.NEW:
-            proposals = proposals.where(cls.status == OfferProposalStatus.NEW.value)
-        elif proposal_filter == OfferProposalFilter.UNDER_REVIEW:
-            proposals = proposals.where(cls.status == OfferProposalStatus.UNDER_REVIEW.value)
+        if proposal_filter == OfferProposalFilter.ACTIVE:
+            proposals = proposals.where(cls.status.in_([
+                OfferProposalStatus.NEW.value, OfferProposalStatus.ACTIVE_READ.value]))
         elif proposal_filter == OfferProposalFilter.SELECTED:
             proposals = proposals.where(cls.status == OfferProposalStatus.SELECTED.value)
         elif proposal_filter == OfferProposalFilter.REJECTED:

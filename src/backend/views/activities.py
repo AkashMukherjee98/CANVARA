@@ -30,7 +30,7 @@ class MyActivityAPI(AuthenticatedAPIBase):
             act_gigs = MyActivity.act_gigs(tx, user, [])
             my_proposals = MyActivity.my_proposals(tx, user, [
                 OfferProposalStatus.NEW.value,
-                OfferProposalStatus.UNDER_REVIEW.value])
+                OfferProposalStatus.ACTIVE_READ.value])
 
             application_tasks = MyActivity.my_applications(tx, user, [
                 ApplicationStatus.SELECTED.value])

@@ -15,8 +15,8 @@ class ApplicationFilter(Enum):
     # All applicants for a post
     ALL = 'all'
 
-    # Only shortlisted applicants
-    SHORTLISTED = 'shortlisted'
+    # New and active_read applications
+    ACTIVE = 'active'
 
     # Only applicants who have been selected
     SELECTED = 'selected'
@@ -38,7 +38,7 @@ class ApplicationFilter(Enum):
 # TODO: (sunil) Update this and use it to define the status column
 class ApplicationStatus(Enum):
     NEW = 'new'
-    SHORTLISTED = 'shortlisted'
+    ACTIVE_READ = 'active_read'
     SELECTED = 'selected'
     PASSED = 'passed'
     DELETED = 'deleted'
@@ -85,8 +85,9 @@ class Application(ModelBase):
 
         applications = tx.query(cls).join(cls.post).where(Post.id == post_id).order_by(cls.created_at.desc())
 
-        if application_filter == ApplicationFilter.SHORTLISTED:
-            applications = applications.where(cls.status == ApplicationStatus.SHORTLISTED.value)
+        if application_filter == ApplicationFilter.ACTIVE:
+            applications = applications.where(cls.status.in_([
+                ApplicationStatus.NEW.value, ApplicationStatus.ACTIVE_READ.value]))
 
         elif application_filter == ApplicationFilter.SELECTED:
             applications = applications.where(cls.status == ApplicationStatus.SELECTED.value)

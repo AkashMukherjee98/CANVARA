@@ -11,7 +11,7 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.location import Location
-from backend.models.post import Post, PostFilter, PostStatus, UserPostBookmark, UserPostLike
+from backend.models.post import Post, PostSort, PostStatusFilter, PostFilter, PostStatus, UserPostBookmark, UserPostLike
 from backend.models.post_type import PostType
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -31,16 +31,38 @@ class PostAPI(AuthenticatedAPIBase):
     def get():
         post_filter = PostFilter.lookup(request.args.get('filter'))
 
+        sort = PostSort.lookup(request.args.get('sort'))
+        keyword = request.args.get('keyword')
+        status = PostStatusFilter.lookup(request.args.get('status'))
+
+        project_size = Post.validate_and_convert_size(
+            request.args.get('project_size')) if 'project_size' in request.args else None
+        target_date = Post.validate_and_convert_target_date(
+            request.args.get('target_date')) if 'target_date' in request.args else None
+        department = request.args.get('department') if 'department' in request.args else None
+
         with transaction() as tx:
             # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            location = Location.lookup(tx, request.args.get('location_id')) if 'location_id' in request.args else None
+
             posts = Post.search(
                 tx,
                 user,
+                # Old & depricated params
                 owner_id=request.args.get('post_owner_id'),
                 query=request.args.get('q'),
                 post_type_id=request.args.get('type'),
-                post_filter=post_filter
+                post_filter=post_filter,
+                # New & updated params
+                sort=sort,
+                keyword=keyword,
+                status=status,
+                project_size=project_size,
+                target_date=target_date,
+                location=location,
+                department=department
             )
             posts = [post.as_dict(user=user) for post in posts]
         return jsonify(posts)
@@ -72,6 +94,7 @@ class PostAPI(AuthenticatedAPIBase):
         now = datetime.utcnow()
         with transaction() as tx:
             owner = User.lookup(tx, current_cognito_jwt['sub'])
+            department = owner.profile['department'] if 'department' in owner.profile else None
             post_type = PostType.lookup(tx, payload['post_type_id'])
             location = Location.lookup(tx, payload['location_id'])
             post = Post(
@@ -91,7 +114,7 @@ class PostAPI(AuthenticatedAPIBase):
                 target_date=target_date,
                 expiration_date=expiration_date
             )
-            post.update_details(payload)
+            post.update_details(payload, department)
 
             if payload.get('highlighted_communities'):
                 post.set_highlighted_communities(tx, payload['highlighted_communities'])

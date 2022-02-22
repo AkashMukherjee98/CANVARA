@@ -53,6 +53,41 @@ class PostFilter(Enum):
             raise InvalidArgumentError(f"Unsupported filter: {name}.") from ex
 
 
+class PostSort(Enum):
+    # Most relevant active posts for the user
+    RECOMMENDED = 'recommended'
+
+    # Latest active posts recommended for the user
+    LATEST = 'latest'
+
+    @classmethod
+    def lookup(cls, name):
+        if name is None:
+            return None
+
+        try:
+            return PostSort(name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported Sorting option: {name}.") from ex
+
+
+class PostStatusFilter(Enum):
+    OPEN = 'open'
+    UNDERWAY = 'underway'
+    COMPLETED = 'completed'
+    SUSPENDED = 'suspended'
+
+    @classmethod
+    def lookup(cls, name):
+        if name is None:
+            return None
+
+        try:
+            return PostStatusFilter(name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported status filter: {name}.") from ex
+
+
 class PostStatus(Enum):
     # Post is available for new applications
     ACTIVE = 'active'
@@ -184,9 +219,10 @@ class Post(ModelBase):
         return posts
 
     @classmethod
-    def search(
-        cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None, limit=None
-    ):  # pylint: disable=too-many-arguments
+    def search(  # noqa: C901
+        cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None,
+        sort=None, keyword=None, status=None, project_size=None, target_date=None, location=None, department=None, limit=None
+    ):  # pylint: disable=too-many-arguments, disable=too-many-locals, disable=too-many-branches
         if post_filter is None:
             post_filter = cls.DEFAULT_FILTER
 
@@ -209,10 +245,87 @@ class Post(ModelBase):
                 Post.description.ilike(f'%{query}%')
             ))
 
-        try:
-            posts = cls.__apply_search_filter(posts, user, post_filter)
-        except NotImplementedError:
-            return []
+        if post_filter is not None:
+            try:
+                posts = cls.__apply_search_filter(posts, user, post_filter)
+            except NotImplementedError:
+                return []
+
+        # Sort(New)
+        if sort is not None:
+            if sort == PostSort.LATEST:
+                posts = posts.where(and_(
+                    Post.owner_id != user.id,
+                    Post.status == PostStatus.ACTIVE.value,
+                )).order_by(Post.created_at.desc())
+        else:  # Default is Recommended
+            posts = posts.where(and_(
+                Post.owner_id != user.id,
+                Post.status == PostStatus.ACTIVE.value,
+            )).order_by(nullslast(UserPostMatch.confidence_level.desc()))
+
+        # Keyword(New)
+        if keyword is not None:
+            posts = posts.where(or_(
+                Post.name.ilike(f'%{keyword}%'),
+                Post.description.ilike(f'%{keyword}%'),
+                Post.details['department'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Post.details['hashtags'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
+            ))
+
+        # Status(New)
+        # TODO: (santanu) Need to improve conditions, as all are not correct
+        if status is not None:
+            from .application import Application, ApplicationStatus  # pylint: disable=import-outside-toplevel, cyclic-import
+            from .performer import Performer, PerformerStatus  # pylint: disable=import-outside-toplevel, cyclic-import
+
+            if status == PostStatusFilter.OPEN:
+                posts = posts.where(and_(
+                    Post.status == PostStatus.ACTIVE.value
+                )).join(Post.applications.and_(
+                    Application.status.in_([
+                        ApplicationStatus.NEW.value,
+                        ApplicationStatus.ACTIVE_READ.value,
+                        ApplicationStatus.DELETED.value])
+                ), isouter=True)
+            if status == PostStatusFilter.UNDERWAY:
+                posts = posts.where(or_(
+                    Post.status == PostStatus.ACTIVE.value,
+                    Post.status == PostStatus.DEACTIVED.value
+                )).join(Post.applications.and_(
+
+                )).join(Application.performers.and_(
+                    Performer.status == PerformerStatus.IN_PROGRESS.value
+                ))
+            if status == PostStatusFilter.COMPLETED:
+                posts = posts.where(and_(
+                    Post.status == PostStatus.ACTIVE.value
+                )).join(Post.applications.and_(
+
+                )).join(Application.performers.and_(
+                    Performer.status == PerformerStatus.COMPLETE.value
+                ))
+            if status == PostStatusFilter.SUSPENDED:
+                posts = posts.where(and_(
+                    Post.status == PostStatus.ACTIVE.value
+                )).join(Post.applications.and_(
+
+                )).join(Application.performers.and_(
+                    Performer.status == PerformerStatus.SUSPENDED.value
+                ))
+
+        # Others(New)
+        if project_size is not None:
+            posts = posts.where(Post.size == project_size)
+
+        if target_date is not None:
+            posts = posts.where(Post.target_date <= target_date)
+
+        if location is not None:
+            posts = posts.where(Post.location == location)
+
+        if department is not None:
+            posts = posts.filter(Post.details['department'].astext == department)  # pylint: disable=unsubscriptable-object
 
         # Eagerload UserPostMatch since we will need it later on
         # Filter the join by user id to force the relationship to be one-to-zero-or-one,
@@ -279,7 +392,7 @@ class Post(ModelBase):
     @classmethod
     def validate_and_convert_size(cls, size):
         if size.upper() not in cls.VALID_SIZES:
-            raise InvalidArgumentError(f"Invalid size: {size}.")
+            raise InvalidArgumentError(f"Invalid project size: {size}.")
         return size.upper()
 
     @staticmethod
@@ -342,7 +455,7 @@ class Post(ModelBase):
                 unmatched_skills.append(post_skill)
         return matched_skills, unmatched_skills
 
-    def update_details(self, payload):
+    def update_details(self, payload, department=None):
         existing = copy.deepcopy(self.details) if self.details else {}
         details_fields = [
             'auto_assign',
@@ -362,6 +475,8 @@ class Post(ModelBase):
             elif 'hashtags' in existing:
                 del existing['hashtags']
 
+        if department is not None:
+            existing['department'] = department
         self.details = existing
 
     def as_dict(self, user=None):  # noqa

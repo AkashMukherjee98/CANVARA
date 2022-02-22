@@ -994,9 +994,6 @@ paths:
                 - role_type
                 - role
                 - description
-                - pay_currency
-                - pay_minimum
-                - pay_maximum
   '/positions/{position_id}':
     parameters:
       - schema:
@@ -1755,8 +1752,8 @@ paths:
                 - location_id
                 - language
                 - type
+                - membership_approval_required
                 - mission
-                - membership_approval
   '/communities/{community_id}':
     parameters:
       - schema:

@@ -252,12 +252,11 @@ class Post(ModelBase):
                 return []
 
         # Sort(New)
-        if sort is not None:
-            if sort == PostSort.LATEST:
-                posts = posts.where(and_(
-                    Post.owner_id != user.id,
-                    Post.status == PostStatus.ACTIVE.value,
-                )).order_by(Post.created_at.desc())
+        if sort is not None and sort == PostSort.LATEST:
+            posts = posts.where(and_(
+                Post.owner_id != user.id,
+                Post.status == PostStatus.ACTIVE.value,
+            )).order_by(Post.created_at.desc())
         else:  # Default is Recommended
             posts = posts.where(and_(
                 Post.owner_id != user.id,
@@ -272,6 +271,19 @@ class Post(ModelBase):
                 Post.details['department'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
                 Post.details['hashtags'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
             ))
+
+        # Others(New)
+        if project_size is not None:
+            posts = posts.where(Post.size == project_size)
+
+        if target_date is not None:
+            posts = posts.where(Post.target_date <= target_date)
+
+        if location is not None:
+            posts = posts.where(Post.location == location)
+
+        if department is not None:
+            posts = posts.filter(Post.details['department'].astext == department)  # pylint: disable=unsubscriptable-object
 
         # Status(New)
         # TODO: (santanu) Need to improve conditions, as all are not correct
@@ -313,19 +325,6 @@ class Post(ModelBase):
                 )).join(Application.performers.and_(
                     Performer.status == PerformerStatus.SUSPENDED.value
                 ))
-
-        # Others(New)
-        if project_size is not None:
-            posts = posts.where(Post.size == project_size)
-
-        if target_date is not None:
-            posts = posts.where(Post.target_date <= target_date)
-
-        if location is not None:
-            posts = posts.where(Post.location == location)
-
-        if department is not None:
-            posts = posts.filter(Post.details['department'].astext == department)  # pylint: disable=unsubscriptable-object
 
         # Eagerload UserPostMatch since we will need it later on
         # Filter the join by user id to force the relationship to be one-to-zero-or-one,

@@ -2302,17 +2302,68 @@ paths:
           in: query
           name: q
           description: The search query.
+          deprecated: true
         - schema:
             type: string
             default: curated
           in: query
           name: filter
           description: Filter for the results.
+          deprecated: true
         - schema:
             type: string
           in: query
           name: type
           description: 'Unique identifier of the post type for search for. If absent, return posts of all types.'
+          deprecated: true
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for gigs.'
+        - schema:
+            type: string
+            enum:
+              - open
+              - underway
+              - completed
+              - suspended
+          in: query
+          name: status
+          description: 'Status filter for list of gigs.'
+        - schema:
+            type: string
+            enum:
+              - s
+              - m
+              - l
+          in: query
+          name: project_size
+          description: 'Project size filter for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: target_date
+          description: 'Date filter upto target date.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location id filter for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter for list of gigs.'
     post:
       summary: Add a new post
       tags:

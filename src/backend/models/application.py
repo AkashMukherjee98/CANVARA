@@ -57,6 +57,7 @@ class ApplicationStatus(Enum):
 class Application(ModelBase):
     __tablename__ = 'application'
 
+    performers = relationship("Performer", back_populates="application")
     applicant = relationship("User", back_populates="applications")
     post = relationship("Post", back_populates="applications")
     description_video = relationship(UserUpload)

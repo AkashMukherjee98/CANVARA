@@ -40,7 +40,7 @@ class PositionAPI(AuthenticatedAPIBase):
         now = datetime.utcnow()
 
         required_fields = {
-            'manager_id', 'location_id', 'role_type', 'role', 'description', 'pay_minimum', 'pay_maximum', 'pay_currency'}
+            'manager_id', 'location_id', 'role_type', 'role', 'description'}
         missing_fields = required_fields - set(payload.keys())
         if missing_fields:
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
@@ -51,10 +51,10 @@ class PositionAPI(AuthenticatedAPIBase):
             hiring_manager = User.lookup(tx, payload['manager_id'])
             location = Location.lookup(tx, payload['location_id'])
 
-            Position.validate_pay_range(payload['pay_currency'], payload['pay_minimum'], payload['pay_maximum'])
-            pay_currency = payload['pay_currency']
-            pay_minimum = payload['pay_minimum']
-            pay_maximum = payload['pay_maximum']
+            pay_currency = payload['pay_currency'] if 'pay_currency' in payload else None
+            pay_minimum = payload['pay_minimum'] if 'pay_minimum' in payload else None
+            pay_maximum = payload['pay_maximum'] if 'pay_maximum' in payload else None
+            Position.validate_pay_range(pay_currency, pay_minimum, pay_maximum)
 
             position = Position(
                 id=position_id,
@@ -63,8 +63,8 @@ class PositionAPI(AuthenticatedAPIBase):
                 role_type=roletype,
                 department=payload['department'],
                 pay_currency=pay_currency,
-                pay_minimum=pay_minimum,
-                pay_maximum=pay_maximum,
+                pay_minimum=pay_minimum or 0,
+                pay_maximum=pay_maximum or 0,
                 location=location,
                 status=PositionStatus.ACTIVE.value,
                 created_at=now,
@@ -109,14 +109,14 @@ class PositionByIdAPI(AuthenticatedAPIBase):
 
             Position.validate_pay_range(
                 payload['pay_currency'] if 'pay_currency' in payload else position.pay_currency,
-                payload['pay_minimum'] if 'pay_minimum' in payload else position.pay_minimum,
-                payload['pay_maximum'] if 'pay_maximum' in payload else position.pay_maximum
+                payload['pay_minimum'] if 'pay_minimum' in payload else float(position.pay_minimum),
+                payload['pay_maximum'] if 'pay_maximum' in payload else float(position.pay_maximum)
             )
-            if payload.get('pay_currency'):
+            if 'pay_currency' in payload:
                 position.pay_currency = payload['pay_currency']
-            if payload.get('pay_minimum'):
+            if 'pay_minimum' in payload:
                 position.pay_minimum = payload['pay_minimum']
-            if payload.get('pay_maximum'):
+            if 'pay_maximum' in payload:
                 position.pay_maximum = payload['pay_maximum']
 
             if payload.get('location_id'):

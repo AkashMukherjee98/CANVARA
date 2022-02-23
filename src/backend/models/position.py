@@ -79,14 +79,16 @@ class Position(ModelBase):
 
     @classmethod
     def validate_pay_range(cls, pay_currency, pay_minimum, pay_maximum):
-        if len(pay_currency) != 3:
+        if pay_currency is not None and len(pay_currency) != 3:
             raise InvalidArgumentError(f"Pay currency '{pay_currency}' should be 3 letter currency code")
-        if not isinstance(pay_minimum, (int, float)):
+        if pay_minimum is not None and not isinstance(pay_minimum, (int, float)):
             raise InvalidArgumentError(f"Pay minimum {pay_minimum} should be currency value")
-        if not isinstance(pay_maximum, (int, float)):
+        if pay_maximum is not None and not isinstance(pay_maximum, (int, float)):
             raise InvalidArgumentError(f"Pay maximum {pay_maximum} should be currency value")
-        if pay_minimum > pay_maximum:
+        if pay_minimum is not None and pay_maximum is not None and pay_minimum > pay_maximum:
             raise InvalidArgumentError(f"Pay minimum {pay_minimum} should be less than pay maximum {pay_maximum}")
+        if (pay_minimum is not None or pay_maximum is not None) and pay_currency is None:
+            raise InvalidArgumentError("Pay currency is required if pay minimum or pay maximum is provided")
 
         return True
 

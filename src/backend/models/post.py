@@ -252,16 +252,18 @@ class Post(ModelBase):
                 return []
 
         # Sort(New)
-        if sort is not None and sort == PostSort.LATEST:
-            posts = posts.where(and_(
-                Post.owner_id != user.id,
-                Post.status == PostStatus.ACTIVE.value,
-            )).order_by(Post.created_at.desc())
-        else:  # Default is Recommended
-            posts = posts.where(and_(
-                Post.owner_id != user.id,
-                Post.status == PostStatus.ACTIVE.value,
-            )).order_by(nullslast(UserPostMatch.confidence_level.desc()))
+        # TODO: (santanu) Recommended would be default, currently its conflicting with old filters
+        if sort is not None:
+            if sort == PostSort.LATEST:
+                posts = posts.where(and_(
+                    Post.owner_id != user.id,
+                    Post.status == PostStatus.ACTIVE.value,
+                )).order_by(Post.created_at.desc())
+            else:
+                posts = posts.where(and_(
+                    Post.owner_id != user.id,
+                    Post.status == PostStatus.ACTIVE.value,
+                )).order_by(nullslast(UserPostMatch.confidence_level.desc()))
 
         # Keyword(New)
         if keyword is not None:

@@ -361,6 +361,30 @@ class Post(ModelBase):
         return posts
 
     @classmethod
+    def my_bookmarks(  # noqa: C901
+        cls, tx, user
+    ):
+        posts = tx.query(cls).join(Post.owner).where(and_(
+            cls.status != PostStatus.DELETED.value
+        )).join(Post.bookmark_users.and_(UserPostBookmark.user_id == user.id)).\
+            order_by(UserPostBookmark.created_at.desc())
+
+        query_options = [
+            contains_eager(Post.owner).joinedload(User.profile_picture),
+            joinedload(Post.post_type, innerjoin=True),
+            joinedload(Post.location, innerjoin=True),
+            noload(Post.required_skills),
+            noload(Post.desired_skills),
+            noload(Post.description_video),
+            contains_eager(Post.user_matches),
+            noload(Post.like_users),
+            contains_eager(Post.bookmark_users)
+        ]
+
+        posts = posts.options(query_options)
+        return posts
+
+    @classmethod
     def validate_and_convert_name(cls, name):
         if len(name) > cls.MAX_NAME_LENGTH:
             raise InvalidArgumentError(f"Name must not be more than {cls.MAX_NAME_LENGTH} characters.")

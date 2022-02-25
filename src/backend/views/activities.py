@@ -2,12 +2,10 @@ from flask import jsonify
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
 
-from sqlalchemy import select
-
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.db import transaction
 from backend.models.user import User
-from backend.models.post import Post, PostFilter
+from backend.models.post import Post
 from backend.models.application import ApplicationStatus
 from backend.models.offer import OfferProposalStatus
 from backend.models.activities import MyActivity
@@ -23,6 +21,7 @@ class MyActivityAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
+            # TODO: (santanu) Move methods to respective models
             own_gigs = MyActivity.own_gigs(tx, user)
             own_offers = MyActivity.own_offers(tx, user)
             own_positions = MyActivity.own_positions(tx, user)
@@ -39,17 +38,16 @@ class MyActivityAPI(AuthenticatedAPIBase):
                 OfferProposalStatus.IN_PROGRESS.value,
                 OfferProposalStatus.COMPLETED.value])
 
-            communities = MyActivity.my_communities(tx, user)
-            events = MyActivity.my_events(tx, user)
+            my_communities = MyActivity.my_communities(tx, user)
+            my_events = MyActivity.my_events(tx, user)
+            my_connections = MyActivity.my_connections(tx, user)
 
-            connections = tx.execute(select(User).where(User.customer_id == user.customer_id)).scalars().all()
-
-            posts_bookmarks = Post.search(
+            bookmarked_gigs = Post.my_bookmarks(
                 tx,
-                user,
-                post_filter=PostFilter.BOOKMARKED.value
+                user
             )
 
+            # TODO: (santanu) Move this to a activities(Model) dict
             activities = {
                 'posts': {
                     'gigs': [gig.as_dict() for gig in own_gigs],
@@ -64,11 +62,11 @@ class MyActivityAPI(AuthenticatedAPIBase):
                     'applications': [application.as_dict() for application in application_tasks],
                     'proposals': [proposal.as_dict() for proposal in proposal_tasks]
                 },
-                'communities': [community.as_dict() for community in communities],
-                'events': [event.as_dict() for event in events],
-                'connections': [connection.as_dict() for connection in connections],
+                'communities': [community.as_dict() for community in my_communities],
+                'events': [event.as_dict() for event in my_events],
+                'connections': [connection.as_dict() for connection in my_connections],
                 'bookmarks': {
-                    'gigs': [post.as_dict(user=user) for post in posts_bookmarks],
+                    'gigs': [gig.as_dict(user=user) for gig in bookmarked_gigs],
                     'offers': [],
                     'positions': [],
                     'community': [],
@@ -76,4 +74,5 @@ class MyActivityAPI(AuthenticatedAPIBase):
                     'peoples': []
                 }
             }
+
         return jsonify(activities)

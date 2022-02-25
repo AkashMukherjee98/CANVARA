@@ -2,6 +2,7 @@ from sqlalchemy import or_
 
 from backend.models.position import Position
 
+from .user import User
 from .post import Post
 from .application import Application
 from .offer import Offer, OfferProposal
@@ -76,3 +77,14 @@ class MyActivity():
             EventRSVP.member_id == user.id
         ))
         return list(events)
+
+    @classmethod
+    def my_connections(cls, tx, user):
+        users = tx.query(User).join(CommunityMembership).where(
+            CommunityMembership.member != user,
+            CommunityMembership.member_id == User.id,
+            CommunityMembership.community_id.in_(tx.query(CommunityMembership.community_id).where(
+                CommunityMembership.member == user
+            ).subquery())
+        )
+        return list(users)

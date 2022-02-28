@@ -504,6 +504,43 @@ class Post(ModelBase):
             existing['department'] = department
         self.details = existing
 
+    def as_custom_dict(self, labels=None):
+        post = {
+            'post_id': self.id,
+            'name': self.name
+        }
+
+        def add_if_not_none(key, value):
+            if (labels is not None and key in labels) and value is not None:
+                post[key] = value
+
+        # TODO: (santanu) call owner using user::as_custom_dict(required fields)
+        owner = {
+            'user_id': self.owner_id,
+            'name': self.owner.name,
+            'profile_picture_url': self.owner.profile_picture_url
+        }
+        if self.owner.profile.get('title'):
+            owner['title'] = self.owner.profile.get('title')
+        if self.owner.profile.get('pronoun'):
+            owner['pronoun'] = self.owner.profile.get('pronoun')
+        if self.owner.profile.get('location'):
+            owner['location'] = self.owner.profile.get('location')
+        if self.owner.profile.get('department'):
+            owner['department'] = self.owner.profile.get('department')
+        add_if_not_none('owner', owner)
+
+        add_if_not_none('description', self.description)
+
+        if self.details:
+            add_if_not_none('hashtags', self.details.get('hashtags'))
+
+        add_if_not_none('status', self.status)
+        add_if_not_none('created_at', self.created_at.isoformat() if self.created_at else None)
+        add_if_not_none('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
+
+        return post
+
     def as_dict(self, user=None):  # noqa
         post = {
             'post_id': self.id,

@@ -100,9 +100,7 @@ class Application(ModelBase):
             # For the default "all" filter, return all non-deleted applications
             applications = applications.where(cls.status != ApplicationStatus.DELETED.value)
 
-        query_options = [
-            noload(Application.description_video)
-        ]
+        query_options = []
         return [application.as_dict() for application in applications.options(query_options)]
 
     @classmethod
@@ -120,13 +118,16 @@ class Application(ModelBase):
     def as_dict(self):
         application = {
             'application_id': self.id,
-            'post_id': self.post_id,
-            'applicant_id': self.user_id,  # TODO: (santanu) remove this once Frontend has been updated
+            'post_id': self.post_id,  # TODO: (santanu) remove this, once Frontend has been updated
+            'post': self.post.as_custom_dict(['owner', 'description', 'hashtags', 'status', 'created_at', 'last_updated_at']),
+            'applicant_id': self.user_id,  # TODO: (santanu) remove this, once Frontend has been updated
             'applicant': self.applicant.as_custom_dict([
                 'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
             ]),
             'description': self.details['description'],
             'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_updated_at': self.last_updated_at.isoformat() if self.last_updated_at else None
         }
 
         if self.description_video:

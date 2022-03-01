@@ -46,25 +46,27 @@ class Offer(ModelBase):
 
         self.details = details
 
-    def as_dict(self):
+    def as_dict(self, return_keys=all):  # if return_keys=all return everything, if any key(s) specified then return those only
         offer = {
             'offer_id': self.id,
-            'name': self.name,
-            'offerer': self.offerer.as_summary_dict(),
-            'status': self.status,
-            'created_at': self.created_at.isoformat(),
-            'last_updated_at': self.last_updated_at.isoformat()
+            'name': self.name
         }
 
-        if self.offer_overview_video:
-            offer['overview_video'] = self.offer_overview_video.as_dict(method='get')
-
-        def add_if_not_none(key, value):
-            if value is not None:
+        def add_if_required(key, value):
+            if (return_keys is all or key in return_keys) and value is not None:
                 offer[key] = value
 
-        add_if_not_none('hashtags', self.details.get('hashtags'))
-        add_if_not_none('overview_text', self.details.get('overview_text'))
+        add_if_required(
+            'offerer', self.offerer.as_custom_dict(['title', 'pronoun', 'location', 'department']) if self.offerer else None)
+
+        add_if_required(
+            'overview_video', self.offer_overview_video.as_dict(method='get') if self.offer_overview_video else None)
+
+        add_if_required('hashtags', self.details.get('hashtags'))
+        add_if_required('overview_text', self.details.get('overview_text'))
+        add_if_required('status', self.status)
+        add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
+        add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
         return offer
 
@@ -178,22 +180,24 @@ class OfferProposal(ModelBase):
     def as_dict(self):
         proposal = {
             'proposal_id': self.id,
-            'name': self.name,
-            'proposer': self.proposer.as_custom_dict([
-                'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id']),
-            'offer_id': self.offer.id,
-            'status': self.status,
-            'created_at': self.created_at.isoformat()
+            'name': self.name
         }
-
-        if self.proposal_overview_video:
-            proposal['overview_video'] = self.proposal_overview_video.as_dict(method='get')
 
         def add_if_not_none(key, value):
             if value is not None:
                 proposal[key] = value
 
+        add_if_not_none('offer_id', self.offer_id)  # Need to remove, deprecated
+        add_if_not_none('offer', self.offer.as_dict([
+            'offerer', 'hashtags', 'status', 'created_at', 'last_updated_at'
+            ]) if self.offer else None)
+        add_if_not_none('proposer', self.proposer.as_custom_dict([
+            'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
+            ]) if self.proposer else None)
+
         add_if_not_none('overview_text', self.details.get('overview_text'))
+        add_if_not_none(
+            'overview_video', self.proposal_overview_video.as_dict(method='get') if self.proposal_overview_video else None)
 
         add_if_not_none('proposer_feedback', self.proposer_feedback)
         add_if_not_none('proposer_feedback_at', self.proposer_feedback_at.isoformat() if self.proposer_feedback_at else None)
@@ -201,8 +205,11 @@ class OfferProposal(ModelBase):
         add_if_not_none('offerer_feedback', self.offerer_feedback)
         add_if_not_none('offerer_feedback_at', self.offerer_feedback_at.isoformat() if self.offerer_feedback_at else None)
 
+        add_if_not_none('status', self.status)
         add_if_not_none('decided_at', self.decided_at.isoformat() if self.decided_at else None)
         add_if_not_none('closed_at', self.closed_at.isoformat() if self.closed_at else None)
+        add_if_not_none('created_at', self.created_at.isoformat() if self.created_at else None)
+        add_if_not_none('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
         return proposal
 

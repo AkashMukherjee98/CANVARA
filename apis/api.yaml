@@ -439,7 +439,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Offer'
+                  $ref: '#/components/schemas/OfferMinimal'
       operationId: list_offers
       description: ''
       security:
@@ -654,7 +654,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Proposal'
+                  $ref: '#/components/schemas/ProposalMinimal'
       operationId: list_proposals
       description: ''
       security:
@@ -4492,6 +4492,15 @@ components:
           type: string
           description: The URL of user's profile picture.
     Offer:
+      allOf:
+        - $ref: '#/components/schemas/OfferMinimal'
+        - title: Offer
+        - type: object
+          properties:
+            overview_video:
+              $ref: '#/components/schemas/UserUpload'
+              description: Overview video for the offer.
+    OfferMinimal:
       title: Offer
       type: object
       properties:
@@ -4528,9 +4537,7 @@ components:
           description: Name of this offer.
         overview_text:
           type: string
-          description: Description of the offer.
-        overview_video:
-          $ref: '#/components/schemas/UserUpload'
+          description: Overview text for the offer.
         hashtags:
           type: array
           description: Hashtags of this offer.
@@ -4549,6 +4556,15 @@ components:
         - name
         - overview_text
     Proposal:
+      allOf:
+        - $ref: '#/components/schemas/ProposalMinimal'
+        - title: Proposal
+        - type: object
+          properties:
+            overview_video:
+              $ref: '#/components/schemas/UserUpload'
+              description: Overview video for the proposal.
+    ProposalMinimal:
       title: Proposal
       type: object
       properties:
@@ -4652,8 +4668,6 @@ components:
         overview_text:
           type: string
           description: Description of the proposal.
-        overview_video:
-          $ref: '#/components/schemas/UserUpload'
         proposer_feedback:
           type: object
           description: Feedback for the proposer.

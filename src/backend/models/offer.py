@@ -2,7 +2,7 @@ from enum import Enum
 import copy
 
 from sqlalchemy import and_
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, noload
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -93,7 +93,9 @@ class Offer(ModelBase):
                 cls.status == OfferStatus.ACTIVE.value
             ))
 
-        query_options = []
+        query_options = [
+            noload(Offer.offer_overview_video)
+        ]
 
         offers = offers.options(query_options)
         return offers
@@ -243,7 +245,9 @@ class OfferProposal(ModelBase):
         elif proposal_filter == OfferProposalFilter.COMPLETED:
             proposals = proposals.where(cls.status == OfferProposalStatus.COMPLETED.value)
 
-        query_options = []
+        query_options = [
+            noload(OfferProposal.proposal_overview_video)
+        ]
 
         proposals = proposals.options(query_options)
         return proposals

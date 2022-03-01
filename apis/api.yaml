@@ -5054,15 +5054,67 @@ components:
       title: Application
       type: object
       properties:
-        post_id:
-          type: string
-          description: Unique identifier for the post.
-        applicant_id:
-          type: string
-          description: Unique identifier for the user applying for the post.
         application_id:
           type: string
           description: Unique identifier for this application.
+        post_id:
+          type: string
+          description: Unique identifier for the post.
+        post:
+          type: object
+          description: Information about post.
+          properties:
+            post_id:
+              type: string
+              description: Unique identifier for this post.
+            owner:
+              type: object
+              description: Information about the post owner.
+              properties:
+                user_id:
+                  type: string
+                  description: Unique identifier for the user.
+                name:
+                  type: string
+                  description: Name of the user.
+                profile_picture_url:
+                  type: string
+                  description: The URL of user's profile picture.
+                title:
+                  type: string
+                  description: Title of the user.
+                pronoun:
+                  type: string
+                  description: Pronoun.
+                location:
+                  type: string
+                  description: Location of the user.
+                department:
+                  type: string
+                  description: Department of the user.
+            name:
+              type: string
+              description: Name of the post.
+            description:
+              type: string
+              description: Description of this post.
+            hashtags:
+              type: array
+              items:
+                type: string
+              description: List of hastags or keywords.
+            status:
+              type: string
+              description: Current status of this post.
+            created_at:
+              type: string
+              description: 'Date and time when this post was created, in ISO 8601 format.'
+            last_updated_at:
+              type: string
+              description: 'Date and time when this post was last updated, in ISO 8601 format.'
+        applicant_id:
+          type: string
+          description: Unique identifier for the user applying for the post.
         applicant:
           type: object
           description: Information about the applicant.
@@ -5115,6 +5167,15 @@ components:
           description: Post's skills that don't match the user's skills.
           items:
             $ref: '#/components/schemas/SkillWithLevel'
+        status:
+          type: string
+          description: Current status of this application.
+        created_at:
+          type: string
+          description: 'Date and time when this application was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this application was last updated, in ISO 8601 format.'
     Performer:
       title: Performer
       type: object

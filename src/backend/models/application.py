@@ -100,7 +100,9 @@ class Application(ModelBase):
             # For the default "all" filter, return all non-deleted applications
             applications = applications.where(cls.status != ApplicationStatus.DELETED.value)
 
-        query_options = []
+        query_options = [
+            noload(Application.description_video)
+        ]
         return [application.as_dict() for application in applications.options(query_options)]
 
     @classmethod

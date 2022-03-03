@@ -45,6 +45,7 @@ class User(ModelBase):
     community_memberships = relationship("Community", secondary='community_membership', primaryjoin=(
         "and_(CommunityMembership.community_id==Community.id, "
         "CommunityMembership.status == 'active')"))
+    bookmark_peoples = relationship("PeopleBookmark", foreign_keys="[PeopleBookmark.people_id]")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -96,6 +97,15 @@ class User(ModelBase):
         if manager.id == self.id:
             raise InvalidArgumentError("Manager must not be same as the user")
         return manager
+
+    @classmethod
+    def my_bookmarks(
+        cls, tx, user
+    ):
+        peoples = tx.query(cls).join(User.bookmark_peoples.and_(PeopleBookmark.user_id == user.id)).\
+            order_by(PeopleBookmark.created_at.desc())
+
+        return peoples
 
     @classmethod
     def validate_skills(cls, skills, skill_type):
@@ -307,3 +317,17 @@ class User(ModelBase):
             user['community_memberships'] = community_memberships
 
         return user
+
+
+class PeopleBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'people_bookmark'
+
+    user = relationship("User", foreign_keys="[PeopleBookmark.user_id]")
+    people = relationship("User", back_populates="bookmark_peoples", foreign_keys="[PeopleBookmark.people_id]")
+
+    @classmethod
+    def lookup(cls, tx, user_id, people_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, people_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Bookmark for people '{people_id}' and user '{user_id}' does not exist")
+        return bookmark

@@ -2,7 +2,7 @@ from enum import Enum
 import copy
 
 from sqlalchemy import and_
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -35,6 +35,7 @@ class Position(ModelBase):
 
     hiring_manager = relationship(User, foreign_keys="[Position.manager_id]")
     location = relationship("Location")
+    bookmark_users = relationship("PositionBookmark", back_populates="position")
     details = None
 
     def update_details(self, payload):
@@ -116,3 +117,33 @@ class Position(ModelBase):
             ))
 
         return positions
+
+    @classmethod
+    def my_bookmarks(
+        cls, tx, user
+    ):
+        positions = tx.query(cls).where(and_(
+            cls.status != PositionStatus.DELETED.value
+        )).join(Position.bookmark_users.and_(PositionBookmark.user_id == user.id)).\
+            order_by(PositionBookmark.created_at.desc())
+
+        query_options = [
+            contains_eager(Position.bookmark_users)
+        ]
+
+        positions = positions.options(query_options)
+        return positions
+
+
+class PositionBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'position_bookmark'
+
+    user = relationship("User")
+    position = relationship("Position", back_populates="bookmark_users")
+
+    @classmethod
+    def lookup(cls, tx, user_id, position_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, position_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Bookmark for position '{position_id}' and user '{user_id}' does not exist")
+        return bookmark

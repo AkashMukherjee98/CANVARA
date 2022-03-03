@@ -2,7 +2,7 @@ import copy
 from enum import Enum
 
 from sqlalchemy import and_
-from sqlalchemy.orm import relationship, noload
+from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -50,6 +50,7 @@ class Community(ModelBase):
         "CommunityMembership.status == 'disapproved', "
         "CommunityMembership.status == 'active'))"))
     gallery = relationship("UserUpload", secondary='community_gallery')
+    bookmark_users = relationship("CommunityBookmark", back_populates="community")
     details = None
 
     MAX_GALLERY_IMAGE = 50
@@ -207,6 +208,27 @@ class Community(ModelBase):
                 self.gallery.remove(fact)
         self.gallery.append(media)
 
+    @classmethod
+    def my_bookmarks(
+        cls, tx, user
+    ):
+        communities = tx.query(cls).where(and_(
+            cls.status != CommunityStatus.DELETED.value
+        )).join(Community.bookmark_users.and_(CommunityBookmark.user_id == user.id)).\
+            order_by(CommunityBookmark.created_at.desc())
+
+        query_options = [
+            noload(Community.secondary_moderator),
+            noload(Community.sponsor_events),
+            noload(Community.announcements),
+            noload(Community.members),
+            noload(Community.gallery),
+            contains_eager(Community.bookmark_users)
+        ]
+
+        communities = communities.options(query_options)
+        return communities
+
 
 class CommunityAnnouncementStatus(Enum):
     # Community announcement is available for community
@@ -291,3 +313,17 @@ class CommunityMembership(ModelBase):
             'status': self.status,
             'join_date': self.created_at.isoformat()
         }
+
+
+class CommunityBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'community_bookmark'
+
+    user = relationship("User")
+    community = relationship("Community", back_populates="bookmark_users")
+
+    @classmethod
+    def lookup(cls, tx, user_id, community_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, community_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Bookmark for community '{community_id}' and user '{user_id}' does not exist")
+        return bookmark

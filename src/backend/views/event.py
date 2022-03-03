@@ -12,7 +12,10 @@ from backend.models.db import transaction
 from backend.models.user import User
 from backend.models.location import Location
 from backend.models.community import Community
-from backend.models.event import Event, EventStatus, EventComment, EventCommentStatus, EventRSVP, EventRSVPStatus
+from backend.models.event import Event, EventStatus
+from backend.models.event import EventComment, EventCommentStatus
+from backend.models.event import EventRSVP, EventRSVPStatus
+from backend.models.event import EventBookmark
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
@@ -413,4 +416,28 @@ class EventGalleryByIdAPI(AuthenticatedAPIBase):
 
             event.gallery.remove(user_upload)
             user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+
+@blueprint.route('/<event_id>/bookmark')
+class EventBookmarkAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(event_id):
+        with transaction() as tx:
+            event = Event.lookup(tx, event_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = EventBookmark.lookup(tx, user.id, event.id, must_exist=False)
+            if bookmark is None:
+                EventBookmark(user=user, event=event, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(event_id):
+        with transaction() as tx:
+            event = Event.lookup(tx, event_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = EventBookmark.lookup(tx, user.id, event.id)
+            tx.delete(bookmark)
         return make_no_content_response()

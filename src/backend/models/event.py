@@ -2,7 +2,7 @@ import copy
 from enum import Enum
 
 from sqlalchemy import and_
-from sqlalchemy.orm import relationship, noload
+from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -37,6 +37,7 @@ class Event(ModelBase):
         "EventRSVP.status == 'no', "
         "EventRSVP.status == 'maybe'))"))
     gallery = relationship("UserUpload", secondary='event_gallery')
+    bookmark_users = relationship("EventBookmark", back_populates="event")
     details = None
 
     EVENT_NAME_MAX_CHAR_LENGTH = 35
@@ -172,6 +173,27 @@ class Event(ModelBase):
         events = events.options(query_options)
         return events
 
+    @classmethod
+    def my_bookmarks(
+        cls, tx, user
+    ):
+        events = tx.query(cls).where(and_(
+            cls.status != EventStatus.DELETED.value
+        )).join(Event.bookmark_users.and_(EventBookmark.user_id == user.id)).\
+            order_by(EventBookmark.created_at.desc())
+
+        query_options = [
+            noload(Event.secondary_organizer),
+            noload(Event.sponsor_community),
+            noload(Event.comments),
+            noload(Event.rsvp),
+            noload(Event.gallery),
+            contains_eager(Event.bookmark_users)
+        ]
+
+        events = events.options(query_options)
+        return events
+
     def add_event_gallery_media(self, media):
         # Event can have limited number of images and video for gallery
         existing_event_gallery = []
@@ -282,3 +304,17 @@ class EventRSVP(ModelBase):
             'status': self.status,
             'date_time': self.last_updated_at.isoformat()
         }
+
+
+class EventBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'event_bookmark'
+
+    user = relationship("User")
+    event = relationship("Event", back_populates="bookmark_users")
+
+    @classmethod
+    def lookup(cls, tx, user_id, event_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, event_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Bookmark for event '{event_id}' and user '{user_id}' does not exist")
+        return bookmark

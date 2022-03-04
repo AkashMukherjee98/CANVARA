@@ -202,7 +202,7 @@ paths:
                       offers:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Offer'
+                          $ref: '#/components/schemas/OfferMinimal'
                         description: List of offers.
                       positions:
                         type: array
@@ -222,7 +222,7 @@ paths:
                       peoples:
                         type: array
                         items:
-                          $ref: '#/components/schemas/User'
+                          $ref: '#/components/schemas/UserSummary'
                         description: List of peoples.
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -688,6 +688,34 @@ paths:
               required:
                 - name
                 - overview_text
+  '/offers/{offer_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+        description: Unique identifier of the offer.
+    put:
+      summary: Bookmark an offer
+      operationId: add_offer_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for an offer
+      operationId: delete_offer_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
   '/proposals/{proposal_id}':
     parameters:
       - schema:
@@ -1078,6 +1106,34 @@ paths:
       responses:
         '204':
           description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/positions/{position_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: position_id
+        in: path
+        required: true
+        description: Unique identifier of the position.
+    put:
+      summary: Bookmark a position
+      operationId: add_position_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - positions
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a position
+      operationId: delete_position_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - positions
       security:
         - AWSCognitoCanvaraPrototype: []
   /events:
@@ -1667,6 +1723,34 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       tags:
         - events
+  '/events/{event_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Bookmark event
+      operationId: add_event_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for event
+      operationId: delete_event_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /communities:
     get:
       summary: List all communities
@@ -2271,6 +2355,34 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       tags:
         - communities
+  '/communities/{community_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    put:
+      summary: Bookmark a community
+      operationId: add_community_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a community
+      operationId: delete_community_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /posts:
     get:
       summary: List all posts
@@ -3505,6 +3617,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+        description: Unique identifier of the user.
+    put:
+      summary: Bookmark a people
+      operationId: add_people_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a people
+      operationId: delete_people_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
       security:
         - AWSCognitoCanvaraPrototype: []
   /banners:

@@ -9,7 +9,7 @@ from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError
 from backend.models.db import transaction
 from backend.models.location import Location
-from backend.models.position import Position, PositionStatus, PositionRoleType
+from backend.models.position import Position, PositionStatus, PositionRoleType, PositionBookmark
 from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
@@ -142,4 +142,28 @@ class PositionByIdAPI(AuthenticatedAPIBase):
 
             position.status = PositionStatus.DELETED.value
             position.last_updated_at = now
+        return make_no_content_response()
+
+
+@blueprint.route('/<position_id>/bookmark')
+class PositionBookmarkAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(position_id):
+        with transaction() as tx:
+            position = Position.lookup(tx, position_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = PositionBookmark.lookup(tx, user.id, position.id, must_exist=False)
+            if bookmark is None:
+                PositionBookmark(user=user, position=position, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(position_id):
+        with transaction() as tx:
+            position = Position.lookup(tx, position_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = PositionBookmark.lookup(tx, user.id, position.id)
+            tx.delete(bookmark)
         return make_no_content_response()

@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
@@ -7,7 +8,7 @@ from sqlalchemy import select
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.models.db import transaction
-from backend.models.user import User, SkillType
+from backend.models.user import User, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -314,4 +315,28 @@ class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
                 raise NotAllowedError(f"User '{user.id}' cannot delete mentorship video of user '{user_id}'")
             user.mentorship_video = None
             user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+
+@blueprint.route('/<user_id>/bookmark')
+class UserBookmarkAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(user_id):
+        with transaction() as tx:
+            bookmarked_user = User.lookup(tx, user_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id, must_exist=False)
+            if bookmark is None:
+                UserBookmark(user=user, bookmarked_user=bookmarked_user, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(user_id):
+        with transaction() as tx:
+            bookmarked_user = User.lookup(tx, user_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id)
+            tx.delete(bookmark)
         return make_no_content_response()

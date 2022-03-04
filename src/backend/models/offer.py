@@ -2,7 +2,7 @@ from enum import Enum
 import copy
 
 from sqlalchemy import and_
-from sqlalchemy.orm import relationship, noload
+from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -23,6 +23,7 @@ class Offer(ModelBase):
 
     offerer = relationship(User, foreign_keys="[Offer.offerer_id]")
     offer_overview_video = relationship(UserUpload, foreign_keys="[Offer.overview_video_id]")
+    bookmark_users = relationship("OfferBookmark", back_populates="offer")
     details = None
 
     def update_details(self, payload):
@@ -83,12 +84,12 @@ class Offer(ModelBase):
     @classmethod
     def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
         if limit is not None:
-            offers = tx.query(cls).where(and_(
+            offers = tx.query(cls).join(Offer.offerer).where(and_(
                 User.customer_id == user.customer_id,
                 cls.status == OfferStatus.ACTIVE.value
             )).limit(limit)
         else:
-            offers = tx.query(cls).where(and_(
+            offers = tx.query(cls).join(Offer.offerer).where(and_(
                 User.customer_id == user.customer_id,
                 cls.status == OfferStatus.ACTIVE.value
             ))
@@ -99,6 +100,37 @@ class Offer(ModelBase):
 
         offers = offers.options(query_options)
         return offers
+
+    @classmethod
+    def my_bookmarks(
+        cls, tx, user
+    ):
+        offers = tx.query(cls).where(and_(
+            cls.status != OfferStatus.DELETED.value
+        )).join(Offer.bookmark_users.and_(OfferBookmark.user_id == user.id)).\
+            order_by(OfferBookmark.created_at.desc())
+
+        query_options = [
+            noload(Offer.offer_overview_video),
+            contains_eager(Offer.bookmark_users)
+        ]
+
+        offers = offers.options(query_options)
+        return offers
+
+
+class OfferBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'offer_bookmark'
+
+    user = relationship("User")
+    offer = relationship("Offer", back_populates="bookmark_users")
+
+    @classmethod
+    def lookup(cls, tx, user_id, offer_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, offer_id))
+        if bookmark is None and must_exist:
+            raise DoesNotExistError(f"Bookmark for offer '{offer_id}' and user '{user_id}' does not exist")
+        return bookmark
 
 
 class OfferProposalFilter(Enum):

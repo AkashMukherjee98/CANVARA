@@ -11,6 +11,7 @@ from backend.models.db import transaction
 from backend.models.community import Community, CommunityStatus
 from backend.models.community import CommunityAnnouncement, CommunityAnnouncementStatus
 from backend.models.community import CommunityMembership, CommunityMembershipStatus
+from backend.models.community import CommunityBookmark
 from backend.models.user import User
 from backend.models.location import Location
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -434,4 +435,28 @@ class CommunityGalleryByIdAPI(AuthenticatedAPIBase):
 
             community.gallery.remove(user_upload)
             user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+
+@blueprint.route('/<community_id>/bookmark')
+class CommunityBookmarkAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(community_id):
+        with transaction() as tx:
+            community = Community.lookup(tx, community_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = CommunityBookmark.lookup(tx, user.id, community.id, must_exist=False)
+            if bookmark is None:
+                CommunityBookmark(user=user, community=community, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(community_id):
+        with transaction() as tx:
+            community = Community.lookup(tx, community_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = CommunityBookmark.lookup(tx, user.id, community.id)
+            tx.delete(bookmark)
         return make_no_content_response()

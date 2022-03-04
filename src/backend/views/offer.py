@@ -9,7 +9,7 @@ from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.offer import (
-    Offer, OfferStatus,
+    Offer, OfferStatus, OfferBookmark,
     OfferProposal, OfferProposalStatus, OfferProposalFilter
 )
 from backend.models.user import User
@@ -149,6 +149,30 @@ class OfferVideoByIdAPI(AuthenticatedAPIBase):
 
             offer.overview_video_id = None
             user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+
+@blueprint.route('/<offer_id>/bookmark')
+class OfferBookmarkAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def put(offer_id):
+        with transaction() as tx:
+            offer = Offer.lookup(tx, offer_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = OfferBookmark.lookup(tx, user.id, offer.id, must_exist=False)
+            if bookmark is None:
+                OfferBookmark(user=user, offer=offer, created_at=datetime.utcnow())
+        return make_no_content_response()
+
+    @staticmethod
+    def delete(offer_id):
+        with transaction() as tx:
+            offer = Offer.lookup(tx, offer_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            bookmark = OfferBookmark.lookup(tx, user.id, offer.id)
+            tx.delete(bookmark)
         return make_no_content_response()
 
 

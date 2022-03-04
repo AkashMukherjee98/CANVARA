@@ -84,12 +84,12 @@ class Offer(ModelBase):
     @classmethod
     def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
         if limit is not None:
-            offers = tx.query(cls).where(and_(
+            offers = tx.query(cls).join(Offer.offerer).where(and_(
                 User.customer_id == user.customer_id,
                 cls.status == OfferStatus.ACTIVE.value
             )).limit(limit)
         else:
-            offers = tx.query(cls).where(and_(
+            offers = tx.query(cls).join(Offer.offerer).where(and_(
                 User.customer_id == user.customer_id,
                 cls.status == OfferStatus.ACTIVE.value
             ))

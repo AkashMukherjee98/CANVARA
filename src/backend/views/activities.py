@@ -45,7 +45,7 @@ class MyActivityAPI(AuthenticatedAPIBase):
             my_events = MyActivity.my_events(tx, user)
             my_connections = MyActivity.my_connections(tx, user)
 
-            bookmarked_peoples = User.my_bookmarks(tx, user)
+            bookmarked_users = User.my_bookmarks(tx, user)
             bookmarked_gigs = Post.my_bookmarks(tx, user)
             bookmarked_offers = Offer.my_bookmarks(tx, user)
             bookmarked_positions = Position.my_bookmarks(tx, user)
@@ -71,7 +71,7 @@ class MyActivityAPI(AuthenticatedAPIBase):
                 'events': [event.as_dict() for event in my_events],
                 'connections': [connection.as_dict() for connection in my_connections],
                 'bookmarks': {
-                    'peoples': [people.as_summary_dict() for people in bookmarked_peoples],
+                    'peoples': [user.as_summary_dict() for user in bookmarked_users],
                     'gigs': [gig.as_dict(user=user) for gig in bookmarked_gigs],
                     'offers': [offer.as_dict() for offer in bookmarked_offers],
                     'positions': [position.as_dict() for position in bookmarked_positions],
@@ -79,13 +79,5 @@ class MyActivityAPI(AuthenticatedAPIBase):
                     'events': [event.as_dict() for event in bookmarked_events],
                 }
             }
-            activities = {
-                    'peoples': [people.as_summary_dict() for people in bookmarked_peoples],
-                    'gigs': [gig.as_dict(user=user) for gig in bookmarked_gigs],
-                    'offers': [offer.as_dict() for offer in bookmarked_offers],
-                    'positions': [position.as_dict() for position in bookmarked_positions],
-                    'community': [community.as_dict() for community in bookmarked_communities],
-                    'events': [event.as_dict() for event in bookmarked_events],
-                }
 
         return jsonify(activities)

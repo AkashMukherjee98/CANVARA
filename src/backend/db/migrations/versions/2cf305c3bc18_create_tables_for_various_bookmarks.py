@@ -19,9 +19,9 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'people_bookmark',
+        'user_bookmark',
         sa.Column('user_id', UUID, sa.ForeignKey('canvara_user.id'), primary_key=True),
-        sa.Column('people_id', UUID, sa.ForeignKey('canvara_user.id'), primary_key=True),
+        sa.Column('bookmarked_user_id', UUID, sa.ForeignKey('canvara_user.id'), primary_key=True),
         sa.Column('created_at', sa.DateTime, nullable=False),
     )
 

@@ -2355,7 +2355,7 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       tags:
         - communities
-  '/communities/{event_id}/bookmark':
+  '/communities/{community_id}/bookmark':
     parameters:
       - schema:
           type: string
@@ -3619,7 +3619,7 @@ paths:
                 $ref: '#/components/schemas/User'
       security:
         - AWSCognitoCanvaraPrototype: []
-  '/users/{event_id}/bookmark':
+  '/users/{user_id}/bookmark':
     parameters:
       - schema:
           type: string

@@ -45,7 +45,7 @@ class User(ModelBase):
     community_memberships = relationship("Community", secondary='community_membership', primaryjoin=(
         "and_(CommunityMembership.community_id==Community.id, "
         "CommunityMembership.status == 'active')"))
-    bookmark_peoples = relationship("PeopleBookmark", foreign_keys="[PeopleBookmark.people_id]")
+    bookmark_user = relationship("UserBookmark", foreign_keys="[UserBookmark.bookmarked_user_id]")
 
     MIN_CURRENT_SKILLS = 3
     MAX_CURRENT_SKILLS = 50
@@ -102,8 +102,8 @@ class User(ModelBase):
     def my_bookmarks(
         cls, tx, user
     ):
-        peoples = tx.query(cls).join(User.bookmark_peoples.and_(PeopleBookmark.user_id == user.id)).\
-            order_by(PeopleBookmark.created_at.desc())
+        peoples = tx.query(cls).join(User.bookmark_user.and_(UserBookmark.user_id == user.id)).\
+            order_by(UserBookmark.created_at.desc())
 
         return peoples
 
@@ -319,15 +319,15 @@ class User(ModelBase):
         return user
 
 
-class PeopleBookmark(ModelBase):  # pylint: disable=too-few-public-methods
-    __tablename__ = 'people_bookmark'
+class UserBookmark(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'user_bookmark'
 
-    user = relationship("User", foreign_keys="[PeopleBookmark.user_id]")
-    people = relationship("User", back_populates="bookmark_peoples", foreign_keys="[PeopleBookmark.people_id]")
+    user = relationship("User", foreign_keys="[UserBookmark.user_id]")
+    bookmarked_user = relationship("User", back_populates="bookmark_user", foreign_keys="[UserBookmark.bookmarked_user_id]")
 
     @classmethod
-    def lookup(cls, tx, user_id, people_id, must_exist=True):
-        bookmark = tx.get(cls, (user_id, people_id))
+    def lookup(cls, tx, user_id, bookmarked_user_id, must_exist=True):
+        bookmark = tx.get(cls, (user_id, bookmarked_user_id))
         if bookmark is None and must_exist:
-            raise DoesNotExistError(f"Bookmark for people '{people_id}' and user '{user_id}' does not exist")
+            raise DoesNotExistError(f"Bookmark for user '{bookmarked_user_id}' does not exist")
         return bookmark

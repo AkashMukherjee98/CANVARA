@@ -8,7 +8,7 @@ from sqlalchemy import select
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.models.db import transaction
-from backend.models.user import User, SkillType, PeopleBookmark
+from backend.models.user import User, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -319,24 +319,24 @@ class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
 
 
 @blueprint.route('/<user_id>/bookmark')
-class PeopleBookmarkAPI(AuthenticatedAPIBase):
+class UserBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(user_id):
         with transaction() as tx:
-            people = User.lookup(tx, user_id)
+            bookmarked_user = User.lookup(tx, user_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
-            bookmark = PeopleBookmark.lookup(tx, user.id, people.id, must_exist=False)
+            bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id, must_exist=False)
             if bookmark is None:
-                PeopleBookmark(user=user, people=people, created_at=datetime.utcnow())
+                UserBookmark(user=user, bookmarked_user=bookmarked_user, created_at=datetime.utcnow())
         return make_no_content_response()
 
     @staticmethod
     def delete(user_id):
         with transaction() as tx:
-            people = User.lookup(tx, user_id)
+            bookmarked_user = User.lookup(tx, user_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
-            bookmark = PeopleBookmark.lookup(tx, user.id, people.id)
+            bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id)
             tx.delete(bookmark)
         return make_no_content_response()

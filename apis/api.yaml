@@ -3647,6 +3647,74 @@ paths:
         - users
       security:
         - AWSCognitoCanvaraPrototype: []
+  /users:
+    get:
+      summary: List all users
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+      operationId: list_user
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - expert
+              - mentor
+            default: all
+          in: query
+          name: type
+          description: 'type filter for list of users.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for users.'
+        - schema:
+            type: string
+          in: query
+          name: title
+          description: 'Title/role filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: skill_id
+          description: 'Skill id filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: location
+          description: 'Location string filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: language
+          description: 'Language filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: tenure_lte
+          description: 'Minimum tenure(number of year) with the company.'
+        - schema:
+            type: string
+          in: query
+          name: tenure_gte
+          description: 'Maximum tenure(number of year) with the company.'
   /banners:
     get:
       summary: List all banners

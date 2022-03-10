@@ -1,6 +1,9 @@
 import copy
 import enum
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
+from sqlalchemy import or_, cast, Date
 from sqlalchemy.orm import backref, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -8,6 +11,22 @@ from .db import ModelBase
 from .language import Language
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
 from .user_upload import UserUpload
+
+
+class UserType(enum.Enum):
+    ALL = 'all'
+    EXPERT = 'expert'
+    MENTOR = 'mentor'
+
+    @classmethod
+    def lookup(cls, user_type):
+        if user_type is None:
+            return None
+
+        try:
+            return UserType(user_type.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported user type filter: {user_type}.") from ex
 
 
 class SkillType(enum.Enum):
@@ -92,6 +111,78 @@ class User(ModelBase):
         if user is None:
             raise DoesNotExistError(f"User '{user_id}' does not exist")
         return user
+
+    @classmethod
+    def search(  # noqa: C901
+        cls, tx, user,
+        user_type=None, keyword=None, title=None, department=None, skill=None, location=None, language=None,
+        tenure_gte=None, tenure_lte=None
+    ):  # pylint: disable=too-many-arguments
+        users = tx.query(cls).where(
+            User.customer_id == user.customer_id,
+            User.id != user.id
+        )
+
+        # pylint: disable=unsubscriptable-object
+        if user_type == UserType.EXPERT:
+            users = users.join(User.current_skills.and_(
+                User.id == UserCurrentSkill.user_id,
+                UserCurrentSkill.is_expert.is_(True)
+            ))
+        elif user_type == UserType.MENTOR:
+            users = users.filter(User.profile['mentorship_offered'].as_boolean().is_(True))
+
+        if keyword is not None:
+            users = users.where(or_(
+                User.name.ilike(f'%{keyword}%'),
+                User.profile['pronoun'].astext.ilike(f'%{keyword}%'),
+                User.profile['introduction'].astext.ilike(f'%{keyword}%'),
+                User.profile['superpowers'].astext.ilike(f'%{keyword}%'),
+                User.profile['career_goals'].astext.ilike(f'%{keyword}%'),
+                User.profile['hidden_secrets'].astext.ilike(f'%{keyword}%'),
+                User.profile['location'].astext.ilike(f'%{keyword}%'),
+                User.profile['languages'].astext.ilike(f'%{keyword}%'),
+                User.profile['department'].astext.ilike(f'%{keyword}%'),
+                User.profile['hashtags'].astext.ilike(f'%{keyword}%'),
+                User.profile['mentorship_description'].astext.ilike(f'%{keyword}%'),
+                User.profile['mentorship_hashtags'].astext.ilike(f'%{keyword}%')
+            ))
+
+        if title is not None:
+            users = users.filter(User.profile['title'].astext == title)
+
+        if department is not None:
+            users = users.filter(User.profile['department'].astext == department)
+
+        if skill is not None:
+            users = users.join(User.current_skills.and_(
+                User.id == UserCurrentSkill.user_id,
+                UserCurrentSkill.skill_id == skill.id
+            ))
+        if location is not None:
+            users = users.filter(
+                User.profile['location'].astext.ilike(f'%{location}%'))
+
+        if language is not None:
+            users = users.filter(User.profile['languages'].contains([language]))
+
+        if tenure_gte is not None:
+            if int(tenure_gte) < 1:
+                raise InvalidArgumentError(f"Tenure(gte) {tenure_gte} should be number of year.")
+            target_date = datetime.now() - relativedelta(years=int(tenure_gte))
+            users = users.filter(cast(User.profile['company_start_date'].astext, Date) <= target_date)
+
+        if tenure_lte is not None:
+            if int(tenure_lte) < 1:
+                raise InvalidArgumentError(f"Tenure(lte) {tenure_lte} should be number of year.")
+            target_date = datetime.now() - relativedelta(years=int(tenure_lte))
+            users = users.filter(cast(User.profile['company_start_date'].astext, Date) >= target_date)
+        # pylint: enable=disable=unsubscriptable-object
+
+        query_options = []
+        users = users.options(query_options)
+
+        return users
 
     def validate_manager(self, manager):
         if manager.id == self.id:

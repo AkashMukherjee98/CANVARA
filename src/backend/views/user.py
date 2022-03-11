@@ -8,7 +8,9 @@ from sqlalchemy import select
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.models.db import transaction
-from backend.models.user import User, SkillType, UserBookmark
+from backend.models.language import Language
+from backend.models.skill import Skill
+from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -55,6 +57,50 @@ class CustomerUserAPI(AuthenticatedAPIBase):
 
             user_details = user.as_dict()
         return user_details
+
+
+@blueprint.route('')
+class UsersAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():
+        user_type = UserTypeFilter.lookup(request.args.get('user_type')) if 'user_type' in request.args else None
+
+        keyword = request.args.get('keyword') if 'keyword' in request.args else None
+        title = request.args.get('title') if 'title' in request.args else None
+        department = request.args.get('department') if 'department' in request.args else None
+        location = request.args.get('location') if 'location' in request.args else None
+        language = Language.validate_and_convert_language(request.args.get('language')) if 'language' in request.args else None
+
+        tenure_gte = request.args.get('tenure_gte') if 'tenure_gte' in request.args else None
+        tenure_lte = request.args.get('tenure_lte') if 'tenure_lte' in request.args else None
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            skill = Skill.lookup(tx, user.customer_id, request.args.get('skill_id')) if 'skill_id' in request.args else None
+
+            users = User.search(
+                tx,
+                user,
+                user_type=user_type,
+                keyword=keyword,
+                title=title,
+                department=department,
+                skill=skill,
+                location=location,
+                language=language,
+                tenure_gte=tenure_gte,
+                tenure_lte=tenure_lte
+            )
+            users = [user.as_custom_dict([
+                'title', 'pronoun', 'department', 'location',
+                'expert_skills',
+                'introduction', 'hashtags',
+                'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
+                'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
+                'matching_reason'
+            ]) for user in users]
+        return jsonify(users)
 
 
 @blueprint.route('/me')

@@ -21,7 +21,6 @@ class Skill(ModelBase):
         if skill_id is None and name is None:
             raise InvalidArgumentError("Either skill id or name is required for lookup")
 
-        internal_name = name.lower()
         if skill_id is not None:
             # TODO: (sunil) if name was also given, make sure it matches
             skill = tx.get(cls, skill_id)
@@ -34,6 +33,7 @@ class Skill(ModelBase):
 
             # Note: This query will return a maximum of two rows, so fetching both and filtering in Python
             # is okay. The amount of data fetched will still be small, and the query is much simpler.
+            internal_name = name.lower()
             skills_query = tx.query(Skill).where(
                 and_(
                     Skill.internal_name == internal_name,

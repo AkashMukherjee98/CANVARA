@@ -3647,6 +3647,134 @@ paths:
         - users
       security:
         - AWSCognitoCanvaraPrototype: []
+  /users:
+    get:
+      summary: List all users
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    user_id:
+                      type: string
+                      description: Unique identifier for the user.
+                    name:
+                      type: string
+                      description: Name of the user.
+                    profile_picture_url:
+                      type: string
+                      description: The URL of user's profile picture.
+                    title:
+                      type: string
+                      description: Title of the user.
+                    pronoun:
+                      type: string
+                      description: Pronoun.
+                    location:
+                      type: string
+                      description: Location of the user.
+                    department:
+                      type: string
+                      description: Department of the user.
+                    expert_skills:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SkillWithLevelAndExpert'
+                      description: Expert skills of the user.
+                    introduction:
+                      type: string
+                      description: Introduction of the user.
+                    hashtags:
+                      type: array
+                      items:
+                        type: string
+                      description: Hastags of the user.
+                    email:
+                      type: string
+                      description: Email of the user.
+                    phone_number:
+                      type: string
+                      description: Phone number of the user.
+                    linkedin_url:
+                      type: string
+                      description: Linkedin URL of the user.
+                    slack_teams_messaging_id:
+                      type: string
+                      description: Slack/Team handle of the user.
+                    mentorship_offered:
+                      type: boolean
+                      description: User is a mentor or not.
+                    mentorship_description:
+                      type: string
+                      description: Mentorship description.
+                    mentorship_hashtags:
+                      type: array
+                      items:
+                        type: string
+                      description: Mentorship hashtags.
+                    matching_reason:
+                      type: string
+                      description: Reason for recomending this user.
+      operationId: list_user
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - expert
+              - mentor
+            default: all
+          in: query
+          name: user_type
+          description: 'type filter for list of users.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for users.'
+        - schema:
+            type: string
+          in: query
+          name: title
+          description: 'Title/role filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: skill_id
+          description: 'Skill id filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: location
+          description: 'Location string filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: language
+          description: 'Language filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: tenure_lte
+          description: 'Minimum tenure(number of year) with the company.'
+        - schema:
+            type: string
+          in: query
+          name: tenure_gte
+          description: 'Maximum tenure(number of year) with the company.'
   /banners:
     get:
       summary: List all banners

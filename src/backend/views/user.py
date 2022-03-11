@@ -10,7 +10,7 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.skill import Skill
-from backend.models.user import User, UserType, SkillType, UserBookmark
+from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -60,10 +60,10 @@ class CustomerUserAPI(AuthenticatedAPIBase):
 
 
 @blueprint.route('')
-class PeopleAPI(AuthenticatedAPIBase):
+class UsersAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
-        user_type = UserType.lookup(request.args.get('type')) if 'type' in request.args else None
+        user_type = UserTypeFilter.lookup(request.args.get('user_type')) if 'user_type' in request.args else None
 
         keyword = request.args.get('keyword') if 'keyword' in request.args else None
         title = request.args.get('title') if 'title' in request.args else None
@@ -92,7 +92,14 @@ class PeopleAPI(AuthenticatedAPIBase):
                 tenure_gte=tenure_gte,
                 tenure_lte=tenure_lte
             )
-            users = [user.as_dict() for user in users]
+            users = [user.as_custom_dict([
+                'title', 'pronoun', 'department', 'location',
+                'expert_skills',
+                'introduction', 'hashtags',
+                'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
+                'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
+                'matching_reason'
+            ]) for user in users]
         return jsonify(users)
 
 

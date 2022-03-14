@@ -115,7 +115,7 @@ class Offer(ModelBase):
         return offer
 
     @classmethod
-    def search(cls, tx, user, sort=None, keyword=None, status=None, limit=None):  # pylint: disable=too-many-arguments        
+    def search(cls, tx, user, sort=None, keyword=None, status=None, limit=None):  # pylint: disable=too-many-arguments
         offers = tx.query(cls).join(Offer.offerer).where(and_(
             User.customer_id == user.customer_id,
             Offer.offerer_id != user.id,

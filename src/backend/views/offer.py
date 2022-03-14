@@ -9,7 +9,7 @@ from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.offer import (
-    Offer, OfferStatus, OfferBookmark,
+    Offer, OfferStatus, OfferStatusFilter, OfferSortFilter, OfferBookmark,
     OfferProposal, OfferProposalStatus, OfferProposalFilter
 )
 from backend.models.user import User
@@ -26,11 +26,21 @@ proposal_blueprint = Blueprint('offer_proposal', __name__, url_prefix='/proposal
 class OfferAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
+        sort = OfferSortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
+
+        limit = request.args.get('limit', None)
+        keyword = request.args.get('keyword', None)
+        status = OfferStatusFilter.lookup(request.args.get('status'))
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             offers = Offer.search(
                 tx,
-                user
+                user,
+                sort=sort,
+                keyword=keyword,
+                status=status,
+                limit=limit
             )
             offers = [offer.as_dict() for offer in offers]
         return jsonify(offers)

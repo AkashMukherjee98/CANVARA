@@ -1,13 +1,46 @@
 from enum import Enum
 import copy
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
 from .user import User
 from .user_upload import UserUpload
+
+
+class OfferSortFilter(Enum):
+    # Most relevant recommended offers for the user
+    RECOMMENDED = 'recommended'
+
+    # Latest active offers for the user
+    LATEST = 'latest'
+
+    @classmethod
+    def lookup(cls, name):
+        if name is None:
+            return None
+
+        try:
+            return OfferSortFilter(name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported Sorting option: {name}.") from ex
+
+
+class OfferStatusFilter(Enum):
+    # Offer is available for proposer
+    ACTIVE = 'active'
+
+    @classmethod
+    def lookup(cls, name):
+        if name is None:
+            return None
+
+        try:
+            return OfferStatusFilter(name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported status filter: {name}.") from ex
 
 
 class OfferStatus(Enum):
@@ -82,17 +115,30 @@ class Offer(ModelBase):
         return offer
 
     @classmethod
-    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
-        if limit is not None:
-            offers = tx.query(cls).join(Offer.offerer).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == OfferStatus.ACTIVE.value
-            )).limit(limit)
-        else:
-            offers = tx.query(cls).join(Offer.offerer).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == OfferStatus.ACTIVE.value
+    def search(cls, tx, user, sort=None, keyword=None, status=None, limit=None):  # pylint: disable=too-many-arguments        
+        offers = tx.query(cls).join(Offer.offerer).where(and_(
+            User.customer_id == user.customer_id,
+            Offer.offerer_id != user.id,
+            cls.status == OfferStatus.ACTIVE.value
+        ))
+
+        if sort is not None and sort == OfferSortFilter.LATEST:
+            offers = offers.order_by(Offer.created_at.desc())
+
+        if keyword is not None:
+            offers = offers.where(or_(
+                Offer.name.ilike(f'%{keyword}%'),
+                Offer.details['overview_text'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Offer.details['hashtags'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
             ))
+
+        if status == OfferStatusFilter.ACTIVE:
+            offers = offers.where(and_(
+                Offer.status == OfferStatus.ACTIVE.value
+            ))
+
+        if limit is not None:
+            offers = offers.limit(int(limit))
 
         query_options = [
             noload(Offer.offer_overview_video)

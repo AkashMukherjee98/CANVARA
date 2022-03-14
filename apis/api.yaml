@@ -1520,10 +1520,12 @@ paths:
           description: OK
           content:
             application/json:
-              properties:
-                event_id:
-                  type: string
-                  description: Unique identifier for this event.
+              schema:
+                type: object
+                properties:
+                  comment_id:
+                    type: string
+                    description: Unique identifier for this comment.
       tags:
         - events
       security:
@@ -1561,10 +1563,12 @@ paths:
           description: OK
           content:
             application/json:
-              properties:
-                comment_id:
-                type: string
-                description: Unique identifier for this comment.
+              schema:
+                type: object
+                properties:
+                  comment_id:
+                    type: string
+                    description: Unique identifier for this comment.
       tags:
         - events
       security:
@@ -1606,10 +1610,19 @@ paths:
           description: OK
           content:
             application/json:
-              properties:
-                status:
-                  type: string
-                  description: Status for provided rsvp.
+              schema:
+                type: object
+                properties:
+                  rsvp_id:
+                    type: string
+                    description: Unique identifier of the rsvp.
+                  status:
+                    type: string
+                    enum:
+                      - yes
+                      - no
+                      - maybe
+                    description: Status for provided rsvp.
       requestBody:
         content:
           application/json:
@@ -2119,10 +2132,12 @@ paths:
           description: OK
           content:
             application/json:
-              properties:
-                community_id:
-                  type: string
-                  description: Unique identifier for this community.
+              schema:
+                type: object
+                properties:
+                  announcement_id:
+                    type: string
+                    description: Unique identifier for this announcement.
       tags:
         - communities
       security:
@@ -2160,10 +2175,12 @@ paths:
           description: OK
           content:
             application/json:
-              properties:
-                community_id:
-                type: string
-                description: Unique identifier for this community.
+              schema:
+                type: object
+                properties:
+                  announcement_id:
+                    type: string
+                    description: Unique identifier for this announcement.
       tags:
         - communities
       security:
@@ -2205,13 +2222,15 @@ paths:
           description: OK
           content:
             application/json:
-              properties:
-                membership_id:
-                  type: string
-                  description: Unique identifier for membership.
-                status:
-                  type: string
-                  description: Status for successful joining.
+              schema:
+                type: object
+                properties:
+                  membership_id:
+                    type: string
+                    description: Unique identifier for membership.
+                  status:
+                    type: string
+                    description: Status for joining.
       tags:
         - communities
       security:

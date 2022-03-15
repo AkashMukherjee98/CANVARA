@@ -8,6 +8,7 @@ Create Date: 2022-03-14 16:59:33.007822
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql.schema import ForeignKey
 
 
 # revision identifiers, used by Alembic.
@@ -21,6 +22,7 @@ def upgrade():
     op.create_table(
         'user_user_match',
         sa.Column('id', UUID, primary_key=True),
+        sa.Column('customer_id', UUID, ForeignKey('customer.id')),
         sa.Column('seeker_user_id', UUID, sa.ForeignKey('canvara_user.id')),
         sa.Column('recommendation_user_id', UUID, sa.ForeignKey('canvara_user.id')),
         sa.Column('created_at', sa.DateTime, nullable=False),

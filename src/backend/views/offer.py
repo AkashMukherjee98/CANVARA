@@ -31,8 +31,6 @@ class OfferAPI(AuthenticatedAPIBase):
         keyword = request.args.get('keyword', None)
         status = OfferStatusFilter.lookup(request.args.get('status'))
 
-        limit = request.args.get('limit', None)
-
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             offers = Offer.search(
@@ -40,8 +38,7 @@ class OfferAPI(AuthenticatedAPIBase):
                 user,
                 sort=sort,
                 keyword=keyword,
-                status=status,
-                limit=limit
+                status=status
             )
             offers = [offer.as_dict() for offer in offers]
         return jsonify(offers)
@@ -86,15 +83,18 @@ class OfferByIdAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def put(offer_id):
+        payload = request.json
         now = datetime.utcnow()
+        status = OfferStatus.lookup(payload['status']) if payload.get('status') else None
 
         with transaction() as tx:
             offer = Offer.lookup(tx, offer_id)
 
-            payload = request.json
-
             if payload.get('name'):
                 offer.name = payload['name']
+
+            if status in [OfferStatus.SUSPENDED]:
+                offer.status = status.value
 
             offer.last_updated_at = now
             offer.update_details(payload)
@@ -217,7 +217,7 @@ class OfferProposalAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             proposer_id = User.lookup(tx, current_cognito_jwt['sub'])
-            offer = Offer.lookup(tx, offer_id)
+            offer = Offer.lookup(tx, offer_id, [OfferStatus.ACTIVE.value])
             proposal = OfferProposal(
                 id=proposal_id,
                 name=payload.get('name'),

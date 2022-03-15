@@ -29,8 +29,9 @@ class OfferSortFilter(Enum):
 
 
 class OfferStatusFilter(Enum):
-    # Offer is available for proposer
-    ACTIVE = 'active'
+    OPEN = 'open'
+    UNDERWAY = 'underway'
+    SUSPENDED = 'suspended'
 
     @classmethod
     def lookup(cls, name):
@@ -132,7 +133,17 @@ class Offer(ModelBase):
                 Offer.details['hashtags'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
             ))
 
-        if status == OfferStatusFilter.ACTIVE:
+        if status == OfferStatusFilter.OPEN:
+            offers = offers.where(and_(
+                Offer.status == OfferStatus.ACTIVE.value
+            ))
+        if status == OfferStatusFilter.UNDERWAY:
+            offers = offers.where(and_(
+                Offer.status == OfferStatus.ACTIVE.value
+            )).join(Offer.pro.performers.and_(
+                Performer.status == PerformerStatus.IN_PROGRESS.value
+            ))
+        if status == OfferStatusFilter.SUSPENDED:
             offers = offers.where(and_(
                 Offer.status == OfferStatus.ACTIVE.value
             ))

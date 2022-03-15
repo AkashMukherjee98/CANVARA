@@ -28,9 +28,10 @@ class OfferAPI(AuthenticatedAPIBase):
     def get():
         sort = OfferSortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
 
-        limit = request.args.get('limit', None)
         keyword = request.args.get('keyword', None)
         status = OfferStatusFilter.lookup(request.args.get('status'))
+
+        limit = request.args.get('limit', None)
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])

@@ -448,6 +448,11 @@ paths:
           description: 'Search keyword for offer.'
         - schema:
             type: string
+          in: query
+          name: location
+          description: 'Text filter based on offerer location.'
+        - schema:
+            type: string
             enum:
               - open
               - underway
@@ -559,6 +564,7 @@ paths:
                   description: Status update for offer.
                   enum:
                     - suspended
+                    - active
     delete:
       summary: Delete an offer
       tags:

@@ -29,6 +29,7 @@ class OfferAPI(AuthenticatedAPIBase):
         sort = OfferSortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
 
         keyword = request.args.get('keyword', None)
+        location = request.args.get('location', None)
         status = OfferStatusFilter.lookup(request.args.get('status'))
 
         with transaction() as tx:
@@ -38,6 +39,7 @@ class OfferAPI(AuthenticatedAPIBase):
                 user,
                 sort=sort,
                 keyword=keyword,
+                location=location,
                 status=status
             )
             offers = [offer.as_dict() for offer in offers]
@@ -93,7 +95,7 @@ class OfferByIdAPI(AuthenticatedAPIBase):
             if payload.get('name'):
                 offer.name = payload['name']
 
-            if status in [OfferStatus.SUSPENDED]:
+            if status in [OfferStatus.SUSPENDED, OfferStatus.ACTIVE]:
                 offer.status = status.value
 
             offer.last_updated_at = now

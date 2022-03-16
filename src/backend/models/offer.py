@@ -135,7 +135,9 @@ class Offer(ModelBase):
         return offer
 
     @classmethod
-    def search(cls, tx, user, sort=None, keyword=None, status=None, limit=None):  # pylint: disable=too-many-arguments
+    def search(
+        cls, tx, user, sort=None, keyword=None, location=None, status=None, limit=None
+    ):  # pylint: disable=too-many-arguments
         offers = tx.query(cls).join(Offer.offerer).where(and_(
             User.customer_id == user.customer_id,
             Offer.offerer_id != user.id,
@@ -151,6 +153,10 @@ class Offer(ModelBase):
                 Offer.details['overview_text'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
                 Offer.details['hashtags'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
             ))
+
+        if location is not None:
+            offers = offers.filter(
+                User.profile['location'].astext.ilike(f'%{location}%'))  # pylint: disable=unsubscriptable-object
 
         if status == OfferStatusFilter.OPEN:
             offers = offers.where(and_(

@@ -431,6 +431,35 @@ paths:
       summary: List all offers
       tags:
         - offers
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for offer list.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for offer.'
+        - schema:
+            type: string
+          in: query
+          name: location
+          description: 'Text filter based on offerer location.'
+        - schema:
+            type: string
+            enum:
+              - open
+              - underway
+              - suspended
+          in: query
+          name: status
+          description: 'Status filter for offer.'
       responses:
         '200':
           description: OK
@@ -530,6 +559,12 @@ paths:
                   items:
                     type: string
                   description: List of hashtags.
+                status:
+                  type: string
+                  description: Status update for offer.
+                  enum:
+                    - suspended
+                    - active
     delete:
       summary: Delete an offer
       tags:

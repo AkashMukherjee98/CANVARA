@@ -9,7 +9,7 @@ from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
 from backend.models.offer import (
-    Offer, OfferStatus, OfferBookmark,
+    Offer, OfferStatus, OfferStatusFilter, OfferSortFilter, OfferBookmark,
     OfferProposal, OfferProposalStatus, OfferProposalFilter
 )
 from backend.models.user import User
@@ -26,11 +26,21 @@ proposal_blueprint = Blueprint('offer_proposal', __name__, url_prefix='/proposal
 class OfferAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
+        sort = OfferSortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
+
+        keyword = request.args.get('keyword', None)
+        location = request.args.get('location', None)
+        status = OfferStatusFilter.lookup(request.args.get('status'))
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             offers = Offer.search(
                 tx,
-                user
+                user,
+                sort=sort,
+                keyword=keyword,
+                location=location,
+                status=status
             )
             offers = [offer.as_dict() for offer in offers]
         return jsonify(offers)
@@ -75,15 +85,18 @@ class OfferByIdAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def put(offer_id):
+        payload = request.json
         now = datetime.utcnow()
+        status = OfferStatus.lookup(payload['status']) if payload.get('status') else None
 
         with transaction() as tx:
             offer = Offer.lookup(tx, offer_id)
 
-            payload = request.json
-
             if payload.get('name'):
                 offer.name = payload['name']
+
+            if status in [OfferStatus.SUSPENDED, OfferStatus.ACTIVE]:
+                offer.status = status.value
 
             offer.last_updated_at = now
             offer.update_details(payload)
@@ -206,7 +219,7 @@ class OfferProposalAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             proposer_id = User.lookup(tx, current_cognito_jwt['sub'])
-            offer = Offer.lookup(tx, offer_id)
+            offer = Offer.lookup(tx, offer_id, [OfferStatus.ACTIVE.value])
             proposal = OfferProposal(
                 id=proposal_id,
                 name=payload.get('name'),

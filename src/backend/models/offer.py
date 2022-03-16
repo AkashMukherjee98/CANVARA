@@ -1,7 +1,7 @@
 from enum import Enum
 import copy
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -10,12 +10,59 @@ from .user import User
 from .user_upload import UserUpload
 
 
+class OfferSortFilter(Enum):
+    # Most relevant recommended offers for the user
+    RECOMMENDED = 'recommended'
+
+    # Latest active offers for the user
+    LATEST = 'latest'
+
+    @classmethod
+    def lookup(cls, filter_name):
+        if filter_name is None:
+            return None
+
+        try:
+            return OfferSortFilter(filter_name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported sorting option: {filter_name}.") from ex
+
+
+class OfferStatusFilter(Enum):
+    OPEN = 'open'
+    UNDERWAY = 'underway'
+    SUSPENDED = 'suspended'
+
+    @classmethod
+    def lookup(cls, filter_name):
+        if filter_name is None:
+            return None
+
+        try:
+            return OfferStatusFilter(filter_name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported status filter: {filter_name}.") from ex
+
+
 class OfferStatus(Enum):
     # Offer is available for proposer
     ACTIVE = 'active'
 
+    # Offer is suspended
+    SUSPENDED = 'suspended'
+
     # Offer has been deleted
     DELETED = 'deleted'
+
+    @classmethod
+    def lookup(cls, status_name):
+        if status_name is None:
+            return None
+
+        try:
+            return OfferStatus(status_name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported status : {status_name}.") from ex
 
 
 class Offer(ModelBase):
@@ -23,6 +70,7 @@ class Offer(ModelBase):
 
     offerer = relationship(User, foreign_keys="[Offer.offerer_id]")
     offer_overview_video = relationship(UserUpload, foreign_keys="[Offer.overview_video_id]")
+    proposals = relationship("OfferProposal", back_populates="offer")
     bookmark_users = relationship("OfferBookmark", back_populates="offer")
     details = None
 
@@ -72,27 +120,62 @@ class Offer(ModelBase):
         return offer
 
     @classmethod
-    def lookup(cls, tx, offer_id, must_exist=True):
+    def lookup(cls, tx, offer_id, status=None):
         offer = tx.query(cls).where(and_(
             cls.id == offer_id,
-            cls.status == OfferStatus.ACTIVE.value
-        )).one_or_none()
-        if offer is None and must_exist:
+            cls.status != OfferStatus.DELETED.value
+        ))
+
+        if status is not None:
+            offer = offer.where(cls.status.in_(status))
+
+        offer = offer.one_or_none()
+        if offer is None:
             raise DoesNotExistError(f"Offer '{offer_id}' does not exist")
         return offer
 
     @classmethod
-    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
-        if limit is not None:
-            offers = tx.query(cls).join(Offer.offerer).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == OfferStatus.ACTIVE.value
-            )).limit(limit)
-        else:
-            offers = tx.query(cls).join(Offer.offerer).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == OfferStatus.ACTIVE.value
+    def search(
+        cls, tx, user, sort=None, keyword=None, location=None, status=None, limit=None
+    ):  # pylint: disable=too-many-arguments
+        offers = tx.query(cls).join(Offer.offerer).where(and_(
+            User.customer_id == user.customer_id,
+            Offer.offerer_id != user.id,
+            cls.status != OfferStatus.DELETED.value
+        )).order_by(Offer.created_at.desc())
+
+        if sort is not None and sort == OfferSortFilter.LATEST:
+            offers = offers.order_by(Offer.created_at.desc())
+
+        if keyword is not None:
+            offers = offers.where(or_(
+                Offer.name.ilike(f'%{keyword}%'),
+                Offer.details['overview_text'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Offer.details['hashtags'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
             ))
+
+        if location is not None:
+            offers = offers.filter(
+                User.profile['location'].astext.ilike(f'%{location}%'))  # pylint: disable=unsubscriptable-object
+
+        if status == OfferStatusFilter.OPEN:
+            offers = offers.where(and_(
+                Offer.status == OfferStatus.ACTIVE.value
+            ))
+        elif status == OfferStatusFilter.UNDERWAY:
+            offers = offers.where(and_(
+                Offer.status == OfferStatus.ACTIVE.value
+            )).join(Offer.proposals.and_(
+                OfferProposal.status.in_([
+                    OfferProposalStatus.SELECTED.value, OfferProposalStatus.IN_PROGRESS.value])
+            ))
+        elif status == OfferStatusFilter.SUSPENDED:
+            offers = offers.where(and_(
+                Offer.status == OfferStatus.SUSPENDED.value
+            ))
+
+        if limit is not None:
+            offers = offers.limit(int(limit))
 
         query_options = [
             noload(Offer.offer_overview_video)

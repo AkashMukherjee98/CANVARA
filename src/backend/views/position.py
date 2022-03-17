@@ -9,7 +9,7 @@ from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError
 from backend.models.db import transaction
 from backend.models.location import Location
-from backend.models.position import Position, PositionStatus, PositionRoleType, PositionBookmark
+from backend.models.position import Position, PositionStatus, PositionRoleType, PositionSortFilter, PositionBookmark
 from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
@@ -21,12 +21,30 @@ blueprint = Blueprint('position', __name__, url_prefix='/positions')
 class PositionAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
+        sort = PositionSortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
+
+        keyword = request.args.get('keyword', None)
+        department = request.args.get('department', None)
+        role = request.args.get('role', None)
+        role_type = PositionRoleType.validate_and_return_role_type(
+            request.args.get('role_type')) if 'role_type' in request.args else None
+        pay_grade = request.args.get('pay_grade', None)
+
         with transaction() as tx:
             # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
+            location = Location.lookup(tx, request.args.get('location_id')) if 'location_id' in request.args else None
+
             positions = Position.search(
                 tx,
-                user
+                user,
+                sort=sort,
+                keyword=keyword,
+                department=department,
+                location=location,
+                role=role,
+                role_type=role_type,
+                pay_grade=pay_grade
             )
             positions = [position.as_dict() for position in positions]
         return jsonify(positions)

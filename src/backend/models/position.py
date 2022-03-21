@@ -1,12 +1,30 @@
 from enum import Enum
 import copy
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import relationship, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
 from .user import User
+
+
+class PositionSortFilter(Enum):
+    # Most relevant recommended positions
+    RECOMMENDED = 'recommended'
+
+    # Latest active positions
+    LATEST = 'latest'
+
+    @classmethod
+    def lookup(cls, sort_name):
+        if sort_name is None:
+            return None
+
+        try:
+            return PositionSortFilter(sort_name.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported sorting filter: {sort_name}.") from ex
 
 
 class PositionRoleType():  # pylint: disable=too-few-public-methods
@@ -104,17 +122,45 @@ class Position(ModelBase):
         return position
 
     @classmethod
-    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
-        if limit is not None:
-            positions = tx.query(cls).join(Position.hiring_manager).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == PositionStatus.ACTIVE.value
-            )).limit(limit)
-        else:
-            positions = tx.query(cls).join(Position.hiring_manager).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == PositionStatus.ACTIVE.value
+    def search(
+        cls, tx, user,
+        sort=None, keyword=None, department=None, location=None, role=None, role_type=None, pay_grade=None,
+        limit=None
+    ):  # pylint: disable=too-many-arguments
+        positions = tx.query(cls).join(Position.hiring_manager).where(and_(
+            User.customer_id == user.customer_id,
+            cls.status != PositionStatus.DELETED.value
+        ))
+
+        if sort is not None and sort == PositionSortFilter.LATEST:
+            positions = positions.order_by(Position.created_at.desc())
+
+        if keyword is not None:
+            positions = positions.where(or_(
+                Position.role.ilike(f'%{keyword}%'),
+                Position.details['description'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Position.details['benefits'].astext.ilike(f'%{keyword}%')  # pylint: disable=unsubscriptable-object
             ))
+
+        if department is not None:
+            positions = positions.filter(Position.department.ilike(f'%{department}%'))
+
+        if location is not None:
+            positions = positions.where(Position.location == location)
+
+        if role is not None:
+            positions = positions.filter(Position.role.ilike(f'%{role}%'))
+
+        if role_type is not None:
+            positions = positions.where(Position.role_type == role_type)
+
+        # TODO: (santanu) Need to implement pay grade based on customer profile
+        if pay_grade is not None:
+            positions = positions.filter(
+                Position.details['pay_grade'].astext.ilike(f'%{pay_grade}%'))  # pylint: disable=unsubscriptable-object
+
+        if limit is not None:
+            positions = positions.limit(int(limit))
 
         return positions
 

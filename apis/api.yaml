@@ -983,6 +983,49 @@ paths:
       summary: List all positions
       tags:
         - positions
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for positions.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for position.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location filter for position.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter(Text) for position.'
+        - schema:
+            type: string
+          in: query
+          name: role
+          description: 'ROle filter for position.'
+        - schema:
+            type: string
+            enum:
+              - Full Time
+              - Part Time
+          in: query
+          name: role_type
+          description: 'Role/Employment type filter for position.'
+        - schema:
+            type: string
+          in: query
+          name: pay_grade
+          description: 'Pay grade filter for position(based on customer profile).'
       responses:
         '200':
           description: OK

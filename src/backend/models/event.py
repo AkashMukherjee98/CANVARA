@@ -1,7 +1,7 @@
 import copy
 from enum import Enum
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_, cast, Boolean
 from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -149,18 +149,42 @@ class Event(ModelBase):
 
     @classmethod
     def search(
-        cls, tx, user, limit=None
+        cls, tx, user,
+        keyword=None, location=None, sponsor_community=None, event_date=None,
+        volunteers_events_only=None, remote_attendance_support=None,
+        limit=None
     ):  # pylint: disable=too-many-arguments
-        if limit is not None:
-            events = tx.query(cls).join(Event.primary_organizer).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == EventStatus.ACTIVE.value
-            )).limit(limit)
-        else:
-            events = tx.query(cls).join(Event.primary_organizer).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == EventStatus.ACTIVE.value
+        events = tx.query(cls).join(Event.primary_organizer).where(and_(
+            User.customer_id == user.customer_id,
+            cls.status == EventStatus.ACTIVE.value
+        ))
+
+        # pylint: disable=unsubscriptable-object
+        if keyword is not None:
+            events = events.where(or_(
+                Event.name.ilike(f'%{keyword}%'),
+                Event.details['overview'].astext.ilike(f'%{keyword}%'),
+                Event.details['hashtags'].astext.ilike(f'%{keyword}%')
             ))
+
+        if location is not None:
+            events = events.where(Event.location == location)
+
+        if sponsor_community is not None:
+            events = events.where(Event.sponsor_community == sponsor_community)
+
+        if event_date is not None:
+            events = events.filter(Event.start_datetime <= event_date).filter(Event.end_datetime >= event_date)
+
+        if volunteers_events_only is not None and volunteers_events_only.lower() in ("true", "yes"):
+            events = events.filter(cast(Event.details['volunteer_event'].astext, Boolean).is_(True))
+
+        if remote_attendance_support is not None and remote_attendance_support.lower() in ("true", "yes"):
+            events = events.filter(cast(Event.details['open_for_outsiders'].astext, Boolean).is_(True))
+
+        if limit is not None:
+            events = events.limit(int(limit))
+        # pylint: enable=disable=unsubscriptable-object
 
         query_options = [
             noload(Event.secondary_organizer),

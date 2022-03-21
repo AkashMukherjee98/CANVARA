@@ -1219,6 +1219,37 @@ paths:
       summary: List all events
       tags:
         - events
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for events.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location filter for events.'
+        - schema:
+            type: string
+          in: query
+          name: sponsor_community_id
+          description: 'Sponsor Community filter for events.'
+        - schema:
+            type: string
+          in: query
+          name: event_date
+          description: 'Event Date filter in ISO 8601 format (YYYY-MM-DD).'
+        - schema:
+            type: boolean
+          in: query
+          name: volunteers_events_only
+          description: 'Show volunteers events only.'
+        - schema:
+            type: boolean
+          in: query
+          name: remote_attendance_support
+          description: 'Show remote attendance supported events.'
       responses:
         '200':
           description: OK

@@ -148,12 +148,12 @@ class Event(ModelBase):
         return event
 
     @classmethod
-    def search(
+    def search(  # noqa: C901
         cls, tx, user,
         keyword=None, location=None, sponsor_community=None, event_date=None,
         volunteers_events_only=None, remote_attendance_support=None,
         limit=None
-    ):  # pylint: disable=too-many-arguments
+    ):  # pylint: disable=too-many-arguments, disable=too-many-branches
         events = tx.query(cls).join(Event.primary_organizer).where(and_(
             User.customer_id == user.customer_id,
             Event.primary_organizer_id != user.id,
@@ -178,11 +178,23 @@ class Event(ModelBase):
         if event_date is not None:
             events = events.filter(Event.start_datetime <= event_date).filter(Event.end_datetime >= event_date)
 
-        if volunteers_events_only is not None and volunteers_events_only.lower() in ("true", "yes"):
-            events = events.filter(cast(Event.details['volunteer_event'].astext, Boolean).is_(True))
+        if volunteers_events_only is not None:
+            if volunteers_events_only.lower() == "true":
+                volunteer_event = True
+            elif volunteers_events_only.lower() == "false":
+                volunteer_event = False
+            else:
+                raise InvalidArgumentError("`volunteers_events_only` can take Boolean(true/false) only.")
+            events = events.filter(cast(Event.details['volunteer_event'].astext, Boolean).is_(volunteer_event))
 
-        if remote_attendance_support is not None and remote_attendance_support.lower() in ("true", "yes"):
-            events = events.filter(cast(Event.details['open_for_outsiders'].astext, Boolean).is_(True))
+        if remote_attendance_support is not None:
+            if remote_attendance_support.lower() == "true":
+                open_for_outsiders = True
+            elif remote_attendance_support.lower() == "false":
+                open_for_outsiders = False
+            else:
+                raise InvalidArgumentError("`remote_attendance_support` can take Boolean(true/false) only.")
+            events = events.filter(cast(Event.details['open_for_outsiders'].astext, Boolean).is_(open_for_outsiders))
 
         if limit is not None:
             events = events.limit(int(limit))

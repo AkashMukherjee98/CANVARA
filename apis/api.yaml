@@ -1244,12 +1244,12 @@ paths:
             type: boolean
           in: query
           name: volunteers_events_only
-          description: 'Show volunteers events only.'
+          description: 'Show volunteers events only(true/false).'
         - schema:
             type: boolean
           in: query
           name: remote_attendance_support
-          description: 'Show remote attendance supported events.'
+          description: 'Show remote attendance supported events(true/false).'
       responses:
         '200':
           description: OK

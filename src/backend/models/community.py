@@ -1,7 +1,7 @@
 import copy
 from enum import Enum
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import relationship, noload, contains_eager
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -9,6 +9,24 @@ from .db import ModelBase
 from .location import Location
 from .user import User
 from .user_upload import UserUpload
+
+
+class CommunitySortFilter(Enum):
+    # Most relevant recommended communities for the user
+    RECOMMENDED = 'recommended'
+
+    # Latest active communities for the user
+    LATEST = 'latest'
+
+    @classmethod
+    def lookup(cls, filter_type):
+        if filter_type is None:
+            return None
+
+        try:
+            return CommunitySortFilter(filter_type.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported sorting option: {filter_type}.") from ex
 
 
 class CommunityStatus(Enum):
@@ -165,17 +183,40 @@ class Community(ModelBase):
         return community
 
     @classmethod
-    def search(cls, tx, user, limit=None):  # pylint: disable=too-many-arguments
-        if limit is not None:
-            communities = tx.query(cls).join(Community.primary_moderator).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == CommunityStatus.ACTIVE.value
-            )).limit(limit)
-        else:
-            communities = tx.query(cls).join(Community.primary_moderator).where(and_(
-                User.customer_id == user.customer_id,
-                cls.status == CommunityStatus.ACTIVE.value
+    def search(
+        cls, tx, user,
+        community_type=None, sort=None, keyword=None, location=None, limit=None
+    ):  # pylint: disable=too-many-arguments, disable=unsubscriptable-object
+        communities = tx.query(cls).join(Community.primary_moderator).where(and_(
+            User.customer_id == user.customer_id,
+            Community.primary_moderator_id != user.id,
+            Community.secondary_moderator_id != user.id,
+            cls.status == CommunityStatus.ACTIVE.value
+        )).outerjoin(Community.members.and_(
+            CommunityMembership.member_id == user.id)).where(
+                CommunityMembership.member_id.is_(None))
+
+        if community_type is not None:
+            communities = communities.where(Community.details['type'].astext.ilike(community_type))
+
+        if sort is not None and sort == CommunitySortFilter.LATEST:
+            communities = communities.order_by(Community.created_at.desc())
+
+        if keyword is not None:
+            communities = communities.where(or_(
+                Community.name.ilike(f'%{keyword}%'),
+                Community.details['type'].astext.ilike(f'%{keyword}%'),
+                Community.details['mission'].astext.ilike(f'%{keyword}%'),
+                Community.details['activities'].astext.ilike(f'%{keyword}%'),
+                Community.details['target_audience'].astext.ilike(f'%{keyword}%'),
+                Community.details['hashtags'].astext.ilike(f'%{keyword}%')
             ))
+
+        if location is not None:
+            communities = communities.where(Community.location == location)
+
+        if limit is not None:
+            communities = communities.limit(int(limit))
 
         query_options = [
             noload(Community.secondary_moderator),

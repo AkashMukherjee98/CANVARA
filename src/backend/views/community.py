@@ -8,7 +8,7 @@ from flask_smorest import Blueprint
 from backend.common.http import make_no_content_response
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
-from backend.models.community import Community, CommunityStatus
+from backend.models.community import Community, CommunityType, CommunityStatus, CommunitySortFilter
 from backend.models.community import CommunityAnnouncement, CommunityAnnouncementStatus
 from backend.models.community import CommunityMembership, CommunityMembershipStatus
 from backend.models.community import CommunityBookmark
@@ -26,13 +26,24 @@ blueprint = Blueprint('community', __name__, url_prefix='/communities')
 class CommunityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
+        sort = CommunitySortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
+        keyword = request.args.get('keyword', None)
+        community_type = CommunityType.validate_and_return_community_type(
+            request.args.get('community_type')) if 'community_type' in request.args else None
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
+            location = Location.lookup(tx, request.args.get('location_id')) if 'location_id' in request.args else None
+
             communities = Community.search(
                 tx,
-                user
+                user,
+                community_type=community_type,
+                sort=sort,
+                keyword=keyword,
+                location=location
             )
-            communities = [community.as_dict() for community in communities]
+            communities = [community.as_summary_dict() for community in communities]
         return jsonify(communities)
 
     @staticmethod

@@ -156,8 +156,10 @@ class Event(ModelBase):
     ):  # pylint: disable=too-many-arguments
         events = tx.query(cls).join(Event.primary_organizer).where(and_(
             User.customer_id == user.customer_id,
+            Event.primary_organizer_id != user.id,
+            Event.secondary_organizer_id != user.id,
             cls.status == EventStatus.ACTIVE.value
-        ))
+        )).outerjoin(Event.rsvp.and_(EventRSVP.guest_id == user.id)).where(EventRSVP.guest_id.is_(None))
 
         # pylint: disable=unsubscriptable-object
         if keyword is not None:

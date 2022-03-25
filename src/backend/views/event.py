@@ -28,12 +28,28 @@ blueprint = Blueprint('event', __name__, url_prefix='/events')
 class EventAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
+        keyword = request.args.get('keyword', None)
+        event_date = DateTime.validate_and_convert_isoformat_to_date(
+            request.args.get('event_date'), 'event_date') if 'event_date' in request.args else None
+        volunteers_events_only = request.args.get('volunteers_events_only', None)
+        remote_attendance_support = request.args.get('remote_attendance_support', None)
+
         with transaction() as tx:
             # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
+            location = Location.lookup(tx, request.args.get('location_id')) if 'location_id' in request.args else None
+            sponsor_community = Community.lookup(
+                tx, request.args.get('sponsor_community_id')) if 'sponsor_community_id' in request.args else None
+
             events = Event.search(
                 tx,
-                user
+                user,
+                keyword=keyword,
+                location=location,
+                sponsor_community=sponsor_community,
+                event_date=event_date,
+                volunteers_events_only=volunteers_events_only,
+                remote_attendance_support=remote_attendance_support
             )
             events = [event.as_dict() for event in events]
         return jsonify(events)

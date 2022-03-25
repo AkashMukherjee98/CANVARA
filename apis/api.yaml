@@ -1012,7 +1012,7 @@ paths:
             type: string
           in: query
           name: role
-          description: 'ROle filter for position.'
+          description: 'Role filter for position.'
         - schema:
             type: string
             enum:
@@ -1878,6 +1878,35 @@ paths:
       summary: List all communities
       tags:
         - communities
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for community.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for community.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location filter for community.'
+        - schema:
+            type: string
+            enum:
+              - Engineering
+              - Sports
+              - Social Activities
+          in: query
+          name: community_type
+          description: 'Community type filter.'
       responses:
         '200':
           description: OK

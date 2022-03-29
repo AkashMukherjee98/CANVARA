@@ -29,6 +29,24 @@ class UserTypeFilter(enum.Enum):
             raise InvalidArgumentError(f"Unsupported user type filter: {user_type}.") from ex
 
 
+class ProfileCompletionRule():  # pylint: disable=too-few-public-methods
+    PERCENTAGE = [
+        ('profile_picture', 20),
+        ('introduction', 20),
+        ('career_goals', 20),
+        ('current_skills', 20),
+        ('desired_skills', 20)
+    ]
+
+    @classmethod
+    def lookup(cls, item_name):
+        try:
+            percentage = dict(cls.PERCENTAGE)
+            return percentage[item_name]
+        except ValueError as ex:
+            raise InvalidArgumentError(f"{item_name} doesn't exists in profile completion rule.") from ex
+
+
 class SkillType(enum.Enum):
     CURRENT_SKILL = 'current_skill'
     DESIRED_SKILL = 'desired_skill'
@@ -197,6 +215,24 @@ class User(ModelBase):
         if manager.id == self.id:
             raise InvalidArgumentError("Manager must not be same as the user")
         return manager
+
+    @classmethod
+    def profile_completion(
+        cls, user
+    ):
+        completeness_percentage = 0
+        completeness_percentage += ProfileCompletionRule.lookup(
+            'profile_picture') if user.profile_picture else 0
+        completeness_percentage += ProfileCompletionRule.lookup(
+            'introduction') if (user.profile['introduction'] != "" or user.mentorship_video) else 0
+        completeness_percentage += ProfileCompletionRule.lookup(
+            'career_goals') if user.profile['career_goals'] else 0
+        completeness_percentage += ProfileCompletionRule.lookup(
+            'current_skills') if len(user.current_skills) > 0 else 0
+        completeness_percentage += ProfileCompletionRule.lookup(
+            'desired_skills') if len(user.desired_skills) > 0 else 0
+
+        return completeness_percentage
 
     @classmethod
     def my_bookmarks(

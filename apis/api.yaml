@@ -3773,7 +3773,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserWithSnap'
+                $ref: '#/components/schemas/UserWithNavigationCues'
       security:
         - AWSCognitoCanvaraPrototype: []
   '/users/{user_id}/bookmark':
@@ -4916,8 +4916,8 @@ components:
         profile_picture_url:
           type: string
           description: The URL of user's profile picture.
-    UserWithSnap:
-      title: SkillWithAccountSnap
+    UserWithNavigationCues:
+      title: UserWithNavigationCues
       allOf:
         - $ref: '#/components/schemas/User'
         - type: object

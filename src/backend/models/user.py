@@ -44,7 +44,7 @@ class ProfileCompletionRule():  # pylint: disable=too-few-public-methods
             percentage = dict(cls.PERCENTAGE)
             return percentage[item_name]
         except ValueError as ex:
-            raise InvalidArgumentError(f"{item_name} is not exists in profile completion rule.") from ex
+            raise InvalidArgumentError(f"{item_name} doesn't exists in profile completion rule.") from ex
 
 
 class SkillType(enum.Enum):

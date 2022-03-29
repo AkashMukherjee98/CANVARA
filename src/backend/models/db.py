@@ -40,6 +40,7 @@ class CanvaraDB:
         from .user import User, UserCurrentSkill, UserDesiredSkill  # noqa: F401
         from .backgroundpicture import BackgroundPicture    # noqa: F401
         from .user_upload import UserUpload     # noqa: F401
+        from .share import Share                # noqa: F401
         # pylint: enable=cyclic-import, import-outside-toplevel, unused-import
 
         engine = cls.get_engine()

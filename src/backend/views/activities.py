@@ -17,7 +17,7 @@ from backend.models.activities import MyActivity
 blueprint = Blueprint('myactivities', __name__, url_prefix='/myactivities')
 
 
-@blueprint.route('/')
+@blueprint.route('')
 class MyActivityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():  # pylint: disable=too-many-locals

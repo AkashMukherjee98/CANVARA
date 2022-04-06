@@ -14,6 +14,7 @@ from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
+from backend.models.notification import Notification
 
 
 blueprint = Blueprint('user', __name__, url_prefix='/users')
@@ -112,6 +113,8 @@ class UserAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user_details = user.as_dict()
             user_details['customer_name'] = user.customer.name
+            user_details['*profile_completion'] = User.profile_completion(user)
+            user_details['*unread_notifications'] = Notification.get_unread_count(tx, user.id)
         return user_details
 
 

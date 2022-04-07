@@ -7,7 +7,7 @@ Create Date: 2022-03-28 13:30:04.999587
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 
 
 # revision identifiers, used by Alembic.
@@ -21,8 +21,8 @@ def upgrade():
     op.create_table(
         'share',
         sa.Column('id', UUID, primary_key=True),
-        sa.Column('shared_by_user_id', UUID, sa.ForeignKey('canvara_user.id'), primary_key=True),
-        sa.Column('shared_with_user_id', UUID, sa.ForeignKey('canvara_user.id'), primary_key=True),
+        sa.Column('share_by_user_id', UUID, sa.ForeignKey('canvara_user.id'), primary_key=True),
+        sa.Column('share_with_user_ids', ARRAY(UUID)),
         sa.Column('item_id', UUID, nullable=False),
         sa.Column('item_type', sa.String(50), nullable=False),
         sa.Column('message', sa.String(50)),

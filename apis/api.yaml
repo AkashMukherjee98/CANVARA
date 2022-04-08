@@ -6,6 +6,7 @@ servers: []
 tags:
   - name: marketplaces
   - name: myactivities
+  - name: share
   - name: offers
   - name: positions
   - name: communities
@@ -19,6 +20,69 @@ tags:
   - name: users
   - name: backgroundpictures
 paths:
+  /share:
+    post:
+      summary: Share an item with users
+      tags:
+        - share
+      operationId: create_share
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Share'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                share_with_user_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: List of user ids.
+                item_type:
+                  type: string
+                  description: Type or identifier of the shareable item.
+                  enum:
+                    - gig
+                    - offer
+                    - position
+                    - event
+                    - community
+                    - people
+                item_id:
+                  type: string
+                  description: Item id(e.g. gig_id or event_id) based on the item type.
+                message:
+                  type: string
+                  description: Optional message for the share.
+              required:
+                - share_with_user_ids
+                - item_type
+                - item_id
+    get:
+      summary: List all shared items
+      operationId: get_share
+      description: ''
+      tags:
+        - share
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Share'
+      security:
+        - AWSCognitoCanvaraPrototype: []
   '/marketplaces/opportunities':
     get:
       summary: List all opportunities
@@ -113,7 +177,7 @@ paths:
                     description: List of events.
       security:
         - AWSCognitoCanvaraPrototype: []
-  '/myactivities':
+  /myactivities:
     get:
       summary: List my activities
       operationId: get_activities
@@ -4563,8 +4627,40 @@ paths:
         - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
+    Share:
+      title: Share item
+      type: object
+      properties:
+        share_id:
+          type: string
+          description: Unique identifier for the shareable.
+        share_by:
+          $ref: '#/components/schemas/UserSummary'
+          description: Person, who shared this item.
+        item_type:
+          type: string
+          enum:
+            - gig
+            - offer
+            - position
+            - event
+            - community
+            - people
+          description: Item type of the shareable item.
+        item:
+          description: Item details.
+          oneOf:
+            - $ref: '#/components/schemas/PostSummary'
+            - $ref: '#/components/schemas/OfferSummary'
+            - $ref: '#/components/schemas/Position'
+            - $ref: '#/components/schemas/EventSummary'
+            - $ref: '#/components/schemas/CommunitySummary'
+            - $ref: '#/components/schemas/UserSummary'
+        message:
+          type: string
+          description: Optional message.
     Position:
-      title: Position
+      title: Position details
       type: object
       properties:
         position_id:
@@ -4904,7 +5000,7 @@ components:
         - user_id
         - name
     UserSummary:
-      title: User Summary
+      title: Summary for a user
       type: object
       properties:
         user_id:
@@ -4937,6 +5033,16 @@ components:
             overview_video:
               $ref: '#/components/schemas/UserUpload'
               description: Overview video for the offer.
+    OfferSummary:
+      title: Summary for a offer
+      type: object
+      properties:
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        name:
+          type: string
+          description: Name of this offer.
     OfferMinimal:
       title: Offer
       type: object
@@ -5487,6 +5593,16 @@ components:
         - people_needed
         - language
         - target_date
+    PostSummary:
+      title: Summary for a gig
+      type: object
+      properties:
+        post_id:
+          type: string
+          description: Unique identifier for a gig.
+        name:
+          type: string
+          description: Name of this post.
     Application:
       title: Application
       type: object

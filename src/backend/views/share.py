@@ -80,9 +80,9 @@ class EventAPI(AuthenticatedAPIBase):
             # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
-            events = Share.search(
+            shares = Share.search(
                 tx,
                 user
             )
-            events = [event.as_dict() for event in events]
-        return jsonify(events)
+            shares = [share.as_dict() for share in shares]
+        return jsonify(shares)

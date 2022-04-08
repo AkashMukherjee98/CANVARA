@@ -4650,24 +4650,8 @@ components:
         item:
           description: Item details.
           oneOf:
-            - type: object
-              description: Summary for a gig.
-              properties:
-                post_id:
-                  type: string
-                  description: Unique identifier for a gig.
-                name:
-                  type: string
-                  description: Name of this post.
-            - type: object
-              description: Summary for a offer.
-              properties:
-                offer_id:
-                  type: string
-                  description: Unique identifier for this offer.
-                name:
-                  type: string
-                  description: Name of this offer.
+            - $ref: '#/components/schemas/PostSummary'
+            - $ref: '#/components/schemas/OfferSummary'
             - $ref: '#/components/schemas/Position'
             - $ref: '#/components/schemas/EventSummary'
             - $ref: '#/components/schemas/CommunitySummary'
@@ -4676,7 +4660,7 @@ components:
           type: string
           description: Optional message.
     Position:
-      title: Position
+      title: Position details
       type: object
       properties:
         position_id:
@@ -5016,7 +5000,7 @@ components:
         - user_id
         - name
     UserSummary:
-      title: User Summary
+      title: Summary for a user
       type: object
       properties:
         user_id:
@@ -5049,6 +5033,16 @@ components:
             overview_video:
               $ref: '#/components/schemas/UserUpload'
               description: Overview video for the offer.
+    OfferSummary:
+      title: Summary for a offer
+      type: object
+      properties:
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        name:
+          type: string
+          description: Name of this offer.
     OfferMinimal:
       title: Offer
       type: object
@@ -5599,6 +5593,16 @@ components:
         - people_needed
         - language
         - target_date
+    PostSummary:
+      title: Summary for a gig
+      type: object
+      properties:
+        post_id:
+          type: string
+          description: Unique identifier for a gig.
+        name:
+          type: string
+          description: Name of this post.
     Application:
       title: Application
       type: object

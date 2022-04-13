@@ -17,7 +17,7 @@ from backend.models.share import Share, ShareItemType
 from backend.views.base import AuthenticatedAPIBase
 
 
-blueprint = Blueprint('share', __name__, url_prefix='/shares')
+blueprint = Blueprint('share', __name__, url_prefix='/shareitems')
 
 
 @blueprint.route('')

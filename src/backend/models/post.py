@@ -558,7 +558,8 @@ class Post(ModelBase):
         }
 
         if self.highlighted_communities:
-            post['highlighted_communities'] = [community.as_summary_dict() for community in self.highlighted_communities]
+            post['highlighted_communities'] = [
+                community.as_dict(['community_logo']) for community in self.highlighted_communities]
 
         if self.required_skills:
             post['required_skills'] = [skill.as_dict() for skill in self.required_skills]

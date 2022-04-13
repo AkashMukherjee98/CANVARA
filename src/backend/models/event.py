@@ -74,55 +74,58 @@ class Event(ModelBase):
 
         self.details = details
 
-    def as_dict(self):
+    def as_dict(self, return_keys=all):  # if return_keys=all return everything, if any key(s) specified then return those only
         event = {
             'event_id': self.id,
-            'name': self.name,
-            'primary_organizer': self.primary_organizer.as_summary_dict(),
-            'location': self.location.as_dict(),
-            'start_datetime': self.start_datetime.isoformat(timespec='milliseconds'),
-            'end_datetime': self.end_datetime.isoformat(timespec='milliseconds')
+            'name': self.name
         }
+
+        def add_if_required(key, value):
+            if (return_keys is all or key in return_keys) and value is not None:
+                event[key] = value
+
+        add_if_required('primary_organizer', self.primary_organizer.as_summary_dict())
 
         if self.secondary_organizer:
             event['secondary_organizer'] = self.secondary_organizer.as_summary_dict()
 
-        if self.sponsor_community:
-            event['sponsor_community'] = self.sponsor_community.as_summary_dict()
+        add_if_required('location', self.location.as_dict())
+        add_if_required('start_datetime', self.start_datetime.isoformat(timespec='milliseconds'))
+        add_if_required('end_datetime', self.end_datetime.isoformat(timespec='milliseconds'))
 
-        if self.event_logo:
-            event['event_logo'] = self.event_logo.as_dict(method='get')
+        add_if_required(
+            'event_logo', self.event_logo.as_dict(method='get') if self.event_logo else None)
 
-        if self.overview_video:
-            event['overview_video'] = self.overview_video.as_dict(method='get')
+        add_if_required(
+            'overview_video', self.overview_video.as_dict(method='get') if self.overview_video else None)
 
-        def add_if_not_none(key, value):
-            if value is not None:
-                event[key] = value
+        add_if_required('overview', self.details.get('overview'))
+        add_if_required('external_event_link', self.details.get('external_event_link'))
+        add_if_required('volunteer_event', self.details.get('volunteer_event'))
+        add_if_required('maximum_participants', self.details.get('maximum_participants'))
+        add_if_required('employee_only', self.details.get('employee_only'))
+        add_if_required('open_for_outsiders', self.details.get('open_for_outsiders'))
+        add_if_required('hashtags', self.details.get('hashtags'))
+        add_if_required('contact_email', self.details.get('contact_email'))
+        add_if_required('contact_phone', self.details.get('contact_phone'))
+        add_if_required('contact_messaging', self.details.get('contact_messaging'))
+        add_if_required('rsvp_required', self.details.get('rsvp_required'))
+        add_if_required('rsvp_link', self.details.get('rsvp_link'))
 
-        event['overview'] = self.details.get('overview')
-        add_if_not_none('external_event_link', self.details.get('external_event_link'))
-        add_if_not_none('volunteer_event', self.details.get('volunteer_event'))
-        add_if_not_none('maximum_participants', self.details.get('maximum_participants'))
-        add_if_not_none('employee_only', self.details.get('employee_only'))
-        add_if_not_none('open_for_outsiders', self.details.get('open_for_outsiders'))
-        add_if_not_none('hashtags', self.details.get('hashtags'))
-        add_if_not_none('contact_email', self.details.get('contact_email'))
-        add_if_not_none('contact_phone', self.details.get('contact_phone'))
-        add_if_not_none('contact_messaging', self.details.get('contact_messaging'))
-        add_if_not_none('rsvp_required', self.details.get('rsvp_required'))
-        add_if_not_none('rsvp_link', self.details.get('rsvp_link'))
-
-        if self.comments:
-            event['comments'] = [comment.as_dict() for comment in self.comments]
-
-        if self.rsvp:
-            event['rsvp'] = [rsvp.as_dict() for rsvp in self.rsvp]
+        add_if_required(
+            'comments', [comment.as_dict() for comment in self.comments] if self.comments else None)
+        add_if_required(
+            'rsvp', [rsvp.as_dict() for rsvp in self.rsvp] if self.rsvp else None)
 
         gallery = [media.as_dict(method='get') for media in self.gallery if media.is_video()]
         gallery.extend([media.as_dict(method='get') for media in self.gallery if media.is_image()])
-        if gallery:
-            event['gallery'] = gallery
+        add_if_required('gallery', gallery if gallery else None)
+
+        add_if_required(
+            'sponsor_community', self.sponsor_community.as_dict(['community_logo']) if self.sponsor_community else None)
+
+        add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
+        add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
         return event
 
@@ -134,6 +137,9 @@ class Event(ModelBase):
 
         if self.event_logo:
             event['event_logo'] = self.event_logo.as_dict(method='get')
+
+        if self.overview_video:
+            event['overview_video'] = self.overview_video.as_dict(method='get')
 
         return event
 

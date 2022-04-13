@@ -43,7 +43,8 @@ class CommunityAPI(AuthenticatedAPIBase):
                 keyword=keyword,
                 location=location
             )
-            communities = [community.as_summary_dict() for community in communities]
+            communities = [community.as_dict([
+                'community_logo', 'sponsor_events', 'created_at', 'last_updated_at']) for community in communities]
         return jsonify(communities)
 
     @staticmethod

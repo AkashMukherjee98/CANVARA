@@ -114,61 +114,55 @@ class Community(ModelBase):
         else:
             del details['hashtags']
 
-    def as_dict(self):
-        community = {
-            'community_id': self.id,
-            'name': self.name,
-            'primary_moderator': self.primary_moderator.as_summary_dict(),
-            'location': self.location.as_dict()
-        }
-
-        if self.secondary_moderator:
-            community['secondary_moderator'] = self.secondary_moderator.as_summary_dict()
-
-        if self.sponsor_events:
-            community['sponsor_events'] = [sponsor_event.as_summary_dict() for sponsor_event in self.sponsor_events]
-
-        if self.community_logo:
-            community['community_logo'] = self.community_logo.as_dict(method='get')
-
-        if self.overview_video:
-            community['overview_video'] = self.overview_video.as_dict(method='get')
-
-        def add_if_not_none(key, value):
-            if value is not None:
-                community[key] = value
-
-        community['type'] = self.details.get('type')
-        community['mission'] = self.details.get('mission')
-        add_if_not_none('target_audience', self.details.get('target_audience'))
-        add_if_not_none('activities', self.details.get('activities'))
-        community['membership_approval_required'] = self.details.get('membership_approval_required')
-        add_if_not_none('hashtags', self.details.get('hashtags'))
-        add_if_not_none('contact_email', self.details.get('contact_email'))
-        add_if_not_none('contact_phone', self.details.get('contact_phone'))
-        add_if_not_none('contact_messaging', self.details.get('contact_messaging'))
-
-        if self.announcements:
-            community['announcements'] = [announcement.as_dict() for announcement in self.announcements]
-
-        if self.members:
-            community['members'] = [member.as_dict() for member in self.members]
-
-        gallery = [media.as_dict(method='get') for media in self.gallery if media.is_video()]
-        gallery.extend([media.as_dict(method='get') for media in self.gallery if media.is_image()])
-        if gallery:
-            community['gallery'] = gallery
-
-        return community
-
-    def as_summary_dict(self):
+    def as_dict(self, return_keys=all):  # if return_keys=all return everything, if any key(s) specified then return those only
         community = {
             'community_id': self.id,
             'name': self.name
         }
 
-        if self.community_logo:
-            community['community_logo'] = self.community_logo.as_dict(method='get')
+        def add_if_required(key, value):
+            if (return_keys is all or key in return_keys) and value is not None:
+                community[key] = value
+
+        add_if_required('primary_moderator', self.primary_moderator.as_summary_dict())
+
+        add_if_required(
+            'secondary_moderator', self.secondary_moderator.as_summary_dict() if self.secondary_moderator else None)
+
+        add_if_required('location', self.location.as_dict())
+
+        add_if_required(
+            'community_logo', self.community_logo.as_dict(method='get') if self.community_logo else None)
+
+        add_if_required(
+            'overview_video', self.overview_video.as_dict(method='get') if self.overview_video else None)
+
+        add_if_required('type', self.details.get('type'))
+        add_if_required('mission', self.details.get('mission'))
+        add_if_required('target_audience', self.details.get('target_audience'))
+        add_if_required('activities', self.details.get('activities'))
+        add_if_required('membership_approval_required', self.details.get('membership_approval_required'))
+        add_if_required('hashtags', self.details.get('hashtags'))
+        add_if_required('contact_email', self.details.get('contact_email'))
+        add_if_required('contact_phone', self.details.get('contact_phone'))
+        add_if_required('contact_messaging', self.details.get('contact_messaging'))
+
+        add_if_required(
+            'announcements', [announcement.as_dict() for announcement in self.announcements] if self.announcements else None)
+
+        add_if_required(
+            'members', [member.as_dict() for member in self.members] if self.members else None)
+
+        gallery = [media.as_dict(method='get') for media in self.gallery if media.is_video()]
+        gallery.extend([media.as_dict(method='get') for media in self.gallery if media.is_image()])
+        add_if_required('gallery', gallery if gallery else None)
+
+        add_if_required(
+            'sponsor_events', [
+                sponsor_event.as_summary_dict() for sponsor_event in self.sponsor_events] if self.sponsor_events else None)
+
+        add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
+        add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
         return community
 
@@ -220,7 +214,6 @@ class Community(ModelBase):
 
         query_options = [
             noload(Community.secondary_moderator),
-            noload(Community.sponsor_events),
             noload(Community.announcements),
             noload(Community.members),
             noload(Community.gallery)

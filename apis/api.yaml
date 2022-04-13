@@ -6,7 +6,7 @@ servers: []
 tags:
   - name: marketplaces
   - name: myactivities
-  - name: share
+  - name: shareitems
   - name: offers
   - name: positions
   - name: communities
@@ -20,11 +20,11 @@ tags:
   - name: users
   - name: backgroundpictures
 paths:
-  /share:
+  /shareitems:
     post:
       summary: Share an item with users
       tags:
-        - share
+        - shareitems
       operationId: create_share
       responses:
         '200':
@@ -71,7 +71,7 @@ paths:
       operationId: get_share
       description: ''
       tags:
-        - share
+        - shareitems
       responses:
         '200':
           description: OK
@@ -4828,6 +4828,12 @@ components:
         contact_messaging:
           type: string
           description: Messaging id of this community.
+        created_at:
+          type: string
+          description: 'Date and time when this community was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this community was last updated, in ISO 8601 format.'
       required:
         - name
         - location_id
@@ -5388,6 +5394,12 @@ components:
             anyOf:
               - $ref: '#/components/schemas/UserUpload'
               - type: string
+        created_at:
+          type: string
+          description: 'Date and time when this event was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this event was last updated, in ISO 8601 format.'
       required:
         - name
         - event_date

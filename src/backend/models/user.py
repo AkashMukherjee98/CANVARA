@@ -460,7 +460,7 @@ class User(ModelBase):
         if self.mentorship_video:
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')
 
-        community_memberships = [community.as_summary_dict() for community in self.community_memberships]
+        community_memberships = [community.as_dict(['community_logo']) for community in self.community_memberships]
         if community_memberships:
             user['community_memberships'] = community_memberships
 

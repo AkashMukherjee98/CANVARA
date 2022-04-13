@@ -56,9 +56,9 @@ class Share(ModelBase):
         elif self.item_type == "position":
             share['item'] = self.item_position.as_dict()
         elif self.item_type == "event":
-            share['item'] = self.item_event.as_summary_dict()
+            share['item'] = self.item_event.as_dict(['event_logo'])
         elif self.item_type == "community":
-            share['item'] = self.item_community.as_summary_dict()
+            share['item'] = self.item_community.as_dict(['community_logo'])
         elif self.item_type == "people":
             share['item'] = self.item_people.as_summary_dict()
 

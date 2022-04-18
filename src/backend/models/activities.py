@@ -2,8 +2,6 @@ from sqlalchemy import or_
 
 from backend.models.position import Position
 
-from .post import Post
-from .application import Application
 from .offer import Offer
 from .community import Community, CommunityMembership
 from .event import Event, EventRSVP
@@ -11,11 +9,12 @@ from .event import Event, EventRSVP
 
 class MyActivity():
     @classmethod
-    def own_gigs(cls, tx, user):
-        gigs = tx.query(Post).where(
+    def own_gigs(cls, tx, user):  # pylint: disable=unused-argument
+        '''gigs = tx.query(Post).where(
             Post.owner_id == user.id
         )
-        return list(gigs)
+        return list(gigs)'''
+        return list()
 
     @classmethod
     def own_offers(cls, tx, user):
@@ -32,13 +31,14 @@ class MyActivity():
         return list(positions)
 
     @classmethod
-    def act_gigs(cls, tx, user, status):
-        gigs = tx.query(Post).join(Application).where(
+    def act_gigs(cls, tx, user, status):  # pylint: disable=unused-argument
+        '''gigs = tx.query(Post).join(Application).where(
             Application.user_id == user.id
         )
         if status:
             gigs = gigs.where(Application.status.in_(status))
-        return list(gigs)
+        return list(gigs)'''
+        return list()
 
     @classmethod
     def my_applications(cls, tx, user, status):  # pylint: disable=unused-argument

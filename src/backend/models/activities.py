@@ -41,7 +41,7 @@ class MyActivity():
         return list(gigs)
 
     @classmethod
-    def my_applications(cls, tx, user, status):
+    def my_applications(cls, tx, user, status):  # pylint: disable=unused-argument
         '''applications = tx.query(Application).where(
             Application.user_id == user.id,
             Application.status.in_(status)
@@ -50,7 +50,7 @@ class MyActivity():
         return list()
 
     @classmethod
-    def my_proposals(cls, tx, user, status):
+    def my_proposals(cls, tx, user, status):  # pylint: disable=unused-argument
         '''proposals = tx.query(OfferProposal).join(Offer).where(
             Offer.offerer_id == user.id or
             OfferProposal.proposer_id == user.id,
@@ -80,7 +80,7 @@ class MyActivity():
         return list(events)
 
     @classmethod
-    def my_connections(cls, tx, user):
+    def my_connections(cls, tx, user):  # pylint: disable=unused-argument
         '''users = tx.query(User).join(CommunityMembership).where(
             CommunityMembership.member != user,
             CommunityMembership.member_id == User.id,

@@ -43,20 +43,22 @@ class MyActivity():
 
     @classmethod
     def my_applications(cls, tx, user, status):
-        applications = tx.query(Application).where(
+        '''applications = tx.query(Application).where(
             Application.user_id == user.id,
             Application.status.in_(status)
         )
-        return list(applications)
+        return list(applications)'''
+        return list()
 
     @classmethod
     def my_proposals(cls, tx, user, status):
-        proposals = tx.query(OfferProposal).join(Offer).where(
+        '''proposals = tx.query(OfferProposal).join(Offer).where(
             Offer.offerer_id == user.id or
             OfferProposal.proposer_id == user.id,
             OfferProposal.status.in_(status)
         )
-        return list(proposals)
+        return list(proposals)'''
+        return list()
 
     @classmethod
     def my_communities(cls, tx, user):
@@ -80,11 +82,12 @@ class MyActivity():
 
     @classmethod
     def my_connections(cls, tx, user):
-        users = tx.query(User).join(CommunityMembership).where(
+        '''users = tx.query(User).join(CommunityMembership).where(
             CommunityMembership.member != user,
             CommunityMembership.member_id == User.id,
             CommunityMembership.community_id.in_(tx.query(CommunityMembership.community_id).where(
                 CommunityMembership.member == user
             ).subquery())
         )
-        return list(users)
+        return list(users)'''
+        return list()

@@ -2,10 +2,8 @@ from sqlalchemy import or_
 
 from backend.models.position import Position
 
-#from .user import User
 from .post import Post
 from .application import Application
-#from .offer import Offer, OfferProposal
 from .offer import Offer
 from .community import Community, CommunityMembership
 from .event import Event, EventRSVP

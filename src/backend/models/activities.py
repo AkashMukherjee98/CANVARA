@@ -1,5 +1,3 @@
-from sqlalchemy import or_
-
 from backend.models.position import Position
 
 from .offer import Offer

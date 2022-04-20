@@ -52,8 +52,7 @@ class Performer(ModelBase):
         ]
 
         performer = tx.query(cls).join(cls.application).join(Application.post).join(Application.applicant).where(and_(
-            Post.id == post_id,
-            User.id == performer_id
+            Post.id == post_id
         )).options(query_options).one_or_none()
 
         if performer is None and must_exist:
@@ -64,5 +63,6 @@ class Performer(ModelBase):
         return {
             'post_id': self.application.post.id,
             'user_id': self.application.applicant.id,
+            'performer': self.application.applicant.profile_picture_url,
             'status': self.status
         }

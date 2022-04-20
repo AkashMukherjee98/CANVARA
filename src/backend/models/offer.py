@@ -117,6 +117,8 @@ class Offer(ModelBase):
         add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
         add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
+        add_if_required('proposal_count', len(self.proposals))
+
         return offer
 
     @classmethod

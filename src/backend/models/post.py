@@ -610,6 +610,7 @@ class Post(ModelBase):
         post['post_owner'] = {
             'user_id': self.owner_id,
             'name': self.owner.name,
+            'location': self.owner.profile.get('location'),
             'profile_picture_url': self.owner.profile_picture_url
         }
 

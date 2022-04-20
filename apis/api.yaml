@@ -4682,6 +4682,9 @@ components:
             profile_picture_url:
               type: string
               description: The URL of user's profile picture.
+            location:
+              type: string
+              description: Location of the higring manager.
         location:
           $ref: '#/components/schemas/Location'
         role_type:
@@ -5101,6 +5104,9 @@ components:
         last_updated_at:
           type: string
           description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+        proposal_count:
+          type: number
+          description: Number of proposals belongs to this offer
       required:
         - name
         - overview_text
@@ -5482,6 +5488,9 @@ components:
             profile_picture_url:
               type: string
               description: The URL of user's profile picture.
+            location:
+              type: string
+              description: Location of the post owner.
         task_owner_id:
           type: string
           deprecated: true

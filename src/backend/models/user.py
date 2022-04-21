@@ -224,9 +224,10 @@ class User(ModelBase):
         completeness_percentage += ProfileCompletionRule.lookup(
             'profile_picture') if user.profile_picture else 0
         completeness_percentage += ProfileCompletionRule.lookup(
-            'introduction') if (user.profile['introduction'] != "" or user.mentorship_video) else 0
+            'introduction') if (
+                ('introduction' in user.profile and user.profile['introduction'] != "") or user.mentorship_video) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
-            'career_goals') if user.profile['career_goals'] else 0
+            'career_goals') if ('career_goals' in user.profile and user.profile['career_goals']) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'current_skills') if len(user.current_skills) > 0 else 0
         completeness_percentage += ProfileCompletionRule.lookup(

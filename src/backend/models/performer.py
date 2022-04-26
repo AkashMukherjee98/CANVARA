@@ -32,6 +32,8 @@ class Performer(ModelBase):
     __tablename__ = 'performer'
 
     application = relationship("Application")
+    # This is a hack to fetch application->applicant->profile_picture
+    applicant = relationship("User", secondary='application')
 
     @classmethod
     def lookup_by_post(cls, tx, post_id):
@@ -48,7 +50,9 @@ class Performer(ModelBase):
     def lookup(cls, tx, post_id, performer_id, must_exist=True):
         query_options = [
             contains_eager(cls.application).joinedload(Application.post, innerjoin=True),
-            contains_eager(cls.application).joinedload(Application.applicant, innerjoin=True)
+            contains_eager(cls.application).joinedload(Application.applicant, innerjoin=True),
+            # This is a hack to fetch application->applicant->profile_picture
+            contains_eager(cls.applicant).joinedload(User.profile_picture, innerjoin=True)
         ]
 
         performer = tx.query(cls).join(cls.application).join(Application.post).join(Application.applicant).where(and_(
@@ -64,5 +68,6 @@ class Performer(ModelBase):
         return {
             'post_id': self.application.post.id,
             'user_id': self.application.applicant.id,
+            'performer': self.application.applicant.as_summary_dict(),
             'status': self.status
         }

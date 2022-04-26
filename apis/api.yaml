@@ -5758,6 +5758,9 @@ components:
           type: string
         user_id:
           type: string
+        performer:
+          $ref: '#/components/schemas/UserSummary'
+          description: Performer details.
         status:
           type: string
           enum:

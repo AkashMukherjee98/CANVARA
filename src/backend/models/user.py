@@ -81,6 +81,7 @@ class User(ModelBase):
     profile_picture = relationship(UserUpload, foreign_keys="[User.profile_picture_id]")
     background_picture = relationship(UserUpload, foreign_keys="[User.background_picture_id]")
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
+    introduction_video = relationship(UserUpload, foreign_keys="[User.introduction_video_id]")
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
     mentorship_video = relationship(UserUpload, foreign_keys="[User.mentorship_video_id]")

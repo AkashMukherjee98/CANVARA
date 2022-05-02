@@ -215,11 +215,11 @@ paths:
                     type: object
                     description: List of applications.
                     properties:
-                      gigs:
+                      applications:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Post'
-                        description: List of gigs.
+                          $ref: '#/components/schemas/Application'
+                        description: List of application.
                       proposals:
                         type: array
                         items:

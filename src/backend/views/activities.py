@@ -29,7 +29,9 @@ class MyActivityAPI(AuthenticatedAPIBase):
             own_offers = MyActivity.own_offers(tx, user)
             own_positions = MyActivity.own_positions(tx, user)
 
-            act_gigs = MyActivity.act_gigs(tx, user, [])
+            my_applications = MyActivity.my_applications(tx, user, [
+                ApplicationStatus.NEW.value,
+                ApplicationStatus.ACTIVE_READ.value])
             my_proposals = MyActivity.my_proposals(tx, user, [
                 OfferProposalStatus.NEW.value,
                 OfferProposalStatus.ACTIVE_READ.value])
@@ -60,7 +62,7 @@ class MyActivityAPI(AuthenticatedAPIBase):
                     'positions': [position.as_dict() for position in own_positions]
                 },
                 'applications': {
-                    'gigs': [gig.as_dict() for gig in act_gigs],
+                    'applications': [applications.as_dict() for applications in my_applications],
                     'proposals': [proposal.as_dict() for proposal in my_proposals]
                 },
                 'tasks': {

@@ -96,7 +96,7 @@ class UsersAPI(AuthenticatedAPIBase):
             users = [user.as_custom_dict([
                 'title', 'pronoun', 'department', 'location',
                 'expert_skills',
-                'introduction', 'hashtags',
+                'introduction', 'introduction_video', 'hashtags',
                 'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
                 'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
                 'matching_reason'

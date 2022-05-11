@@ -33,17 +33,9 @@ class MyActivity():
         return list(positions)
 
     @classmethod
-    def act_gigs(cls, tx, user, status):
-        gigs = tx.query(Post).join(Application).where(
-            Application.user_id == user.id
-        )
-        if status:
-            gigs = gigs.where(Application.status.in_(status))
-        return list(gigs)
-
-    @classmethod
     def my_applications(cls, tx, user, status):
-        applications = tx.query(Application).where(
+        applications = tx.query(Application).join(Post).where(
+            Post.id == Application.post_id,
             Application.user_id == user.id,
             Application.status.in_(status)
         )
@@ -52,7 +44,7 @@ class MyActivity():
     @classmethod
     def my_proposals(cls, tx, user, status):
         proposals = tx.query(OfferProposal).join(Offer).where(
-            Offer.offerer_id == user.id or
+            Offer.id == OfferProposal.offer_id,
             OfferProposal.proposer_id == user.id,
             OfferProposal.status.in_(status)
         )

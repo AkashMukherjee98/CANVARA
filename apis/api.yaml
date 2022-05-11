@@ -215,11 +215,11 @@ paths:
                     type: object
                     description: List of applications.
                     properties:
-                      gigs:
+                      applications:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Post'
-                        description: List of gigs.
+                          $ref: '#/components/schemas/Application'
+                        description: List of application.
                       proposals:
                         type: array
                         items:
@@ -5051,6 +5051,8 @@ components:
           type: string
         introduction:
           type: string
+        introduction_video:
+          $ref: '#/components/schemas/UserUpload'
         career_goals:
           type: string
         languages:

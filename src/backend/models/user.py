@@ -378,6 +378,9 @@ class User(ModelBase):
         add_if_not_none('expert_skills', [skill.as_dict() for skill in self.expert_skills])
 
         add_if_not_none('introduction', self.profile.get('introduction'))
+        add_if_not_none(
+            'introduction_video', self.introduction_video.as_dict(method='get') if self.introduction_video else None)
+
         add_if_not_none('hashtags', self.profile.get('hashtags'))
 
         add_if_not_none('email', self.profile.get('email'))
@@ -394,6 +397,7 @@ class User(ModelBase):
         return user
 
     def as_dict(self, scrub_feedback=False):  # noqa: C901
+        # pylint: disable=too-many-statements
         user = {
             'customer_id': self.customer_id,
             'user_id': self.id,

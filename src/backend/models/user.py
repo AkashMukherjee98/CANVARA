@@ -226,7 +226,7 @@ class User(ModelBase):
             'profile_picture') if user.profile_picture else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'introduction') if (
-                ('introduction' in user.profile and user.profile['introduction'] != "") or user.mentorship_video) else 0
+                ('introduction' in user.profile and user.profile['introduction'] != "") or user.introduction_video) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'career_goals') if ('career_goals' in user.profile and user.profile['career_goals']) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
@@ -458,6 +458,9 @@ class User(ModelBase):
         # TODO: (sunil) add a max limit to the number of feedback items sent
         if self.feedback_list:
             user['feedback'] = [feedback.as_dict(comments_only=scrub_feedback) for feedback in self.feedback_list]
+
+        if self.introduction_video:
+            user['introduction_video'] = self.introduction_video.as_dict(method='get')
 
         if self.mentorship_video:
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')

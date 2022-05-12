@@ -1,5 +1,3 @@
-from sqlalchemy import or_
-
 from backend.models.position import Position
 
 from .user import User
@@ -52,22 +50,18 @@ class MyActivity():
 
     @classmethod
     def my_communities(cls, tx, user):
-        communities = tx.query(Community).join(CommunityMembership.member).where(or_(
-            Community.primary_moderator_id == user.id,
-            Community.secondary_moderator_id == user.id,
-            Community.status == 'active' and
+        communities = tx.query(Community).join(CommunityMembership).where(
+            Community.status == 'active',
             CommunityMembership.member_id == user.id
-        ))
+        )
         return list(communities)
 
     @classmethod
     def my_events(cls, tx, user):
-        events = tx.query(Event).join(EventRSVP.guest).where(or_(
-            Event.primary_organizer_id == user.id,
-            Event.secondary_organizer_id == user.id,
-            Event.status == 'active' and
-            EventRSVP.member_id == user.id
-        ))
+        events = tx.query(Event).join(EventRSVP).where(
+            Event.status == 'active',
+            EventRSVP.guest_id == user.id
+        )
         return list(events)
 
     @classmethod

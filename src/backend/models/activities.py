@@ -68,9 +68,6 @@ class MyActivity():
     def my_connections(cls, tx, user):
         users = tx.query(User).join(CommunityMembership).where(
             CommunityMembership.member != user,
-            CommunityMembership.member_id == User.id,
-            CommunityMembership.community_id.in_(tx.query(CommunityMembership.community_id).where(
-                CommunityMembership.member == user
-            ).subquery())
+            CommunityMembership.member_id == User.id
         )
         return list(users)

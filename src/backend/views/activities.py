@@ -5,12 +5,9 @@ from flask_smorest import Blueprint
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.db import transaction
 from backend.models.user import User
-from backend.models.post import Post
 from backend.models.application import ApplicationStatus
-from backend.models.offer import Offer, OfferProposalStatus
-from backend.models.position import Position
-from backend.models.community import Community
-from backend.models.event import Event
+from backend.models.offer import OfferProposalStatus
+
 from backend.models.activities import MyActivity
 
 
@@ -47,13 +44,6 @@ class MyActivityAPI(AuthenticatedAPIBase):
             my_events = MyActivity.my_events(tx, user)
             my_connections = MyActivity.my_connections(tx, user)
 
-            bookmarked_users = User.my_bookmarks(tx, user)
-            bookmarked_gigs = Post.my_bookmarks(tx, user)
-            bookmarked_offers = Offer.my_bookmarks(tx, user)
-            bookmarked_positions = Position.my_bookmarks(tx, user)
-            bookmarked_communities = Community.my_bookmarks(tx, user)
-            bookmarked_events = Event.my_bookmarks(tx, user)
-
             # TODO: (santanu) Move this to a activities(Model) dict
             activities = {
                 'posts': {
@@ -73,12 +63,12 @@ class MyActivityAPI(AuthenticatedAPIBase):
                 'events': [event.as_dict() for event in my_events],
                 'connections': [connection.as_dict() for connection in my_connections],
                 'bookmarks': {
-                    'peoples': [user.as_summary_dict() for user in bookmarked_users],
-                    'gigs': [gig.as_dict(user=user) for gig in bookmarked_gigs],
-                    'offers': [offer.as_dict() for offer in bookmarked_offers],
-                    'positions': [position.as_dict() for position in bookmarked_positions],
-                    'community': [community.as_dict() for community in bookmarked_communities],
-                    'events': [event.as_dict() for event in bookmarked_events],
+                    'peoples': [],
+                    'gigs': [],
+                    'offers': [],
+                    'positions': [],
+                    'community': [],
+                    'events': [],
                 }
             }
 

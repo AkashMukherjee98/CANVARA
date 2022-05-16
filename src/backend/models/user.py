@@ -81,6 +81,7 @@ class User(ModelBase):
     profile_picture = relationship(UserUpload, foreign_keys="[User.profile_picture_id]")
     background_picture = relationship(UserUpload, foreign_keys="[User.background_picture_id]")
     team = relationship("User", backref=backref("manager", remote_side='User.id'))
+    introduction_video = relationship(UserUpload, foreign_keys="[User.introduction_video_id]")
     fun_facts = relationship("UserUpload", secondary='user_fun_fact')
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
     mentorship_video = relationship(UserUpload, foreign_keys="[User.mentorship_video_id]")
@@ -225,7 +226,7 @@ class User(ModelBase):
             'profile_picture') if user.profile_picture else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'introduction') if (
-                ('introduction' in user.profile and user.profile['introduction'] != "") or user.mentorship_video) else 0
+                ('introduction' in user.profile and user.profile['introduction'] != "") or user.introduction_video) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'career_goals') if ('career_goals' in user.profile and user.profile['career_goals']) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
@@ -377,6 +378,9 @@ class User(ModelBase):
         add_if_not_none('expert_skills', [skill.as_dict() for skill in self.expert_skills])
 
         add_if_not_none('introduction', self.profile.get('introduction'))
+        add_if_not_none(
+            'introduction_video', self.introduction_video.as_dict(method='get') if self.introduction_video else None)
+
         add_if_not_none('hashtags', self.profile.get('hashtags'))
 
         add_if_not_none('email', self.profile.get('email'))
@@ -393,6 +397,7 @@ class User(ModelBase):
         return user
 
     def as_dict(self, scrub_feedback=False):  # noqa: C901
+        # pylint: disable=too-many-statements
         user = {
             'customer_id': self.customer_id,
             'user_id': self.id,
@@ -457,6 +462,9 @@ class User(ModelBase):
         # TODO: (sunil) add a max limit to the number of feedback items sent
         if self.feedback_list:
             user['feedback'] = [feedback.as_dict(comments_only=scrub_feedback) for feedback in self.feedback_list]
+
+        if self.introduction_video:
+            user['introduction_video'] = self.introduction_video.as_dict(method='get')
 
         if self.mentorship_video:
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')

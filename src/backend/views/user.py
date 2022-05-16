@@ -96,7 +96,7 @@ class UsersAPI(AuthenticatedAPIBase):
             users = [user.as_custom_dict([
                 'title', 'pronoun', 'department', 'location',
                 'expert_skills',
-                'introduction', 'hashtags',
+                'introduction', 'introduction_video', 'hashtags',
                 'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
                 'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
                 'matching_reason'
@@ -274,6 +274,50 @@ class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
     @staticmethod
     def put(user_id, upload_id):
         return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
+
+
+@blueprint.route('/<user_id>/introduction_video')
+class IntroductionVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
+
+    @staticmethod
+    def put(user_id):
+        metadata = {
+            'resource': 'user',
+            'resource_id': user_id,
+            'type': 'introduction_video',
+        }
+        return IntroductionVideoAPI.create_user_upload(
+            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+
+
+@blueprint.route('/<user_id>/introduction_video/<upload_id>')
+class IntroductionVideoByIdAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def put(user_id, upload_id):
+        status = UserUploadStatus.lookup(request.json['status'])
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            if status == UserUploadStatus.UPLOADED:
+                user.introduction_video = user_upload
+                user_upload.status = status.value
+
+        return {
+            'status': user_upload.status,
+        }
+
+    @staticmethod
+    def delete(user_id, upload_id):
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+
+            if user.id != user_id:
+                raise NotAllowedError(f"User '{user.id}' cannot delete introduction video of user '{user_id}'")
+            user.introduction_video = None
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
 
 
 @blueprint.route('/<user_id>/fun_fact')

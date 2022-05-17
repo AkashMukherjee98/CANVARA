@@ -1,6 +1,5 @@
 from backend.models.position import Position
 
-from .user import User
 from .post import Post
 from .application import Application
 from .offer import Offer, OfferProposal
@@ -65,9 +64,5 @@ class MyActivity():
         return list(events)
 
     @classmethod
-    def my_connections(cls, tx, user):
-        users = tx.query(User).join(CommunityMembership).where(
-            CommunityMembership.member != user,
-            CommunityMembership.member_id == User.id
-        )
-        return list(users)
+    def my_connections(cls, tx, user):  # pylint: disable=unused-argument
+        return list()

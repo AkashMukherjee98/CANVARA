@@ -19,7 +19,8 @@ def get_canvara_config():
     )
 
     config['database'] = {
-        'sqlalchemy.url': sqlalchemy_url.render_as_string(hide_password=False)
+        'sqlalchemy.url': sqlalchemy_url.render_as_string(hide_password=False),
+        # 'sqlalchemy.echo':'True'
     }
 
     return config

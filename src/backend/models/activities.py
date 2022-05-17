@@ -3,8 +3,6 @@ from backend.models.position import Position
 from .post import Post
 from .application import Application
 from .offer import Offer, OfferProposal
-from .community import Community, CommunityMembership
-from .event import Event, EventRSVP
 
 
 class MyActivity():
@@ -48,20 +46,12 @@ class MyActivity():
         return list(proposals)
 
     @classmethod
-    def my_communities(cls, tx, user):
-        communities = tx.query(Community).join(CommunityMembership).where(
-            Community.status == 'active',
-            CommunityMembership.member_id == user.id
-        )
-        return list(communities)
+    def my_communities(cls, tx, user):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
-    def my_events(cls, tx, user):
-        events = tx.query(Event).join(EventRSVP).where(
-            Event.status == 'active',
-            EventRSVP.guest_id == user.id
-        )
-        return list(events)
+    def my_events(cls, tx, user):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
     def my_connections(cls, tx, user):  # pylint: disable=unused-argument

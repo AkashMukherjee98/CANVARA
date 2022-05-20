@@ -1,8 +1,6 @@
-from backend.models.position import Position
-
 from .post import Post
-from .application import Application
-from .offer import Offer, OfferProposal
+from .offer import Offer
+from .position import Position
 
 
 class MyActivity():
@@ -28,22 +26,12 @@ class MyActivity():
         return list(positions)
 
     @classmethod
-    def my_applications(cls, tx, user, status):
-        applications = tx.query(Application).join(Post).where(
-            Post.id == Application.post_id,
-            Application.user_id == user.id,
-            Application.status.in_(status)
-        )
-        return list(applications)
+    def my_applications(cls, tx, user, status):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
-    def my_proposals(cls, tx, user, status):
-        proposals = tx.query(OfferProposal).join(Offer).where(
-            Offer.id == OfferProposal.offer_id,
-            OfferProposal.proposer_id == user.id,
-            OfferProposal.status.in_(status)
-        )
-        return list(proposals)
+    def my_proposals(cls, tx, user, status):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
     def my_communities(cls, tx, user):  # pylint: disable=unused-argument

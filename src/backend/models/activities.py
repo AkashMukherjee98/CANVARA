@@ -1,29 +1,15 @@
-from .post import Post
-from .offer import Offer
-from .position import Position
-
-
 class MyActivity():
     @classmethod
-    def own_gigs(cls, tx, user):
-        gigs = tx.query(Post).where(
-            Post.owner_id == user.id
-        )
-        return list(gigs)
+    def own_gigs(cls, tx, user):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
-    def own_offers(cls, tx, user):
-        offers = tx.query(Offer).where(
-            Offer.offerer_id == user.id
-        )
-        return list(offers)
+    def own_offers(cls, tx, user):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
-    def own_positions(cls, tx, user):
-        positions = tx.query(Position).where(
-            Position.manager_id == user.id
-        )
-        return list(positions)
+    def own_positions(cls, tx, user):  # pylint: disable=unused-argument
+        return list()
 
     @classmethod
     def my_applications(cls, tx, user, status):  # pylint: disable=unused-argument

@@ -4,15 +4,9 @@ from flask_smorest import Blueprint
 
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.db import transaction
-
 from backend.models.user import User
-from backend.models.post import Post
 from backend.models.application import ApplicationStatus
-from backend.models.offer import Offer
 from backend.models.offer import OfferProposalStatus
-from backend.models.position import Position
-from backend.models.community import Community
-from backend.models.event import Event
 
 from backend.models.activities import MyActivity
 
@@ -50,12 +44,12 @@ class MyActivityAPI(AuthenticatedAPIBase):
             my_events = MyActivity.my_events(tx, user)
             my_connections = MyActivity.my_connections(tx, user)
 
-            bookmarked_users = User.my_bookmarks(tx, user)
-            bookmarked_gigs = Post.my_bookmarks(tx, user)
-            bookmarked_offers = Offer.my_bookmarks(tx, user)
-            bookmarked_positions = Position.my_bookmarks(tx, user)
-            bookmarked_communities = Community.my_bookmarks(tx, user)
-            bookmarked_events = Event.my_bookmarks(tx, user)
+            bookmarked_users = []
+            bookmarked_gigs = []
+            bookmarked_offers = []
+            bookmarked_positions = []
+            bookmarked_communities = []
+            bookmarked_events = []
 
             # TODO: (santanu) Move this to a activities(Model) dict
             activities = {

@@ -4,6 +4,7 @@ from .post import Post
 from .application import Application
 from .offer import Offer
 from .offer import OfferProposal
+from .position import Position
 
 from .community import Community, CommunityMembership
 from .event import Event, EventRSVP
@@ -15,12 +16,18 @@ class MyActivity():
         return list()
 
     @classmethod
-    def own_offers(cls, tx, user):  # pylint: disable=unused-argument
-        return list()
+    def own_offers(cls, tx, user):
+        offers = tx.query(Offer).where(
+            Offer.offerer_id == user.id
+        )
+        return list(offers)
 
     @classmethod
-    def own_positions(cls, tx, user):  # pylint: disable=unused-argument
-        return list()
+    def own_positions(cls, tx, user):
+        positions = tx.query(Position).where(
+            Position.manager_id == user.id
+        )
+        return list(positions)
 
     @classmethod
     def my_applications(cls, tx, user, status):

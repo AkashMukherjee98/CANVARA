@@ -12,20 +12,26 @@ from .event import Event, EventRSVP
 
 class MyActivity():
     @classmethod
-    def own_gigs(cls, tx, user):  # pylint: disable=unused-argument
-        return list()
+    def own_gigs(cls, tx, user):
+        gigs = tx.query(Post).where(
+            Post.owner_id == user.id,
+            Post.status != 'deleted'
+        )
+        return list(gigs)
 
     @classmethod
     def own_offers(cls, tx, user):
         offers = tx.query(Offer).where(
-            Offer.offerer_id == user.id
+            Offer.offerer_id == user.id,
+            Offer.status != 'deleted'
         )
         return list(offers)
 
     @classmethod
     def own_positions(cls, tx, user):
         positions = tx.query(Position).where(
-            Position.manager_id == user.id
+            Position.manager_id == user.id,
+            Position.status != 'deleted'
         )
         return list(positions)
 

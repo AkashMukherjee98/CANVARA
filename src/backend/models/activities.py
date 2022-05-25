@@ -1,16 +1,111 @@
-from .user import User
-
 from .post import Post
 from .application import Application
 from .offer import Offer
 from .offer import OfferProposal
 from .position import Position
 
+from .application import ApplicationStatus
+from .offer import OfferProposalStatus
+
 from .community import Community, CommunityMembership
 from .event import Event, EventRSVP
 
 
 class MyActivity():
+    @classmethod
+    def overall_count(cls, tx, user):
+        counts = tx.execute('''SELECT
+            (
+                SELECT COUNT(id)
+                    FROM post
+                        WHERE
+                            post.owner_id = :user_id
+                            AND post.status != :deleted_status
+            ) AS own_gigs,
+            (
+                SELECT COUNT(id)
+                    FROM offer
+                        WHERE
+                            offer.offerer_id = :user_id
+                            AND offer.status != :deleted_status
+            ) AS own_offers,
+            (
+                SELECT COUNT(id)
+                    FROM position
+                        WHERE
+                            position.manager_id = :user_id
+                            AND position.status != :deleted_status
+            ) AS own_positions,
+            (
+                SELECT COUNT(id)
+                    FROM application
+                        WHERE
+                            application.user_id = :user_id
+                            AND application.status IN :my_applications_status
+            ) AS my_applications,
+            (
+                SELECT COUNT(id)
+                    FROM offer_proposal
+                        WHERE
+                            offer_proposal.proposer_id = :user_id
+                            AND offer_proposal.status IN :my_proposals_status
+            ) AS my_proposals,
+            (
+                SELECT COUNT(id)
+                    FROM application
+                        WHERE
+                            application.user_id = :user_id
+                            AND application.status = :application_tasks_status
+            ) AS application_tasks,
+            (
+                SELECT COUNT(id)
+                    FROM offer_proposal
+                        WHERE
+                            offer_proposal.proposer_id = :user_id
+                            AND offer_proposal.status IN :proposal_tasks_status
+            ) AS proposal_tasks,
+            (
+                SELECT COUNT(community.id)
+                    FROM community
+                        JOIN
+                            community_membership ON community_membership.community_id = community.id
+                        WHERE
+                            community.status = :active_status
+                            AND community_membership.member_id = :user_id
+            ) AS my_communities,
+            (
+                SELECT COUNT(event.id)
+                    FROM event
+                        JOIN
+                            event_rsvp ON event_rsvp.event_id = event.id
+                        WHERE
+                            event.status = :active_status
+                            AND event_rsvp.guest_id = :user_id
+            ) AS my_events,
+            (
+                SELECT 0
+            ) AS my_connections''', {
+                'user_id': user.id,
+                'deleted_status': 'deleted',
+                'my_applications_status': (
+                    ApplicationStatus.NEW.value,
+                    ApplicationStatus.ACTIVE_READ.value
+                ),
+                'my_proposals_status': (
+                    OfferProposalStatus.NEW.value,
+                    OfferProposalStatus.ACTIVE_READ.value
+                ),
+                'application_tasks_status': ApplicationStatus.SELECTED.value,
+                'proposal_tasks_status': (
+                    OfferProposalStatus.SELECTED.value,
+                    OfferProposalStatus.IN_PROGRESS.value,
+                    OfferProposalStatus.COMPLETED.value
+                ),
+                'active_status': 'active'
+            }
+        )
+        return list(counts)
+
     @classmethod
     def own_gigs(cls, tx, user):
         gigs = tx.query(Post).where(
@@ -70,12 +165,5 @@ class MyActivity():
         return list(events)
 
     @classmethod
-    def my_connections(cls, tx, user):
-        users = tx.query(User).join(CommunityMembership).where(
-            CommunityMembership.member != user,
-            CommunityMembership.member_id == User.id,
-            CommunityMembership.community_id.in_(tx.query(CommunityMembership.community_id).where(
-                CommunityMembership.member == user
-            ).subquery())
-        )
-        return list(users)
+    def my_connections(cls, tx, user):  # pylint: disable=unused-argument
+        return list()

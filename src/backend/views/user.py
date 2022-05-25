@@ -16,7 +16,6 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.models.notification import Notification
 
-
 blueprint = Blueprint('user', __name__, url_prefix='/users')
 customer_user_blueprint = Blueprint('customer_user', __name__, url_prefix='/customers/<customer_id>/users')
 
@@ -70,7 +69,8 @@ class UsersAPI(AuthenticatedAPIBase):
         title = request.args.get('title') if 'title' in request.args else None
         department = request.args.get('department') if 'department' in request.args else None
         location = request.args.get('location') if 'location' in request.args else None
-        language = Language.validate_and_convert_language(request.args.get('language')) if 'language' in request.args else None
+        language = Language.validate_and_convert_language(
+            request.args.get('language')) if 'language' in request.args else None
 
         tenure_gte = request.args.get('tenure_gte') if 'tenure_gte' in request.args else None
         tenure_lte = request.args.get('tenure_lte') if 'tenure_lte' in request.args else None
@@ -78,7 +78,8 @@ class UsersAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
-            skill = Skill.lookup(tx, user.customer_id, request.args.get('skill_id')) if 'skill_id' in request.args else None
+            skill = Skill.lookup(tx, user.customer_id,
+                                 request.args.get('skill_id')) if 'skill_id' in request.args else None
 
             users = User.search(
                 tx,
@@ -433,3 +434,22 @@ class UserBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id)
             tx.delete(bookmark)
         return make_no_content_response()
+
+
+@blueprint.route('/slack')
+class SlackAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def put():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            payload = request.json
+
+            if payload.get('slack_id'):
+                user.slack_id = payload['slack_id']
+            if payload.get('workspace_id'):
+                user.workspace_id = payload['workspace_id']
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+        return user.check_slack_details(payload['slack_id'], payload['workspace_id'])

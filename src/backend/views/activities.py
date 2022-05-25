@@ -14,6 +14,17 @@ from backend.models.activities import MyActivity
 blueprint = Blueprint('myactivities', __name__, url_prefix='/myactivities')
 
 
+@blueprint.route('/count')
+class MyActivitySnapAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():  # pylint: disable=too-many-locals
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            overall_count = MyActivity.overall_count(tx, user)
+            return jsonify([dict(row) for row in overall_count])
+
+
 @blueprint.route('')
 class MyActivityAPI(AuthenticatedAPIBase):
     @staticmethod

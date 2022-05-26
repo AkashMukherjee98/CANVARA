@@ -12,9 +12,10 @@ from .event import Event, EventRSVP
 
 
 class MyActivity():
+    # Get activities counts
     @classmethod
-    def overall_count(cls, tx, user):
-        counts = tx.execute('''SELECT
+    def activities_count(cls, tx, user):
+        results = tx.execute('''SELECT
             (
                 SELECT COUNT(id)
                     FROM post
@@ -104,8 +105,132 @@ class MyActivity():
                 'active_status': 'active'
             }
         )
-        return list(counts)
 
+        counts = results.fetchone()
+        return dict(counts)
+
+    # Get complete activities
+    @classmethod
+    def activities_one(cls, tx, user):
+        own_gigs = tx.execute('''SELECT id, name
+            FROM post
+                WHERE
+                    post.owner_id = :user_id
+                    AND post.status != :deleted_status''', {
+                        'user_id': user.id,
+                        'deleted_status': 'deleted'
+                    }
+        )
+
+        own_offers = tx.execute('''SELECT id, name
+            FROM offer
+                WHERE
+                    offer.offerer_id = :user_id
+                    AND offer.status != :deleted_status''', {
+                        'user_id': user.id,
+                        'deleted_status': 'deleted'
+                    }
+        )
+
+        own_positions = tx.execute('''SELECT id, role
+            FROM position
+                WHERE
+                    position.manager_id = :user_id
+                    AND position.status != :deleted_status''', {
+                        'user_id': user.id,
+                        'deleted_status': 'deleted'
+                    }
+        )
+
+        my_applications = tx.execute('''SELECT id, details->>'description' AS description
+            FROM application
+                WHERE
+                    application.user_id = :user_id
+                    AND application.status IN :my_applications_status''', {
+                        'user_id': user.id,
+                        'my_applications_status': (
+                            ApplicationStatus.NEW.value,
+                            ApplicationStatus.ACTIVE_READ.value
+                        )
+                    }
+        )
+
+        my_proposals = tx.execute('''SELECT id, name
+            FROM offer_proposal
+                WHERE
+                    offer_proposal.proposer_id = :user_id
+                    AND offer_proposal.status IN :my_proposals_status''', {
+                        'user_id': user.id,
+                        'my_proposals_status': (
+                            OfferProposalStatus.NEW.value,
+                            OfferProposalStatus.ACTIVE_READ.value
+                        )
+                    }
+        )
+
+        application_tasks = tx.execute('''SELECT id, details->>'description' AS description
+            FROM application
+                WHERE
+                    application.user_id = :user_id
+                    AND application.status = :application_tasks_status''', {
+                        'user_id': user.id,
+                        'application_tasks_status': ApplicationStatus.SELECTED.value
+                    }
+        )
+
+        proposal_tasks = tx.execute('''SELECT id, name
+            FROM offer_proposal
+                WHERE
+                    offer_proposal.proposer_id = :user_id
+                    AND offer_proposal.status IN :proposal_tasks_status''', {
+                        'user_id': user.id,
+                        'proposal_tasks_status': (
+                            OfferProposalStatus.SELECTED.value,
+                            OfferProposalStatus.IN_PROGRESS.value,
+                            OfferProposalStatus.COMPLETED.value
+                        )
+                    }
+        )
+
+        my_communities = tx.execute('''SELECT community.id, community.name
+            FROM community
+                JOIN
+                    community_membership ON community_membership.community_id = community.id
+                WHERE
+                    community.status = :active_status
+                    AND community_membership.member_id = :user_id''', {
+                        'active_status': 'active',
+                        'user_id': user.id
+                    }
+        )
+
+        my_events = tx.execute('''SELECT event.id, event.name
+            FROM event
+                JOIN
+                    event_rsvp ON event_rsvp.event_id = event.id
+                WHERE
+                    event.status = :active_status
+                    AND event_rsvp.guest_id = :user_id''', {
+                        'active_status': 'active',
+                        'user_id': user.id
+                    }
+        )
+
+        activities = {
+            'own_gigs': [dict(row) for row in own_gigs],
+            'own_offers': [dict(row) for row in own_offers],
+            'own_positions': [dict(row) for row in own_positions],
+            'my_applications': [dict(row) for row in my_applications],
+            'my_proposals': [dict(row) for row in my_proposals],
+            'application_tasks': [dict(row) for row in application_tasks],
+            'proposal_tasks': [dict(row) for row in proposal_tasks],
+            'my_communities': [dict(row) for row in my_communities],
+            'my_events': [dict(row) for row in my_events],
+            'my_connections': []
+        }
+        return activities
+
+    # Get individual activities
     @classmethod
     def own_gigs(cls, tx, user):
         gigs = tx.query(Post).where(

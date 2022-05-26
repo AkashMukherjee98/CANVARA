@@ -15,14 +15,25 @@ blueprint = Blueprint('myactivities', __name__, url_prefix='/myactivities')
 
 
 @blueprint.route('/count')
-class MyActivitySnapAPI(AuthenticatedAPIBase):
+class MyActivityCountAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():  # pylint: disable=too-many-locals
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
-            overall_count = MyActivity.overall_count(tx, user)
-            return jsonify([dict(row) for row in overall_count])
+            overall_count = MyActivity.activities_count(tx, user)
+            return jsonify(overall_count)
+
+
+@blueprint.route('/one')
+class MyActivityOneAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():  # pylint: disable=too-many-locals
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            overall_snaps = MyActivity.activities_one(tx, user)
+            return jsonify(overall_snaps)
 
 
 @blueprint.route('')

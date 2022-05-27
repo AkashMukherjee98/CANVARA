@@ -140,9 +140,9 @@ class User(ModelBase):
 
     @classmethod
     def search(  # noqa: C901
-            cls, tx, user,
-            user_type=None, keyword=None, title=None, department=None, skill=None, location=None, language=None,
-            tenure_gte=None, tenure_lte=None
+        cls, tx, user,
+        user_type=None, keyword=None, title=None, department=None, skill=None, location=None, language=None,
+        tenure_gte=None, tenure_lte=None
     ):  # pylint: disable=too-many-arguments
         users = tx.query(cls).where(
             User.customer_id == user.customer_id,
@@ -219,7 +219,7 @@ class User(ModelBase):
 
     @classmethod
     def profile_completion(
-            cls, user
+        cls, user
     ):
         completeness_percentage = 0
         completeness_percentage += ProfileCompletionRule.lookup(
@@ -239,7 +239,7 @@ class User(ModelBase):
 
     @classmethod
     def my_bookmarks(
-            cls, tx, user
+        cls, tx, user
     ):
         peoples = tx.query(cls).join(User.bookmark_user.and_(UserBookmark.user_id == user.id)). \
             order_by(UserBookmark.created_at.desc())

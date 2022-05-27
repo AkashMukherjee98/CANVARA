@@ -405,7 +405,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/UserWithTeam'
       operationId: list_users
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -3511,7 +3511,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserWithTeam'
       security:
         - AWSCognitoCanvaraPrototype: []
     put:
@@ -4986,6 +4986,19 @@ components:
       required:
         - customer_id
         - name
+    UserSummary:
+      title: Summary for a user
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier for the user.
+        name:
+          type: string
+          description: Name of the user.
+        profile_picture_url:
+          type: string
+          description: The URL of user's profile picture.
     User:
       title: User
       type: object
@@ -5094,23 +5107,21 @@ components:
         - customer_id
         - user_id
         - name
-    UserSummary:
-      title: Summary for a user
-      type: object
-      properties:
-        user_id:
-          type: string
-          description: Unique identifier for the user.
-        name:
-          type: string
-          description: Name of the user.
-        profile_picture_url:
-          type: string
-          description: The URL of user's profile picture.
-    UserWithNavigationCues:
+    UserWithTeam:
       title: UserWithNavigationCues
       allOf:
         - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            team:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserSummary'
+              description: List of team members.
+    UserWithNavigationCues:
+      title: UserWithNavigationCues
+      allOf:
+        - $ref: '#/components/schemas/UserWithTeam'
         - type: object
           properties:
             profile_completion:

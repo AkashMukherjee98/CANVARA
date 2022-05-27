@@ -5096,6 +5096,8 @@ components:
             type: string
         mentorship_video:
           $ref: '#/components/schemas/UserUpload'
+        resume_file:
+          $ref: '#/components/schemas/UserUpload'
         community_memberships:
           type: array
           description: Community memberships for user.

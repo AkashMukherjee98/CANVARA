@@ -78,13 +78,18 @@ class User(ModelBase):
     desired_skills = relationship("UserDesiredSkill")
     post_bookmarks = relationship("UserPostBookmark", back_populates="user")
     post_likes = relationship("UserPostLike", back_populates="user")
+
     profile_picture = relationship(UserUpload, foreign_keys="[User.profile_picture_id]")
     background_picture = relationship(UserUpload, foreign_keys="[User.background_picture_id]")
-    team = relationship("User", backref=backref("manager", remote_side='User.id'))
     introduction_video = relationship(UserUpload, foreign_keys="[User.introduction_video_id]")
-    fun_facts = relationship("UserUpload", secondary='user_fun_fact')
-    feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
     mentorship_video = relationship(UserUpload, foreign_keys="[User.mentorship_video_id]")
+    resume_file = relationship(UserUpload, foreign_keys="[User.resume_file_id]")
+    fun_facts = relationship("UserUpload", secondary='user_fun_fact')
+
+    team = relationship("User", backref=backref("manager", remote_side='User.id'))
+
+    feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
+
     community_memberships = relationship("Community", secondary='community_membership', primaryjoin=(
         "and_(CommunityMembership.community_id==Community.id, "
         "CommunityMembership.status == 'active')"))
@@ -101,6 +106,12 @@ class User(ModelBase):
 
     DEFAULT_BACKGROUND_PICTURE_PATH = 'public/users/blank_background_picture.png'
     DEFAULT_BACKGROUND_PICTURE_CONTENT_TYPE = 'image/png'
+
+    ALLOWED_CONTENT_TYPES_FOR_RESUME = [
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/pdf'
+    ]
 
     MAX_VIDEO_FUN_FACTS = 1
     MAX_IMAGE_FUN_FACTS = 10
@@ -391,6 +402,11 @@ class User(ModelBase):
         add_if_not_none('mentorship_offered', self.profile.get('mentorship_offered'))
         add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
         add_if_not_none('mentorship_hashtags', self.profile.get('mentorship_hashtags'))
+        add_if_not_none(
+            'mentorship_video', self.mentorship_video.as_dict(method='get') if self.mentorship_video else None)
+
+        add_if_not_none(
+            'resume_file', self.resume_file.as_dict(method='get') if self.resume_file else None)
 
         add_if_not_none('matching_reason', self.matching_reason)
 
@@ -468,6 +484,9 @@ class User(ModelBase):
 
         if self.mentorship_video:
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')
+
+        if self.resume_file:
+            user['resume_file'] = self.resume_file.as_dict(method='get')
 
         community_memberships = [community.as_dict(['community_logo']) for community in self.community_memberships]
         if community_memberships:

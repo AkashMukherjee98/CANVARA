@@ -226,7 +226,8 @@ class User(ModelBase):
             'profile_picture') if user.profile_picture else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'introduction') if (
-                ('introduction' in user.profile and user.profile['introduction'] != "") or user.introduction_video) else 0
+                ('introduction' in user.profile and user.profile[
+                    'introduction'] != "") or user.introduction_video) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'career_goals') if ('career_goals' in user.profile and user.profile['career_goals']) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
@@ -240,7 +241,7 @@ class User(ModelBase):
     def my_bookmarks(
         cls, tx, user
     ):
-        peoples = tx.query(cls).join(User.bookmark_user.and_(UserBookmark.user_id == user.id)).\
+        peoples = tx.query(cls).join(User.bookmark_user.and_(UserBookmark.user_id == user.id)). \
             order_by(UserBookmark.created_at.desc())
 
         return peoples
@@ -436,6 +437,9 @@ class User(ModelBase):
         add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
         add_if_not_none('mentorship_hashtags', self.profile.get('mentorship_hashtags'))
 
+        add_if_not_none('slack_id', self.slack_id)
+        add_if_not_none('workspace_id', self.workspace_id)
+
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()
 
@@ -475,12 +479,24 @@ class User(ModelBase):
 
         return user
 
+    def check_slack_details(self, slack_id, workspace_id):
+        if self.slack_id == slack_id and self.workspace_id == workspace_id:
+            return {
+                'is_success': True,
+                'message': 'Slack details update successfully'
+            }
+        return {
+                 'is_success': False,
+                 'message': 'Unable to update Slack details'
+            }
+
 
 class UserBookmark(ModelBase):  # pylint: disable=too-few-public-methods
     __tablename__ = 'user_bookmark'
 
     user = relationship("User", foreign_keys="[UserBookmark.user_id]")
-    bookmarked_user = relationship("User", back_populates="bookmark_user", foreign_keys="[UserBookmark.bookmarked_user_id]")
+    bookmarked_user = relationship("User", back_populates="bookmark_user",
+                                   foreign_keys="[UserBookmark.bookmarked_user_id]")
 
     @classmethod
     def lookup(cls, tx, user_id, bookmarked_user_id, must_exist=True):

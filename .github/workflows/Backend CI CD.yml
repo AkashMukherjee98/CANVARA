@@ -111,8 +111,6 @@ jobs:
           [ "$VERSION" == "master" ] && VERSION=latest
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
-          echo REGISTRY_USERNAME=${{ secrets.DOCKER_USERNAME }}
-          echo REGISTRY_PASSWORD=${{ secrets.CREATE_DOCKER_TOKEN }}
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
 

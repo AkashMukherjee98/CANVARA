@@ -60,6 +60,18 @@ class UserDesiredSkill(ModelBase, SkillWithoutLevelMixin):
     __tablename__ = 'user_desired_skill'
 
 
+def slack_notification_response(res):
+    msg = ""
+    is_success = res["ok"]
+    if 'error' in res:
+        msg = res["error"]
+    elif is_success:
+        msg = "Notification sent successfully"
+    notification_response = {"is_success": is_success, "message": msg}
+    print("response: ", res)
+    return notification_response
+
+
 class User(ModelBase):
     # Note: 'user' is a reserved keyword in PostgreSQL so we use 'canvara_user' instead
     __tablename__ = 'canvara_user'
@@ -486,9 +498,13 @@ class User(ModelBase):
                 'message': 'Slack details update successfully'
             }
         return {
-                 'is_success': False,
-                 'message': 'Unable to update Slack details'
-            }
+            'is_success': False,
+            'message': 'Unable to update Slack details'
+        }
+
+    def validate_slack_details(self):
+        if self.slack_id is None:
+            raise DoesNotExistError(f"User '{self.username}' does not have any registered slack details")
 
 
 class UserBookmark(ModelBase):  # pylint: disable=too-few-public-methods

@@ -12,7 +12,7 @@ from backend.models.offer import (
     Offer, OfferStatus, OfferStatusFilter, OfferSortFilter, OfferBookmark,
     OfferProposal, OfferProposalStatus, OfferProposalFilter
 )
-from backend.models.user import User
+from backend.models.user import User, send_slack_notification
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
@@ -71,6 +71,7 @@ class OfferAPI(AuthenticatedAPIBase):
 
             offer.update_details(payload)
             offer_details = offer.as_dict()
+            send_slack_notification(offerer_id, "Offer created successfully")
 
         return offer_details
 

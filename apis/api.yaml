@@ -19,6 +19,7 @@ tags:
   - name: posts
   - name: users
   - name: backgroundpictures
+  - name: slack
 paths:
   /shareitems:
     post:
@@ -4708,7 +4709,60 @@ paths:
           description: No Content
       operationId: delete_notification
       security:
-        - AWSCognitoCanvaraPrototype: []
+        - AWSCognitoCanvaraPrototype: [ ]
+  '/slack/update_user':
+    put:
+      summary: Update slack details for the users
+      tags:
+        - slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackUpdateUserResponse'
+      operationId: update_slack
+      security:
+        - AWSCognitoCanvaraPrototype: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackUpdateUserRequest'
+            examples:
+              Example:
+                value:
+                  slack_id: "slack_id"
+                  workspace_id: "workspace_id"
+        security:
+          - AWSCognitoCanvaraPrototype: [ ]
+  '/slack/send_notification':
+    post:
+      summary: Send a notification in slack
+      tags:
+        - slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackNotificationResponse'
+        operationId: slack_notification
+        security:
+          - AWSCognitoCanvaraPrototype: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackNotificationRequest'
+            examples:
+              Example:
+                value:
+                  text: "Hello"
+      security:
+        - AWSCognitoCanvaraPrototype: [ ]
 components:
   schemas:
     Share:
@@ -6088,6 +6142,36 @@ components:
         concerns:
           type: string
         additional_comments:
+          type: string
+    SlackUpdateUserRequest:
+      title: Update Slack details for users request
+      type: object
+      properties:
+        slack_id:
+          type: string
+        workspace_id:
+          type: string
+    SlackUpdateUserResponse:
+      title: Update Slack details for users response
+      type: object
+      properties:
+        is_success:
+          type: boolean
+        message:
+          type: string
+    SlackNotificationRequest:
+      title: Slack send notification request
+      type: object
+      properties:
+        text:
+          type: string
+    SlackNotificationResponse:
+      title: Slack send notification response
+      type: object
+      properties:
+        is_success:
+          type: boolean
+        message:
           type: string
   securitySchemes:
     AWSCognitoCanvaraPrototype:

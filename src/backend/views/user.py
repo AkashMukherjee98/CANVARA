@@ -455,6 +455,7 @@ class SlackUpdateAPI(AuthenticatedAPIBase):
                 user.workspace_id = payload['workspace_id']
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
+            send_slack_notification(user, "Welcome to Canvara!!!")
         return user.check_slack_details(payload['slack_id'], payload['workspace_id'])
 
 

@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 
-import requests
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
@@ -13,7 +12,8 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.skill import Skill
-from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark, slack_notification_response
+from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark, slack_notification_response, \
+    send_slack_notification
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -472,22 +472,5 @@ class SlackSendNotificationAPI(AuthenticatedAPIBase):
             if 'text' in payload:
                 text = payload["text"]
 
-                payload = json.dumps({
-                    "channel": user.slack_id,
-                    "text": text
-                })
-
-                # Slack notification url
-                url = "https://slack.com/api/chat.postMessage"
-
-                # API key
-                token = "xoxb-453068480679-3145973337222-KP7yYDe45Xlu2zjiTEZq5E3a"
-                # Headers
-                headers = {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                }
-
-                # sending post request and saving response as response object
-                response = requests.request("POST", url, headers=headers, data=payload)
+        response = send_slack_notification(user, text)
         return slack_notification_response(json.loads(response.text))

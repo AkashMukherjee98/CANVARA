@@ -1,6 +1,9 @@
 import copy
 import enum
+import json
 from datetime import datetime
+
+import requests
 from dateutil.relativedelta import relativedelta
 
 from sqlalchemy import or_, cast, Date
@@ -70,6 +73,30 @@ def slack_notification_response(res):
     notification_response = {"is_success": is_success, "message": msg}
     print("response: ", res)
     return notification_response
+
+
+def send_slack_notification(user, text):
+    payload = json.dumps({
+        "channel": user.slack_id,
+        "text": text
+    })
+
+    # Slack notification url
+    url = "https://slack.com/api/chat.postMessage"
+
+    # API key
+    token = "xoxb-453068480679-3145973337222-KP7yYDe45Xlu2zjiTEZq5E3a"
+    # Headers
+    headers = {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+    }
+
+    # sending post request and saving response as response object
+    response = requests.request("POST", url, headers=headers, data=payload)
+    print(response.text)
+
+    return response
 
 
 class User(ModelBase):

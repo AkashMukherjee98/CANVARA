@@ -1,5 +1,5 @@
 # Canvara Backend
-## Prerequisites 
+## Prerequisites
 * Python 3.8
 
 ## Setup Environment Variables

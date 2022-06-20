@@ -83,7 +83,10 @@ class Community(ModelBase):
             'activities',
             'contact_email',
             'contact_phone',
-            'contact_messaging'
+            'contact_messaging',
+            'member_can_create_events',
+            'member_can_post_photos',
+            'member_can_post_updates'
         ]
 
         for field_name in details_fields:
@@ -146,6 +149,10 @@ class Community(ModelBase):
         add_if_required('contact_email', self.details.get('contact_email'))
         add_if_required('contact_phone', self.details.get('contact_phone'))
         add_if_required('contact_messaging', self.details.get('contact_messaging'))
+
+        add_if_required('member_can_create_events', bool(self.details.get('member_can_create_events')))
+        add_if_required('member_can_post_photos', bool(self.details.get('member_can_post_photos')))
+        add_if_required('member_can_post_updates', bool(self.details.get('member_can_post_updates')))
 
         add_if_required(
             'announcements', [announcement.as_dict() for announcement in self.announcements] if self.announcements else None)

@@ -635,6 +635,7 @@ paths:
                   description: Status update for offer.
                   enum:
                     - suspended
+                    - completed
                     - active
     delete:
       summary: Delete an offer
@@ -1165,6 +1166,9 @@ paths:
                   type: number
                   multipleOf: 0.01
                   description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
               required:
                 - manager_id
                 - location_id
@@ -1247,6 +1251,9 @@ paths:
                   type: number
                   multipleOf: 0.01
                   description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
     delete:
       summary: Delete a position
       tags:
@@ -2053,6 +2060,15 @@ paths:
                 contact_messaging:
                   type: string
                   description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
               required:
                 - name
                 - location_id
@@ -2143,6 +2159,15 @@ paths:
                 contact_messaging:
                   type: string
                   description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
     delete:
       summary: Delete a community
       tags:
@@ -4835,6 +4860,12 @@ components:
             location:
               type: string
               description: Location of the higring manager.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
         location:
           $ref: '#/components/schemas/Location'
         role_type:
@@ -4866,6 +4897,9 @@ components:
           type: number
           multipleOf: 0.01
           description: Maximum payout for this position.
+        apply_url:
+          type: string
+          description: Apply URL for this position.
       required:
         - hiring_manager
         - location
@@ -4981,6 +5015,15 @@ components:
         contact_messaging:
           type: string
           description: Messaging id of this community.
+        member_can_create_events:
+          type: boolean
+          description: Members are allowed to create events or not.
+        member_can_post_photos:
+          type: boolean
+          description: Members are allowed to post photos or not.
+        member_can_post_updates:
+          type: boolean
+          description: Members are allowed to post updates or not.
         created_at:
           type: string
           description: 'Date and time when this community was created, in ISO 8601 format.'
@@ -5261,6 +5304,12 @@ components:
             department:
               type: string
               description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
         name:
           type: string
           description: Name of this offer.

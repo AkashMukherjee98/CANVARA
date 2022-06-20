@@ -1,7 +1,7 @@
 """Add column to track user resume file
 
 Revision ID: c33c9f9c33db
-Revises: 87f53e882bbb
+Revises: 0818eb53b001
 Create Date: 2022-05-27 14:49:02.983565
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision = 'c33c9f9c33db'
-down_revision = '87f53e882bbb'
+down_revision = '0818eb53b001'
 branch_labels = None
 depends_on = None
 

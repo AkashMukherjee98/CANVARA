@@ -19,6 +19,7 @@ tags:
   - name: posts
   - name: users
   - name: backgroundpictures
+  - name: slack
 paths:
   /shareitems:
     post:
@@ -439,6 +440,10 @@ paths:
                   type: string
                 location:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
                 current_skills:
                   type: array
                   items:
@@ -459,12 +464,14 @@ paths:
                   type: string
                 career_goals:
                   type: string
-                languages:
-                  type: array
-                  items:
-                    type: string
+                career_goals_visibility:
+                  type: boolean
                 superpowers:
                   type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
                 company_start_date:
                   type: string
                 pronoun:
@@ -628,6 +635,7 @@ paths:
                   description: Status update for offer.
                   enum:
                     - suspended
+                    - completed
                     - active
     delete:
       summary: Delete an offer
@@ -1158,6 +1166,9 @@ paths:
                   type: number
                   multipleOf: 0.01
                   description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
               required:
                 - manager_id
                 - location_id
@@ -1240,6 +1251,9 @@ paths:
                   type: number
                   multipleOf: 0.01
                   description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
     delete:
       summary: Delete a position
       tags:
@@ -2046,6 +2060,15 @@ paths:
                 contact_messaging:
                   type: string
                   description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
               required:
                 - name
                 - location_id
@@ -2136,6 +2159,15 @@ paths:
                 contact_messaging:
                   type: string
                   description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
     delete:
       summary: Delete a community
       tags:
@@ -3542,6 +3574,10 @@ paths:
                   type: string
                 location:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
                 current_skills:
                   type: array
                   items:
@@ -3562,12 +3598,14 @@ paths:
                   type: string
                 career_goals:
                   type: string
-                languages:
-                  type: array
-                  items:
-                    type: string
+                career_goals_visibility:
+                  type: boolean
                 superpowers:
                   type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
                 company_start_date:
                   type: string
                 pronoun:
@@ -4708,7 +4746,60 @@ paths:
           description: No Content
       operationId: delete_notification
       security:
-        - AWSCognitoCanvaraPrototype: []
+        - AWSCognitoCanvaraPrototype: [ ]
+  '/slack/update_user':
+    put:
+      summary: Update slack details for the users
+      tags:
+        - slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackUpdateUserResponse'
+      operationId: update_slack
+      security:
+        - AWSCognitoCanvaraPrototype: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackUpdateUserRequest'
+            examples:
+              Example:
+                value:
+                  slack_id: "slack_id"
+                  workspace_id: "workspace_id"
+        security:
+          - AWSCognitoCanvaraPrototype: [ ]
+  '/slack/send_notification':
+    post:
+      summary: Send a notification in slack
+      tags:
+        - slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackNotificationResponse'
+        operationId: slack_notification
+        security:
+          - AWSCognitoCanvaraPrototype: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackNotificationRequest'
+            examples:
+              Example:
+                value:
+                  text: "Hello"
+      security:
+        - AWSCognitoCanvaraPrototype: [ ]
 components:
   schemas:
     Share:
@@ -4769,6 +4860,12 @@ components:
             location:
               type: string
               description: Location of the higring manager.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
         location:
           $ref: '#/components/schemas/Location'
         role_type:
@@ -4800,6 +4897,9 @@ components:
           type: number
           multipleOf: 0.01
           description: Maximum payout for this position.
+        apply_url:
+          type: string
+          description: Apply URL for this position.
       required:
         - hiring_manager
         - location
@@ -4915,6 +5015,15 @@ components:
         contact_messaging:
           type: string
           description: Messaging id of this community.
+        member_can_create_events:
+          type: boolean
+          description: Members are allowed to create events or not.
+        member_can_post_photos:
+          type: boolean
+          description: Members are allowed to post photos or not.
+        member_can_post_updates:
+          type: boolean
+          description: Members are allowed to post updates or not.
         created_at:
           type: string
           description: 'Date and time when this community was created, in ISO 8601 format.'
@@ -5052,21 +5161,27 @@ components:
             anyOf:
               - $ref: '#/components/schemas/UserUpload'
               - type: string
-        hidden_secrets:
-          type: string
-        superpowers:
-          type: string
-        company_start_date:
-          type: string
-        pronoun:
-          type: string
-        department:
-          type: string
         introduction:
           type: string
         introduction_video:
           $ref: '#/components/schemas/UserUpload'
         career_goals:
+          type: string
+        career_goals_visibility:
+          type: boolean
+        hidden_secrets:
+          type: string
+        superpowers:
+          type: string
+        trying_to_learn:
+          type: string
+        trying_to_learn_visibility:
+          type: boolean
+        company_start_date:
+          type: string
+        pronoun:
+          type: string
+        department:
           type: string
         languages:
           type: array
@@ -5105,6 +5220,14 @@ components:
             anyOf:
               - $ref: '#/components/schemas/CommunitySummary'
               - type: string
+        relevant_skills_recommendation:
+          type: array
+          items:
+            type: string
+        linkedin_profiles_suggestion:
+          type: array
+          items:
+            type: string
       required:
         - customer_id
         - user_id
@@ -5183,6 +5306,12 @@ components:
             department:
               type: string
               description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
         name:
           type: string
           description: Name of this offer.
@@ -6090,6 +6219,36 @@ components:
         concerns:
           type: string
         additional_comments:
+          type: string
+    SlackUpdateUserRequest:
+      title: Update Slack details for users request
+      type: object
+      properties:
+        slack_id:
+          type: string
+        workspace_id:
+          type: string
+    SlackUpdateUserResponse:
+      title: Update Slack details for users response
+      type: object
+      properties:
+        is_success:
+          type: boolean
+        message:
+          type: string
+    SlackNotificationRequest:
+      title: Slack send notification request
+      type: object
+      properties:
+        text:
+          type: string
+    SlackNotificationResponse:
+      title: Slack send notification response
+      type: object
+      properties:
+        is_success:
+          type: boolean
+        message:
           type: string
   securitySchemes:
     AWSCognitoCanvaraPrototype:

@@ -1,4 +1,6 @@
+import json
 from datetime import datetime
+
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
@@ -10,12 +12,12 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.skill import Skill
-from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
+from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark, slack_notification_response, \
+    send_slack_notification
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.models.notification import Notification
-
 
 blueprint = Blueprint('user', __name__, url_prefix='/users')
 customer_user_blueprint = Blueprint('customer_user', __name__, url_prefix='/customers/<customer_id>/users')
@@ -71,7 +73,8 @@ class UsersAPI(AuthenticatedAPIBase):
         title = request.args.get('title') if 'title' in request.args else None
         department = request.args.get('department') if 'department' in request.args else None
         location = request.args.get('location') if 'location' in request.args else None
-        language = Language.validate_and_convert_language(request.args.get('language')) if 'language' in request.args else None
+        language = Language.validate_and_convert_language(
+            request.args.get('language')) if 'language' in request.args else None
 
         tenure_gte = request.args.get('tenure_gte') if 'tenure_gte' in request.args else None
         tenure_lte = request.args.get('tenure_lte') if 'tenure_lte' in request.args else None
@@ -79,7 +82,8 @@ class UsersAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
 
-            skill = Skill.lookup(tx, user.customer_id, request.args.get('skill_id')) if 'skill_id' in request.args else None
+            skill = Skill.lookup(tx, user.customer_id,
+                                 request.args.get('skill_id')) if 'skill_id' in request.args else None
 
             users = User.search(
                 tx,
@@ -468,7 +472,7 @@ class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
-# People bookmar APIs
+# People bookmark APIs
 @blueprint.route('/<user_id>/bookmark')
 class UserBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
@@ -491,3 +495,41 @@ class UserBookmarkAPI(AuthenticatedAPIBase):
             bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id)
             tx.delete(bookmark)
         return make_no_content_response()
+
+
+@blueprint.route('/slack/update_user')
+class SlackUpdateAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def put():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            payload = request.json
+
+            if payload.get('slack_id'):
+                user.slack_id = payload['slack_id']
+            if payload.get('workspace_id'):
+                user.workspace_id = payload['workspace_id']
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            send_slack_notification(user, "Welcome to Canvara!!!")
+        return user.check_slack_details(payload['slack_id'], payload['workspace_id'])
+
+
+@blueprint.route('/slack/send_notification')
+class SlackSendNotificationAPI(AuthenticatedAPIBase):
+
+    @staticmethod
+    def post():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user.validate_slack_details()
+
+            payload = request.json
+
+            if 'text' in payload:
+                text = payload["text"]
+
+        response = send_slack_notification(user, text)
+        return slack_notification_response(json.loads(response.text))

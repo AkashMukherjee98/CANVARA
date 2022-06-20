@@ -1,6 +1,9 @@
 import copy
 import enum
+import json
 from datetime import datetime
+
+import requests
 from dateutil.relativedelta import relativedelta
 
 from sqlalchemy import or_, cast, Date
@@ -58,6 +61,42 @@ class UserCurrentSkill(ModelBase, SkillWithLevelMixin):
 
 class UserDesiredSkill(ModelBase, SkillWithoutLevelMixin):
     __tablename__ = 'user_desired_skill'
+
+
+def slack_notification_response(res):
+    msg = ""
+    is_success = res["ok"]
+    if 'error' in res:
+        msg = res["error"]
+    elif is_success:
+        msg = "Notification sent successfully"
+    notification_response = {"is_success": is_success, "message": msg}
+    print("response: ", res)
+    return notification_response
+
+
+def send_slack_notification(user, text):
+    payload = json.dumps({
+        "channel": user.slack_id,
+        "text": text
+    })
+
+    # Slack notification url
+    url = "https://slack.com/api/chat.postMessage"
+
+    # API key
+    token = "xoxb-453068480679-3145973337222-KP7yYDe45Xlu2zjiTEZq5E3a"
+    # Headers
+    headers = {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+    }
+
+    # sending post request and saving response as response object
+    response = requests.request("POST", url, headers=headers, data=payload)
+    print(response.text)
+
+    return response
 
 
 class User(ModelBase):
@@ -175,8 +214,9 @@ class User(ModelBase):
                 User.profile['pronoun'].astext.ilike(f'%{keyword}%'),
                 User.profile['title'].astext.ilike(f'%{keyword}%'),
                 User.profile['introduction'].astext.ilike(f'%{keyword}%'),
-                User.profile['superpowers'].astext.ilike(f'%{keyword}%'),
                 User.profile['career_goals'].astext.ilike(f'%{keyword}%'),
+                User.profile['superpowers'].astext.ilike(f'%{keyword}%'),
+                User.profile['trying_to_learn'].astext.ilike(f'%{keyword}%'),
                 User.profile['hidden_secrets'].astext.ilike(f'%{keyword}%'),
                 User.profile['location'].astext.ilike(f'%{keyword}%'),
                 User.profile['languages'].astext.ilike(f'%{keyword}%'),
@@ -237,7 +277,8 @@ class User(ModelBase):
             'profile_picture') if user.profile_picture else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'introduction') if (
-                ('introduction' in user.profile and user.profile['introduction'] != "") or user.introduction_video) else 0
+                ('introduction' in user.profile and user.profile[
+                    'introduction'] != "") or user.introduction_video) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
             'career_goals') if ('career_goals' in user.profile and user.profile['career_goals']) else 0
         completeness_percentage += ProfileCompletionRule.lookup(
@@ -251,7 +292,7 @@ class User(ModelBase):
     def my_bookmarks(
         cls, tx, user
     ):
-        peoples = tx.query(cls).join(User.bookmark_user.and_(UserBookmark.user_id == user.id)).\
+        peoples = tx.query(cls).join(User.bookmark_user.and_(UserBookmark.user_id == user.id)). \
             order_by(UserBookmark.created_at.desc())
 
         return peoples
@@ -327,7 +368,10 @@ class User(ModelBase):
             'phone_number',
             'hidden_secrets',
             'career_goals',
+            'career_goals_visibility',
             'superpowers',
+            'trying_to_learn',
+            'trying_to_learn_visibility',
             'company_start_date',
             'pronoun',
             'department',
@@ -438,7 +482,10 @@ class User(ModelBase):
 
         add_if_not_none('hidden_secrets', self.profile.get('hidden_secrets'))
         add_if_not_none('career_goals', self.profile.get('career_goals'))
+        add_if_not_none('career_goals_visibility', bool(self.profile.get('career_goals_visibility')))
         add_if_not_none('superpowers', self.profile.get('superpowers'))
+        add_if_not_none('trying_to_learn', self.profile.get('trying_to_learn'))
+        add_if_not_none('trying_to_learn_visibility', bool(self.profile.get('trying_to_learn_visibility')))
         add_if_not_none('company_start_date', self.profile.get('company_start_date'))
         add_if_not_none('pronoun', self.profile.get('pronoun'))
         add_if_not_none('department', self.profile.get('department'))
@@ -448,9 +495,12 @@ class User(ModelBase):
         add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))
         add_if_not_none('hashtags', self.profile.get('hashtags'))
         add_if_not_none('slack_teams_messaging_id', self.profile.get('slack_teams_messaging_id'))
-        add_if_not_none('mentorship_offered', self.profile.get('mentorship_offered'))
+        add_if_not_none('mentorship_offered', bool(self.profile.get('mentorship_offered')))
         add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
         add_if_not_none('mentorship_hashtags', self.profile.get('mentorship_hashtags'))
+
+        add_if_not_none('slack_id', self.slack_id)
+        add_if_not_none('workspace_id', self.workspace_id)
 
         if self.manager:
             user['manager'] = self.manager.as_summary_dict()
@@ -492,14 +542,35 @@ class User(ModelBase):
         if community_memberships:
             user['community_memberships'] = community_memberships
 
+        # TODO: (santanu) Get relevent skills based on the user profile(DS)
+        user['relevant_skills_recommendation'] = []
+        # TODO: (santanu) Get Linkedin profile suggestions based on user(DS)
+        user['linkedin_profiles_suggestion'] = []
+
         return user
+
+    def check_slack_details(self, slack_id, workspace_id):
+        if self.slack_id == slack_id and self.workspace_id == workspace_id:
+            return {
+                'is_success': True,
+                'message': 'Slack details update successfully'
+            }
+        return {
+            'is_success': False,
+            'message': 'Unable to update Slack details'
+        }
+
+    def validate_slack_details(self):
+        if self.slack_id is None:
+            raise DoesNotExistError(f"User '{self.username}' does not have any registered slack details")
 
 
 class UserBookmark(ModelBase):  # pylint: disable=too-few-public-methods
     __tablename__ = 'user_bookmark'
 
     user = relationship("User", foreign_keys="[UserBookmark.user_id]")
-    bookmarked_user = relationship("User", back_populates="bookmark_user", foreign_keys="[UserBookmark.bookmarked_user_id]")
+    bookmarked_user = relationship("User", back_populates="bookmark_user",
+                                   foreign_keys="[UserBookmark.bookmarked_user_id]")
 
     @classmethod
     def lookup(cls, tx, user_id, bookmarked_user_id, must_exist=True):

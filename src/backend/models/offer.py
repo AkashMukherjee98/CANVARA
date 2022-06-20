@@ -51,6 +51,9 @@ class OfferStatus(Enum):
     # Offer is suspended
     SUSPENDED = 'suspended'
 
+    # Offer is suspended
+    COMPLETED = 'completed'
+
     # Offer has been deleted
     DELETED = 'deleted'
 
@@ -105,8 +108,8 @@ class Offer(ModelBase):
             if (return_keys is all or key in return_keys) and value is not None:
                 offer[key] = value
 
-        add_if_required(
-            'offerer', self.offerer.as_custom_dict(['title', 'pronoun', 'location', 'department']) if self.offerer else None)
+        add_if_required('offerer', self.offerer.as_custom_dict(
+            ['title', 'pronoun', 'location', 'department', 'phone_number', 'email']) if self.offerer else None)
 
         add_if_required(
             'overview_video', self.offer_overview_video.as_dict(method='get') if self.offer_overview_video else None)

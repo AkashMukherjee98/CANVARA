@@ -440,6 +440,10 @@ paths:
                   type: string
                 location:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
                 current_skills:
                   type: array
                   items:
@@ -460,12 +464,14 @@ paths:
                   type: string
                 career_goals:
                   type: string
-                languages:
-                  type: array
-                  items:
-                    type: string
+                career_goals_visibility:
+                  type: boolean
                 superpowers:
                   type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
                 company_start_date:
                   type: string
                 pronoun:
@@ -3543,6 +3549,10 @@ paths:
                   type: string
                 location:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
                 current_skills:
                   type: array
                   items:
@@ -3563,12 +3573,14 @@ paths:
                   type: string
                 career_goals:
                   type: string
-                languages:
-                  type: array
-                  items:
-                    type: string
+                career_goals_visibility:
+                  type: boolean
                 superpowers:
                   type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
                 company_start_date:
                   type: string
                 pronoun:
@@ -5106,21 +5118,27 @@ components:
             anyOf:
               - $ref: '#/components/schemas/UserUpload'
               - type: string
-        hidden_secrets:
-          type: string
-        superpowers:
-          type: string
-        company_start_date:
-          type: string
-        pronoun:
-          type: string
-        department:
-          type: string
         introduction:
           type: string
         introduction_video:
           $ref: '#/components/schemas/UserUpload'
         career_goals:
+          type: string
+        career_goals_visibility:
+          type: boolean
+        hidden_secrets:
+          type: string
+        superpowers:
+          type: string
+        trying_to_learn:
+          type: string
+        trying_to_learn_visibility:
+          type: boolean
+        company_start_date:
+          type: string
+        pronoun:
+          type: string
+        department:
           type: string
         languages:
           type: array
@@ -5157,6 +5175,14 @@ components:
             anyOf:
               - $ref: '#/components/schemas/CommunitySummary'
               - type: string
+        relevant_skills_recommendation:
+          type: array
+          items:
+            type: string
+        linkedin_profiles_suggestion:
+          type: array
+          items:
+            type: string
       required:
         - customer_id
         - user_id

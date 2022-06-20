@@ -466,10 +466,10 @@ class User(ModelBase):
 
         add_if_not_none('hidden_secrets', self.profile.get('hidden_secrets'))
         add_if_not_none('career_goals', self.profile.get('career_goals'))
-        add_if_not_none('career_goals_visibility', True if self.profile.get('career_goals_visibility') else False)
+        add_if_not_none('career_goals_visibility', bool(self.profile.get('career_goals_visibility')))
         add_if_not_none('superpowers', self.profile.get('superpowers'))
         add_if_not_none('trying_to_learn', self.profile.get('trying_to_learn'))
-        add_if_not_none('trying_to_learn_visibility', True if self.profile.get('trying_to_learn_visibility') else False)
+        add_if_not_none('trying_to_learn_visibility', bool(self.profile.get('trying_to_learn_visibility')))
         add_if_not_none('company_start_date', self.profile.get('company_start_date'))
         add_if_not_none('pronoun', self.profile.get('pronoun'))
         add_if_not_none('department', self.profile.get('department'))
@@ -479,7 +479,7 @@ class User(ModelBase):
         add_if_not_none('onboarding_complete', self.profile.get('onboarding_complete'))
         add_if_not_none('hashtags', self.profile.get('hashtags'))
         add_if_not_none('slack_teams_messaging_id', self.profile.get('slack_teams_messaging_id'))
-        add_if_not_none('mentorship_offered', True if self.profile.get('mentorship_offered') else False)
+        add_if_not_none('mentorship_offered', bool(self.profile.get('mentorship_offered')))
         add_if_not_none('mentorship_description', self.profile.get('mentorship_description'))
         add_if_not_none('mentorship_hashtags', self.profile.get('mentorship_hashtags'))
 

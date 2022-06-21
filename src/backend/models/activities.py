@@ -1,3 +1,9 @@
+import enum
+from sqlalchemy import and_, func
+from sqlalchemy.orm import relationship
+from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
+from .db import ModelBase
+
 from .post import Post
 from .application import Application
 from .offer import Offer
@@ -9,6 +15,68 @@ from .offer import OfferProposalStatus
 
 from .community import Community, CommunityMembership
 from .event import Event, EventRSVP
+
+
+class ActivityStatus(enum.Enum):
+    READ = 'read'
+    UNREAD = 'unread'
+    DELETED = 'deleted'
+
+    @classmethod
+    def lookup(cls, stat):
+        try:
+            return cls(stat)
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Invalid activity status: {stat}") from ex
+
+
+class Activity(ModelBase):
+    __tablename__ = 'activity'
+
+    user = relationship("User")
+
+    ACTIVITY_DEFAULT_LIMIT = 20
+    ACTIVITY_MAX_LIMIT = 100
+    ACTIVITY_DEFAULT_START = 0
+
+    @classmethod
+    def lookup(cls, tx, activity_id):
+        activity = tx.query(cls).where(and_(
+            cls.id == activity_id,
+            cls.status != ActivityStatus.DELETED.value,
+        )).one_or_none()
+        if activity is None:
+            raise DoesNotExistError(f"Activity '{activity_id}' does not exist")
+        return activity
+
+    @classmethod
+    def find_multiple(cls, tx, user_id, start=None, limit=None):
+        if limit is None:
+            limit = cls.ACTIVITY_DEFAULT_LIMIT
+        limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
+        if start is None:
+            start = cls.ACTIVITY_DEFAULT_START
+
+        return tx.query(cls).where(and_(
+            cls.user_id == user_id,
+            cls.status != ActivityStatus.DELETED.value
+        )).order_by(Activity.created_at.desc()).offset(start).limit(limit).all()
+
+    @classmethod
+    def get_unread_count(cls, tx, user_id):
+        return tx.query(func.count(cls.id)).where(and_(
+            cls.user_id == user_id,
+            cls.status == ActivityStatus.UNREAD.value
+        )).scalar()
+
+    def as_dict(self):
+        return {
+            'activity_id': self.id,
+            'type': self.type,
+            'data': self.data,
+            'created_at': self.created_at.isoformat(),
+            'status': self.status,
+        }
 
 
 class MyActivity():

@@ -7,7 +7,7 @@ from flask_smorest import Api
 
 
 API_TITLE = 'Canvara Backend API'
-API_VERSION = '0.41.0'
+API_VERSION = '0.42.0'
 OPENAPI_VERSION = '3.0.0'
 
 
@@ -49,6 +49,7 @@ def create_app():  # pylint: disable=too-many-locals, disable=too-many-statement
     # pylint: disable=import-outside-toplevel
     from .views.marketplace import blueprint as marketplace_blueprint
     from .views.activities import blueprint as activities_blueprint
+    from .views.activities import blueprint_myactivities as myactivities_blueprint
     from .views.application import blueprint as application_blueprint, post_application_blueprint
     from .views.banner import blueprint as banner_blueprint
     from .views.community import blueprint as community_blueprint
@@ -70,6 +71,7 @@ def create_app():  # pylint: disable=too-many-locals, disable=too-many-statement
 
     api.register_blueprint(marketplace_blueprint)
     api.register_blueprint(activities_blueprint)
+    api.register_blueprint(myactivities_blueprint)
     api.register_blueprint(application_blueprint)
     api.register_blueprint(banner_blueprint)
     api.register_blueprint(community_blueprint)

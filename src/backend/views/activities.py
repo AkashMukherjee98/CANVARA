@@ -1,4 +1,5 @@
 from flask import jsonify
+from flask import request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
 
@@ -8,35 +9,31 @@ from backend.models.user import User
 from backend.models.application import ApplicationStatus
 from backend.models.offer import OfferProposalStatus
 
+from backend.models.activities import Activity
 from backend.models.activities import MyActivity
 
 
-blueprint = Blueprint('myactivities', __name__, url_prefix='/myactivities')
-
-
-@blueprint.route('/count')
-class MyActivityCountAPI(AuthenticatedAPIBase):
-    @staticmethod
-    def get():  # pylint: disable=too-many-locals
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            overall_count = MyActivity.activities_count(tx, user)
-            return jsonify(overall_count)
-
-
-@blueprint.route('/one')
-class MyActivityOneAPI(AuthenticatedAPIBase):
-    @staticmethod
-    def get():  # pylint: disable=too-many-locals
-        with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            overall_snaps = MyActivity.activities_one(tx, user)
-            return jsonify(overall_snaps)
+blueprint = Blueprint('activities', __name__, url_prefix='/activities')
+blueprint_myactivities = Blueprint('myactivities', __name__, url_prefix='/myactivities')
 
 
 @blueprint.route('')
+class ActivityAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():
+        start = int(request.args.get('start')) if request.args.get('start') is not None else None
+        limit = int(request.args.get('limit')) if request.args.get('limit') is not None else None
+
+        user_id = current_cognito_jwt['sub']
+        with transaction() as tx:
+            activities = Activity.find_multiple(tx, user_id, start=start, limit=limit)
+            return {
+                'activities': [activitiy.as_dict() for activitiy in activities],
+                'total_unread': Activity.get_unread_count(tx, user_id),
+            }
+
+
+@blueprint_myactivities.route('')
 class MyActivityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():  # pylint: disable=too-many-locals
@@ -102,3 +99,25 @@ class MyActivityAPI(AuthenticatedAPIBase):
             }
 
         return jsonify(activities)
+
+
+@blueprint_myactivities.route('/count')
+class MyActivityCountAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():  # pylint: disable=too-many-locals
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            overall_count = MyActivity.activities_count(tx, user)
+            return jsonify(overall_count)
+
+
+@blueprint_myactivities.route('/one')
+class MyActivityOneAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():  # pylint: disable=too-many-locals
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            overall_snaps = MyActivity.activities_one(tx, user)
+            return jsonify(overall_snaps)

@@ -61,6 +61,7 @@ class Position(ModelBase):
         details_fields = [
             'description',
             'benefits',
+            'apply_url'
         ]
 
         for field in details_fields:
@@ -75,7 +76,7 @@ class Position(ModelBase):
     def as_dict(self):
         position = {
             'position_id': self.id,
-            'hiring_manager': self.hiring_manager.as_custom_dict('location'),
+            'hiring_manager': self.hiring_manager.as_custom_dict(['location', 'phone_number', 'email']),
             'location': self.location.as_dict(),
             'role_type': self.role_type,
             'role': self.role,
@@ -89,6 +90,7 @@ class Position(ModelBase):
 
         add_if_not_none('description', self.details.get('description'))
         add_if_not_none('benefits', self.details.get('benefits'))
+        add_if_not_none('apply_url', self.details.get('apply_url'))
 
         position['pay_currency'] = self.pay_currency
         position['pay_minimum'] = float(self.pay_minimum)

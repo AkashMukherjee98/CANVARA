@@ -4,8 +4,8 @@ info:
   version: 0.11.0
 servers: []
 tags:
+  - name: activities
   - name: marketplaces
-  - name: myactivities
   - name: shareitems
   - name: offers
   - name: positions
@@ -21,6 +21,153 @@ tags:
   - name: backgroundpictures
   - name: slack
 paths:
+  /activities:
+    get:
+      summary: List all activities
+      tags:
+        - activities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Activity'
+                  total_unread:
+                    type: number
+      operationId: list_activities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: integer
+            default: 20
+          in: query
+          name: limit
+          description: Maximum number of activities to return.
+        - schema:
+            type: integer
+          in: query
+          name: start
+          description: Start index from where to return the activities.
+  /myactivities:
+    get:
+      summary: List my activities
+      operationId: get_activities
+      description: ''
+      tags:
+        - activities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: object
+                    description: List of all posts.
+                    properties:
+                      gigs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Offer'
+                        description: List of offers.
+                      positions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                        description: List of positions.
+                  applications:
+                    type: object
+                    description: List of applications.
+                    properties:
+                      applications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Application'
+                        description: List of application.
+                      proposals:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Proposal'
+                        description: List of proposals.
+                  tasks:
+                    type: object
+                    description: List of tasks.
+                    properties:
+                      applications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Application'
+                        description: List of applications.
+                      proposals:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Proposal'
+                        description: List of proposals.
+                  connections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                    description: List of connections.
+                  communities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Community'
+                    description: List of communities.
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    description: List of events.
+                  bookmarks:
+                    type: object
+                    description: List of all bookmarks.
+                    properties:
+                      gigs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OfferMinimal'
+                        description: List of offers.
+                      positions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                        description: List of positions.
+                      communities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Community'
+                        description: List of communities.
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        description: List of events.
+                      peoples:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserSummary'
+                        description: List of peoples.
+      security:
+        - AWSCognitoCanvaraPrototype: []
   /shareitems:
     post:
       summary: Share an item with users
@@ -178,119 +325,6 @@ paths:
                     description: List of events.
       security:
         - AWSCognitoCanvaraPrototype: []
-  /myactivities:
-    get:
-      summary: List my activities
-      operationId: get_activities
-      description: ''
-      tags:
-        - myactivities
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  posts:
-                    type: object
-                    description: List of all posts.
-                    properties:
-                      gigs:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Post'
-                        description: List of gigs.
-                      offers:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Offer'
-                        description: List of offers.
-                      positions:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Position'
-                        description: List of positions.
-                  applications:
-                    type: object
-                    description: List of applications.
-                    properties:
-                      applications:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Application'
-                        description: List of application.
-                      proposals:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Proposal'
-                        description: List of proposals.
-                  tasks:
-                    type: object
-                    description: List of tasks.
-                    properties:
-                      applications:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Application'
-                        description: List of applications.
-                      proposals:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Proposal'
-                        description: List of proposals.
-                  connections:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                    description: List of connections.
-                  communities:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Community'
-                    description: List of communities.
-                  events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Event'
-                    description: List of events.
-                  bookmarks:
-                    type: object
-                    description: List of all bookmarks.
-                    properties:
-                      gigs:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Post'
-                        description: List of gigs.
-                      offers:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/OfferMinimal'
-                        description: List of offers.
-                      positions:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Position'
-                        description: List of positions.
-                      communities:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Community'
-                        description: List of communities.
-                      events:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Event'
-                        description: List of events.
-                      peoples:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/UserSummary'
-                        description: List of peoples.
-      security:
-        - AWSCognitoCanvaraPrototype: []
   /customers:
     get:
       summary: List all customers
@@ -440,6 +474,10 @@ paths:
                   type: string
                 location:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
                 current_skills:
                   type: array
                   items:
@@ -460,12 +498,14 @@ paths:
                   type: string
                 career_goals:
                   type: string
-                languages:
-                  type: array
-                  items:
-                    type: string
+                career_goals_visibility:
+                  type: boolean
                 superpowers:
                   type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
                 company_start_date:
                   type: string
                 pronoun:
@@ -629,6 +669,7 @@ paths:
                   description: Status update for offer.
                   enum:
                     - suspended
+                    - completed
                     - active
     delete:
       summary: Delete an offer
@@ -1159,6 +1200,9 @@ paths:
                   type: number
                   multipleOf: 0.01
                   description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
               required:
                 - manager_id
                 - location_id
@@ -1241,6 +1285,9 @@ paths:
                   type: number
                   multipleOf: 0.01
                   description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
     delete:
       summary: Delete a position
       tags:
@@ -2047,6 +2094,15 @@ paths:
                 contact_messaging:
                   type: string
                   description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
               required:
                 - name
                 - location_id
@@ -2137,6 +2193,15 @@ paths:
                 contact_messaging:
                   type: string
                   description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
     delete:
       summary: Delete a community
       tags:
@@ -3543,6 +3608,10 @@ paths:
                   type: string
                 location:
                   type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
                 current_skills:
                   type: array
                   items:
@@ -3563,12 +3632,14 @@ paths:
                   type: string
                 career_goals:
                   type: string
-                languages:
-                  type: array
-                  items:
-                    type: string
+                career_goals_visibility:
+                  type: boolean
                 superpowers:
                   type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
                 company_start_date:
                   type: string
                 pronoun:
@@ -4765,6 +4836,34 @@ paths:
         - AWSCognitoCanvaraPrototype: [ ]
 components:
   schemas:
+    Activity:
+      title: Activity
+      type: object
+      properties:
+        activity_id:
+          type: string
+          description: Unique identifier of this activity.
+        type:
+          type: string
+          description: Type of activity.
+        data:
+          type: object
+          description: Data to display in the activity.
+        created_at:
+          type: string
+          description: 'UTC date and time when this activity was created, in ISO 8601 format.'
+        status:
+          type: string
+          description: Unread status of the activity.
+          enum:
+            - read
+            - unread
+      required:
+        - activity_id
+        - type
+        - data
+        - created_at
+        - status
     Share:
       title: Share item
       type: object
@@ -4823,6 +4922,12 @@ components:
             location:
               type: string
               description: Location of the higring manager.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
         location:
           $ref: '#/components/schemas/Location'
         role_type:
@@ -4854,6 +4959,9 @@ components:
           type: number
           multipleOf: 0.01
           description: Maximum payout for this position.
+        apply_url:
+          type: string
+          description: Apply URL for this position.
       required:
         - hiring_manager
         - location
@@ -4969,6 +5077,15 @@ components:
         contact_messaging:
           type: string
           description: Messaging id of this community.
+        member_can_create_events:
+          type: boolean
+          description: Members are allowed to create events or not.
+        member_can_post_photos:
+          type: boolean
+          description: Members are allowed to post photos or not.
+        member_can_post_updates:
+          type: boolean
+          description: Members are allowed to post updates or not.
         created_at:
           type: string
           description: 'Date and time when this community was created, in ISO 8601 format.'
@@ -5106,21 +5223,27 @@ components:
             anyOf:
               - $ref: '#/components/schemas/UserUpload'
               - type: string
-        hidden_secrets:
-          type: string
-        superpowers:
-          type: string
-        company_start_date:
-          type: string
-        pronoun:
-          type: string
-        department:
-          type: string
         introduction:
           type: string
         introduction_video:
           $ref: '#/components/schemas/UserUpload'
         career_goals:
+          type: string
+        career_goals_visibility:
+          type: boolean
+        hidden_secrets:
+          type: string
+        superpowers:
+          type: string
+        trying_to_learn:
+          type: string
+        trying_to_learn_visibility:
+          type: boolean
+        company_start_date:
+          type: string
+        pronoun:
+          type: string
+        department:
           type: string
         languages:
           type: array
@@ -5150,6 +5273,8 @@ components:
             type: string
         mentorship_video:
           $ref: '#/components/schemas/UserUpload'
+        resume_file:
+          $ref: '#/components/schemas/UserUpload'
         community_memberships:
           type: array
           description: Community memberships for user.
@@ -5157,6 +5282,14 @@ components:
             anyOf:
               - $ref: '#/components/schemas/CommunitySummary'
               - type: string
+        relevant_skills_recommendation:
+          type: array
+          items:
+            type: string
+        linkedin_profiles_suggestion:
+          type: array
+          items:
+            type: string
       required:
         - customer_id
         - user_id
@@ -5235,6 +5368,12 @@ components:
             department:
               type: string
               description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
         name:
           type: string
           description: Name of this offer.

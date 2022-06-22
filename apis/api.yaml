@@ -4780,7 +4780,7 @@ paths:
           description: No Content
       operationId: delete_notification
       security:
-        - AWSCognitoCanvaraPrototype: [ ]
+        - AWSCognitoCanvaraPrototype: []
   '/slack/user':
     put:
       summary: Update slack details for the users
@@ -4795,7 +4795,7 @@ paths:
                 $ref: '#/components/schemas/SlackUpdateUserResponse'
       operationId: update_slack
       security:
-        - AWSCognitoCanvaraPrototype: [ ]
+        - AWSCognitoCanvaraPrototype: []
       requestBody:
         content:
           application/json:
@@ -4807,7 +4807,7 @@ paths:
                   slack_id: "slack_id"
                   workspace_id: "workspace_id"
         security:
-          - AWSCognitoCanvaraPrototype: [ ]
+          - AWSCognitoCanvaraPrototype: []
   '/slack/notification':
     post:
       summary: Send a notification in slack
@@ -4822,7 +4822,7 @@ paths:
                 $ref: '#/components/schemas/SlackNotificationResponse'
         operationId: slack_notification
         security:
-          - AWSCognitoCanvaraPrototype: [ ]
+          - AWSCognitoCanvaraPrototype: []
       requestBody:
         content:
           application/json:
@@ -4833,7 +4833,7 @@ paths:
                 value:
                   text: "Hello"
       security:
-        - AWSCognitoCanvaraPrototype: [ ]
+        - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
     Activity:

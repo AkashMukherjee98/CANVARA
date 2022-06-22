@@ -4710,7 +4710,7 @@ paths:
       operationId: delete_notification
       security:
         - AWSCognitoCanvaraPrototype: [ ]
-  '/slack/update_user':
+  '/slack/user':
     put:
       summary: Update slack details for the users
       tags:
@@ -4737,7 +4737,7 @@ paths:
                   workspace_id: "workspace_id"
         security:
           - AWSCognitoCanvaraPrototype: [ ]
-  '/slack/send_notification':
+  '/slack/notification':
     post:
       summary: Send a notification in slack
       tags:

@@ -138,6 +138,8 @@ jobs:
       POSTGRES_HOST: ${{ secrets.RDS_STAGE_HOST }}
       POSTGRES_PORT: 5432
       POSTGRES_DATABASE: ${{ secrets.RDS_DB_NAME }}
+      SLACK_POST_MESSAGE_URL: ${{ secrets.SLACK_POST_MESSAGE_URL }}
+      SLACK_CANVARA_APP_BOT_TOKEN: ${{ secrets.SLACK_CANVARA_APP_BOT_TOKEN }}
 
     steps:
       - name: Log in to the Container registry

@@ -23,8 +23,4 @@ def get_canvara_config():
         # 'sqlalchemy.echo':'True'
     }
 
-    config['slack'] = {
-        'url': os.environ['SLACK_POST_MESSAGE_URL'],
-        'token': os.environ['SLACK_CANVARA_APP_BOT_TOKEN']
-    }
     return config

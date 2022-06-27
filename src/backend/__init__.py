@@ -67,7 +67,6 @@ def create_app():  # pylint: disable=too-many-locals, disable=too-many-statement
     from .views.user import blueprint as user_blueprint, customer_user_blueprint
     from .views.backgroundpicture import blueprint as backgroundpicture_blueprint
     from .views.share import blueprint as share_blueprint
-    from .views.slack import blueprint as slack_blueprint
     # pylint: enable=import-outside-toplevel
 
     api.register_blueprint(marketplace_blueprint)
@@ -96,6 +95,5 @@ def create_app():  # pylint: disable=too-many-locals, disable=too-many-statement
     api.register_blueprint(user_blueprint)
     api.register_blueprint(backgroundpicture_blueprint)
     api.register_blueprint(share_blueprint)
-    api.register_blueprint(slack_blueprint)
 
     return app

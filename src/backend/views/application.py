@@ -5,7 +5,7 @@ import uuid
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
-from backend.models.slack import send_slack_notification
+
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.models.application import Application, ApplicationFilter, ApplicationStatus
@@ -64,7 +64,6 @@ class PostApplicationAPI(AuthenticatedAPIBase):
 
             # Generate a notification for the post owner
             tx.add(Notification.create_new_application_notification(application))
-            send_slack_notification(applicant, "Application created successfully")
             return application.as_dict()
 
 

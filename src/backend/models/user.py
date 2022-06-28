@@ -1,9 +1,7 @@
 import copy
 import enum
-import json
 from datetime import datetime
 
-import requests
 from dateutil.relativedelta import relativedelta
 
 from sqlalchemy import or_, cast, Date
@@ -61,42 +59,6 @@ class UserCurrentSkill(ModelBase, SkillWithLevelMixin):
 
 class UserDesiredSkill(ModelBase, SkillWithoutLevelMixin):
     __tablename__ = 'user_desired_skill'
-
-
-def slack_notification_response(res):
-    msg = ""
-    is_success = res["ok"]
-    if 'error' in res:
-        msg = res["error"]
-    elif is_success:
-        msg = "Notification sent successfully"
-    notification_response = {"is_success": is_success, "message": msg}
-    print("response: ", res)
-    return notification_response
-
-
-def send_slack_notification(user, text):
-    payload = json.dumps({
-        "channel": user.slack_id,
-        "text": text
-    })
-
-    # Slack notification url
-    url = "https://slack.com/api/chat.postMessage"
-
-    # API key
-    token = "xoxb-453068480679-3145973337222-KP7yYDe45Xlu2zjiTEZq5E3a"
-    # Headers
-    headers = {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-    }
-
-    # sending post request and saving response as response object
-    response = requests.request("POST", url, headers=headers, data=payload)
-    print(response.text)
-
-    return response
 
 
 class User(ModelBase):
@@ -548,21 +510,6 @@ class User(ModelBase):
         user['linkedin_profiles_suggestion'] = []
 
         return user
-
-    def check_slack_details(self, slack_id, workspace_id):
-        if self.slack_id == slack_id and self.workspace_id == workspace_id:
-            return {
-                'is_success': True,
-                'message': 'Slack details update successfully'
-            }
-        return {
-            'is_success': False,
-            'message': 'Unable to update Slack details'
-        }
-
-    def validate_slack_details(self):
-        if self.slack_id is None:
-            raise DoesNotExistError(f"User '{self.username}' does not have any registered slack details")
 
 
 class UserBookmark(ModelBase):  # pylint: disable=too-few-public-methods

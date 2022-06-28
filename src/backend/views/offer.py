@@ -5,6 +5,7 @@ from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
 
+from backend.models.slack import send_slack_notification
 from backend.common.http import make_no_content_response
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError
 from backend.models.db import transaction
@@ -12,7 +13,7 @@ from backend.models.offer import (
     Offer, OfferStatus, OfferStatusFilter, OfferSortFilter, OfferBookmark,
     OfferProposal, OfferProposalStatus, OfferProposalFilter
 )
-from backend.models.user import User, send_slack_notification
+from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase

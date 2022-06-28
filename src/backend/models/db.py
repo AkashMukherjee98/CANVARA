@@ -16,13 +16,6 @@ class CanvaraDB:
     def get_engine(cls):
         if cls.__engine is None:
             canvara_config = backend.common.config.get_canvara_config()
-            slack_config = canvara_config['slack']
-            # Slack notification url
-            url_os = slack_config['url']
-            # # Slack token
-            # token_os = slack_config['token']
-            print("slack url_os: ", url_os)
-            # print("slack token_os: ", token_os)
             cls.__engine = engine_from_config(canvara_config['database'], prefix="sqlalchemy.")
         return cls.__engine
 

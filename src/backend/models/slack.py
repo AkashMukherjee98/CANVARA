@@ -1,7 +1,7 @@
 import json
 
 import requests
-# from backend.common.config import get_canvara_config
+from backend.common.config import get_canvara_config
 
 from backend.common.exceptions import DoesNotExistError
 
@@ -25,15 +25,13 @@ def send_slack_notification(user, text):
     })
 
     # slack config
-    # canvara_config = get_canvara_config()
-    # slack_config = canvara_config['slack']
+    canvara_config = get_canvara_config()
+    slack_config = canvara_config['slack']
     # Slack notification url
-    # url = slack_config['url']
-    # # Slack token
-    # token = slack_config['token']
-    url = "https://slack.com/api/chat.postMessage"
+    url = slack_config['url']
     # Slack token
-    token = "xoxb-453068480679-3145973337222-KP7yYDe45Xlu2zjiTEZq5E3a"
+    token = slack_config['token']
+
     # Headers
     headers = {
         'Authorization': 'Bearer ' + token,

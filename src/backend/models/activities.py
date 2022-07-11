@@ -52,6 +52,7 @@ class ActivityStatus(enum.Enum):
 class Activity(ModelBase):
     __tablename__ = 'activity'
 
+    customer = relationship("Customer")
     user = relationship("User")
 
     ACTIVITY_DEFAULT_START = 0
@@ -73,6 +74,7 @@ class Activity(ModelBase):
         activitytype = ActivityType.lookup(act_type)
         return Activity(
             id=str(uuid.uuid4()),
+            customer=user.customer,
             user=user,
             type=activitytype.value,
             data=data,

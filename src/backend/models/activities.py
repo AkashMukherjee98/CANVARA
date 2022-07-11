@@ -1,4 +1,7 @@
 import enum
+import uuid
+from datetime import datetime
+
 from sqlalchemy import and_, func
 from sqlalchemy.orm import relationship
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -6,20 +9,36 @@ from .db import ModelBase
 
 from .post import Post
 from .application import Application
+from .application import ApplicationStatus
 from .offer import Offer
 from .offer import OfferProposal
-from .position import Position
-
-from .application import ApplicationStatus
 from .offer import OfferProposalStatus
+from .position import Position
 
 from .community import Community, CommunityMembership
 from .event import Event, EventRSVP
 
 
+class ActivityType(enum.Enum):
+    GIG_POSTED = 'gig_posted'
+    APPLICATION_SUBMITTED = 'application_submitted'
+    GIG_ASSIGNED = 'gig_assigned'
+    APPLICATION_REJECTED = 'application_rejected'
+
+    @classmethod
+    def lookup(cls, activity_type):
+        try:
+            return cls(activity_type)
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Invalid activity type: {activity_type}") from ex
+
+
 class ActivityStatus(enum.Enum):
+    NEW = 'new'
+
     READ = 'read'
     UNREAD = 'unread'
+
     DELETED = 'deleted'
 
     @classmethod
@@ -35,9 +54,9 @@ class Activity(ModelBase):
 
     user = relationship("User")
 
+    ACTIVITY_DEFAULT_START = 0
     ACTIVITY_DEFAULT_LIMIT = 20
     ACTIVITY_MAX_LIMIT = 100
-    ACTIVITY_DEFAULT_START = 0
 
     @classmethod
     def lookup(cls, tx, activity_id):
@@ -48,6 +67,18 @@ class Activity(ModelBase):
         if activity is None:
             raise DoesNotExistError(f"Activity '{activity_id}' does not exist")
         return activity
+
+    @classmethod
+    def add_activity(cls, user, act_type, data):
+        activitytype = ActivityType.lookup(act_type)
+        return Activity(
+            id=str(uuid.uuid4()),
+            user=user,
+            type=activitytype.value,
+            data=data,
+            created_at=datetime.utcnow(),
+            status=ActivityStatus.UNREAD.value
+        )
 
     @classmethod
     def find_multiple(cls, tx, user_id, start=None, limit=None):
@@ -63,7 +94,7 @@ class Activity(ModelBase):
         )).order_by(Activity.created_at.desc()).offset(start).limit(limit).all()
 
     @classmethod
-    def get_unread_count(cls, tx, user_id):
+    def unread_count(cls, tx, user_id):
         return tx.query(func.count(cls.id)).where(and_(
             cls.user_id == user_id,
             cls.status == ActivityStatus.UNREAD.value
@@ -76,6 +107,59 @@ class Activity(ModelBase):
             'data': self.data,
             'created_at': self.created_at.isoformat(),
             'status': self.status,
+        }
+
+
+class ActivityGlobal(ModelBase):
+    __tablename__ = 'activity_global'
+
+    customer = relationship("Customer")
+
+    ACTIVITY_DEFAULT_START = 0
+    ACTIVITY_DEFAULT_LIMIT = 20
+    ACTIVITY_MAX_LIMIT = 100
+
+    @classmethod
+    def lookup(cls, tx, activity_id):
+        activity = tx.query(cls).where(and_(
+            cls.id == activity_id,
+            cls.status != ActivityStatus.DELETED.value,
+        )).one_or_none()
+        if activity is None:
+            raise DoesNotExistError(f"Global activity '{activity_id}' does not exist")
+        return activity
+
+    @classmethod
+    def add_activity(cls, customer, act_type, data):
+        activity_type = ActivityType.lookup(act_type)
+        return ActivityGlobal(
+            id=str(uuid.uuid4()),
+            customer=customer,
+            type=activity_type.value,
+            data=data,
+            created_at=datetime.utcnow(),
+            status=ActivityStatus.NEW.value
+        )
+
+    @classmethod
+    def find_multiple(cls, tx, customer_id, start=None, limit=None):
+        if limit is None:
+            limit = cls.ACTIVITY_DEFAULT_LIMIT
+        limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
+        if start is None:
+            start = cls.ACTIVITY_DEFAULT_START
+
+        return tx.query(cls).where(and_(
+            cls.customer_id == customer_id,
+            cls.status != ActivityStatus.DELETED.value
+        )).order_by(ActivityGlobal.created_at.desc()).offset(start).limit(limit).all()
+
+    def as_dict(self):
+        return {
+            'activity_id': self.id,
+            'type': self.type,
+            'data': self.data,
+            'created_at': self.created_at.isoformat()
         }
 
 

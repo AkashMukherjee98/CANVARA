@@ -18,6 +18,8 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
 
 blueprint = Blueprint('post', __name__, url_prefix='/posts')
 post_type_blueprint = Blueprint('post_type', __name__, url_prefix='/post_types')
@@ -126,6 +128,21 @@ class PostAPI(AuthenticatedAPIBase):
             if payload.get('desired_skills'):
                 Post.validate_desired_skills(payload['desired_skills'])
                 post.set_desired_skills(tx, payload['desired_skills'])
+
+            # Insert activity details in DB
+            activity_data = {
+                'gig': {
+                    'post_id': post.id,
+                    'name': post.name
+                },
+                'user': {
+                    'user_id': post.owner.id,
+                    'name': post.owner.name,
+                    'profile_picture_url': post.owner.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(owner, ActivityType.GIG_POSTED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(owner.customer, ActivityType.GIG_POSTED, data=activity_data))
 
             return post.as_dict()
 

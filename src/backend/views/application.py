@@ -18,6 +18,8 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
 
 post_application_blueprint = Blueprint('post_application', __name__, url_prefix='/posts/<post_id>/applications')
 blueprint = Blueprint('application', __name__, url_prefix='/applications')
@@ -61,6 +63,25 @@ class PostApplicationAPI(AuthenticatedAPIBase):
                 status=ApplicationStatus.NEW.value
             )
             tx.add(application)
+
+            # Insert activity details in DB
+            activity_data = {
+                'gig': {
+                    'post_id': post.id,
+                    'name': post.name
+                },
+                'application': {
+                    'application_id': application.id,
+                    'description': application.details['description']
+                },
+                'user': {
+                    'user_id': applicant.id,
+                    'name': applicant.name,
+                    'profile_picture_url': applicant.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(applicant, ActivityType.APPLICATION_SUBMITTED, data=activity_data))
+            tx.add(Activity.add_activity(post.owner, ActivityType.APPLICATION_SUBMITTED, data=activity_data))
 
             # Generate a notification for the post owner
             tx.add(Notification.create_new_application_notification(application))
@@ -106,6 +127,23 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                 new_status = ApplicationStatus.lookup(payload['status'])
                 application.status = new_status.value
 
+                # Prepare activity details
+                activity_data = {
+                    'gig': {
+                        'post_id': application.post.id,
+                        'name': application.post.name
+                    },
+                    'application': {
+                        'application_id': application.id,
+                        'description': application.details['description']
+                    },
+                    'user': {
+                        'user_id': application.applicant.id,
+                        'name': application.applicant.name,
+                        'profile_picture_url': application.applicant.profile_picture_url
+                    }
+                }
+
                 # If the application has been selected, add a new performer
                 if application.status != new_status and new_status == ApplicationStatus.SELECTED:
                     tx.add(Performer(
@@ -113,6 +151,20 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                         status=PerformerStatus.IN_PROGRESS.value,
                         created_at=now,
                         last_updated_at=now))
+
+                    # Insert activity details in DB
+                    tx.add(Activity.add_activity(application.applicant, ActivityType.GIG_ASSIGNED, data=activity_data))
+                    tx.add(Activity.add_activity(application.post.owner, ActivityType.GIG_ASSIGNED, data=activity_data))
+                    tx.add(ActivityGlobal.add_activity(
+                        application.post.owner.customer, ActivityType.GIG_ASSIGNED, data=activity_data))
+
+                # If the application has been passed
+                if application.status != new_status and new_status == ApplicationStatus.PASSED:
+                    # Insert activity details in DB
+                    tx.add(Activity.add_activity(application.applicant, ActivityType.APPLICATION_REJECTED, data=activity_data))
+                    tx.add(Activity.add_activity(
+                        application.post.owner, ActivityType.APPLICATION_REJECTED, data=activity_data))
+
             application.last_updated_at = now
             return application.as_dict()
 

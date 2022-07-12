@@ -13,6 +13,8 @@ from backend.models.position import Position, PositionStatus, PositionRoleType, 
 from backend.models.user import User
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
 
 blueprint = Blueprint('position', __name__, url_prefix='/positions')
 
@@ -90,6 +92,21 @@ class PositionAPI(AuthenticatedAPIBase):
             )
             position.update_details(payload)
             tx.add(position)
+
+            # Insert activity details in DB
+            activity_data = {
+                'position': {
+                    'offer_id': position.id
+                },
+                'user': {
+                    'user_id': position.hiring_manager.id,
+                    'name': position.hiring_manager.name,
+                    'profile_picture_url': position.hiring_manager.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(position.hiring_manager, ActivityType.NEW_POSITION_POSTED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(
+                position.hiring_manager.customer, ActivityType.NEW_POSITION_POSTED, data=activity_data))
 
             position_details = position.as_dict()
 

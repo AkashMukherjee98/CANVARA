@@ -19,6 +19,8 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
 
 post_application_blueprint = Blueprint('post_application', __name__, url_prefix='/posts/<post_id>/applications')
 blueprint = Blueprint('application', __name__, url_prefix='/applications')
@@ -62,6 +64,36 @@ class PostApplicationAPI(AuthenticatedAPIBase):
                 status=ApplicationStatus.NEW.value
             )
             tx.add(application)
+
+            # Insert activity details in DB
+            tx.add(Activity.add_activity(application.applicant, ActivityType.APPLICATION_SUBMITTED, data={
+                'gig': {
+                    'post_id': application.post.id,
+                    'name': application.post.name
+                },
+                'application': {
+                    'application_id': application.id
+                },
+                'user': {
+                    'user_id': application.post.owner.id,
+                    'name': application.post.owner.name,
+                    'profile_picture_url': application.post.owner.profile_picture_url
+                }
+            }))
+            tx.add(Activity.add_activity(application.post.owner, ActivityType.APPLICATION_SUBMITTED, data={
+                'gig': {
+                    'post_id': application.post.id,
+                    'name': application.post.name
+                },
+                'application': {
+                    'application_id': application.id
+                },
+                'user': {
+                    'user_id': application.applicant.id,
+                    'name': application.applicant.name,
+                    'profile_picture_url': application.applicant.profile_picture_url
+                }
+            }))
 
             # Generate a notification for the post owner
             tx.add(Notification.create_new_application_notification(application))
@@ -115,6 +147,83 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                         status=PerformerStatus.IN_PROGRESS.value,
                         created_at=now,
                         last_updated_at=now))
+
+                    # Insert activity details in DB
+                    tx.add(Activity.add_activity(application.applicant, ActivityType.GIG_ASSIGNED, data={
+                        'gig': {
+                            'post_id': application.post.id,
+                            'name': application.post.name
+                        },
+                        'application': {
+                            'application_id': application.id
+                        },
+                        'user': {
+                            'user_id': application.post.owner.id,
+                            'name': application.post.owner.name,
+                            'profile_picture_url': application.post.owner.profile_picture_url
+                        }
+                    }))
+                    tx.add(Activity.add_activity(application.post.owner, ActivityType.GIG_ASSIGNED, data={
+                        'gig': {
+                            'post_id': application.post.id,
+                            'name': application.post.name
+                        },
+                        'application': {
+                            'application_id': application.id
+                        },
+                        'user': {
+                            'user_id': application.applicant.id,
+                            'name': application.applicant.name,
+                            'profile_picture_url': application.applicant.profile_picture_url
+                        }
+                    }))
+                    tx.add(ActivityGlobal.add_activity(application.post.owner.customer, ActivityType.GIG_ASSIGNED, data={
+                        'gig': {
+                            'post_id': application.post.id,
+                            'name': application.post.name
+                        },
+                        'application': {
+                            'application_id': application.id
+                        },
+                        'user': {
+                            'user_id': application.applicant.id,
+                            'name': application.applicant.name,
+                            'profile_picture_url': application.applicant.profile_picture_url
+                        }
+                    }))
+
+                # If the application has been passed
+                if application.status != new_status and new_status == ApplicationStatus.PASSED:
+                    # Insert activity details in DB
+                    tx.add(Activity.add_activity(application.applicant, ActivityType.APPLICATION_REJECTED, data={
+                        'gig': {
+                            'post_id': application.post.id,
+                            'name': application.post.name
+                        },
+                        'application': {
+                            'application_id': application.id
+                        },
+                        'user': {
+                            'user_id': application.post.owner.id,
+                            'name': application.post.owner.name,
+                            'profile_picture_url': application.post.owner.profile_picture_url
+                        }
+                    }))
+                    tx.add(Activity.add_activity(application.post.owner, ActivityType.APPLICATION_REJECTED, data={
+                        'gig': {
+                            'post_id': application.post.id,
+                            'name': application.post.name
+                        },
+                        'application': {
+                            'application_id': application.id
+                        },
+                        'user': {
+                            'user_id': application.applicant.id,
+                            'name': application.applicant.name,
+                            'profile_picture_url': application.applicant.profile_picture_url
+                        }
+                    }))
+
             application.last_updated_at = now
             return application.as_dict()
 

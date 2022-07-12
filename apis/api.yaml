@@ -21,26 +21,12 @@ tags:
   - name: backgroundpictures
   - name: slack
 paths:
-  /activities:
+  /activities/my:
     get:
-      summary: List all activities
+      summary: List my activities
+      operationId: list_activities
       tags:
         - activities
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  activities:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Activity'
-                  total_unread:
-                    type: number
-      operationId: list_activities
       security:
         - AWSCognitoCanvaraPrototype: []
       parameters:
@@ -55,6 +41,84 @@ paths:
           in: query
           name: start
           description: Start index from where to return the activities.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        activity_id:
+                          type: string
+                          description: Unique identifier of this activity.
+                        type:
+                          type: string
+                          description: Type of activity.
+                        data:
+                          type: object
+                          description: Data to display in the activity.
+                        created_at:
+                          type: string
+                          description: 'UTC date and time when this activity was created, in ISO 8601 format.'
+                        status:
+                          type: string
+                          description: Status of the activity.
+                          enum:
+                            - read
+                            - unread
+                  total_unread:
+                    type: number
+  /activities/global:
+    get:
+      summary: List global activities
+      operationId: list_activities_global
+      tags:
+        - activities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: integer
+            default: 20
+          in: query
+          name: limit
+          description: Maximum number of activities to return.
+        - schema:
+            type: integer
+          in: query
+          name: start
+          description: Start index from where to return the activities.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        activity_id:
+                          type: string
+                          description: Unique identifier of this activity.
+                        type:
+                          type: string
+                          description: Type of activity.
+                        data:
+                          type: object
+                          description: Data to display in the activity.
+                        created_at:
+                          type: string
+                          description: 'UTC date and time when this activity was created, in ISO 8601 format.'
   /myactivities:
     get:
       summary: List my activities
@@ -62,6 +126,7 @@ paths:
       description: ''
       tags:
         - activities
+      deprecated: true
       responses:
         '200':
           description: OK
@@ -4836,34 +4901,6 @@ paths:
         - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
-    Activity:
-      title: Activity
-      type: object
-      properties:
-        activity_id:
-          type: string
-          description: Unique identifier of this activity.
-        type:
-          type: string
-          description: Type of activity.
-        data:
-          type: object
-          description: Data to display in the activity.
-        created_at:
-          type: string
-          description: 'UTC date and time when this activity was created, in ISO 8601 format.'
-        status:
-          type: string
-          description: Unread status of the activity.
-          enum:
-            - read
-            - unread
-      required:
-        - activity_id
-        - type
-        - data
-        - created_at
-        - status
     Share:
       title: Share item
       type: object

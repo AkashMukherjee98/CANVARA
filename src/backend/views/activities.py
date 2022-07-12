@@ -9,7 +9,7 @@ from backend.models.user import User
 from backend.models.application import ApplicationStatus
 from backend.models.offer import OfferProposalStatus
 
-from backend.models.activities import Activity
+from backend.models.activities import Activity, ActivityGlobal
 from backend.models.activities import MyActivity
 
 
@@ -17,7 +17,7 @@ blueprint = Blueprint('activities', __name__, url_prefix='/activities')
 blueprint_myactivities = Blueprint('myactivities', __name__, url_prefix='/myactivities')
 
 
-@blueprint.route('')
+@blueprint.route('/my')
 class ActivityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
@@ -26,44 +26,31 @@ class ActivityAPI(AuthenticatedAPIBase):
 
         user_id = current_cognito_jwt['sub']
         with transaction() as tx:
-            Activity.find_multiple(tx, user_id, start=start, limit=limit)
-            Activity.get_unread_count(tx, user_id)
+            activities = Activity.find_multiple(tx, user_id, start=start, limit=limit)
 
             return {
-                'activities': [
-                    {
-                        "created_at": "2021-11-26T07:43:15.568450",
-                        "data": {
-                            "post_id": "f5272507-ffb7-4963-9d21-fe741e7ca30e",
-                            "name": "Need a person for web app development",
-                            "user": {
-                                "user_id": "2b153d65-4f06-4315-b663-2a61df5c23af",
-                                "name": "Smoke Suite Inc"
-                            }
-                        },
-                        "notification_id": "a76e349c-2faa-4b0e-a1cb-09d61a3d4136",
-                        "status": "read",
-                        "type": "gig_posted"
-                    },
-                    {
-                        "created_at": "2021-11-26T07:41:59.950590",
-                        "data": {
-                            "name": "John Doe",
-                            "user_id": "2b153d65-4f06-4315-b663-2a61df5c23af",
-                            "user": {
-                                "user_id": "2b153d65-4f06-4315-b663-2a61df5c23af",
-                                "name": "Smoke Suite Inc"
-                            }
-                        },
-                        "notification_id": "f1a2e14b-2a1e-4cc7-a422-7c5b38c89568",
-                        "status": "unread",
-                        "type": "new_employee_joined"
-                    }
-                ],
-                'total_unread': 2,
+                'activities': [activitiy.as_dict() for activitiy in activities],
+                'total_unread': Activity.unread_count(tx, user_id),
             }
 
 
+@blueprint.route('/global')
+class ActivityGlobalAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get():
+        start = int(request.args.get('start')) if request.args.get('start') is not None else None
+        limit = int(request.args.get('limit')) if request.args.get('limit') is not None else None
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            activities = ActivityGlobal.find_multiple(tx, user.customer_id, start=start, limit=limit)
+
+            return {
+                'activities': [activitiy.as_dict() for activitiy in activities]
+            }
+
+
+# Old my activities code starts here - DEPRICATED
 @blueprint_myactivities.route('')
 class MyActivityAPI(AuthenticatedAPIBase):
     @staticmethod

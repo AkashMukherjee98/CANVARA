@@ -18,6 +18,8 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
 
 blueprint = Blueprint('offer', __name__, url_prefix='/offers')
 proposal_blueprint = Blueprint('offer_proposal', __name__, url_prefix='/proposals')
@@ -58,12 +60,12 @@ class OfferAPI(AuthenticatedAPIBase):
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
 
         with transaction() as tx:
-            offerer_id = User.lookup(tx, current_cognito_jwt['sub'])
+            offerer = User.lookup(tx, current_cognito_jwt['sub'])
 
             offer = Offer(
                 id=offer_id,
                 name=payload.get('name'),
-                offerer=offerer_id,
+                offerer=offerer,
                 status=OfferStatus.ACTIVE.value,
                 created_at=now,
                 last_updated_at=now
@@ -71,8 +73,24 @@ class OfferAPI(AuthenticatedAPIBase):
             tx.add(offer)
 
             offer.update_details(payload)
+
+            # Insert activity details in DB
+            activity_data = {
+                'offer': {
+                    'offer_id': offer.id,
+                    'name': offer.name
+                },
+                'user': {
+                    'user_id': offer.offerer.id,
+                    'name': offer.offerer.name,
+                    'profile_picture_url': offer.offerer.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(offer.offerer, ActivityType.NEW_OFFER_POSTED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(offer.offerer.customer, ActivityType.NEW_OFFER_POSTED, data=activity_data))
+
             offer_details = offer.as_dict()
-            send_slack_notification(offerer_id, "Offer created successfully")
+            send_slack_notification(offerer, "Offer created successfully")
 
         return offer_details
 
@@ -220,12 +238,12 @@ class OfferProposalAPI(AuthenticatedAPIBase):
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
 
         with transaction() as tx:
-            proposer_id = User.lookup(tx, current_cognito_jwt['sub'])
+            proposer = User.lookup(tx, current_cognito_jwt['sub'])
             offer = Offer.lookup(tx, offer_id, [OfferStatus.ACTIVE.value])
             proposal = OfferProposal(
                 id=proposal_id,
                 name=payload.get('name'),
-                proposer=proposer_id,
+                proposer=proposer,
                 offer_id=offer.id,
                 status=OfferProposalStatus.NEW.value,
                 created_at=now,
@@ -234,6 +252,39 @@ class OfferProposalAPI(AuthenticatedAPIBase):
             tx.add(proposal)
 
             proposal.update_details(payload)
+
+            # Insert activity details in DB
+            tx.add(Activity.add_activity(proposal.proposer, ActivityType.NEW_PROPOSAL, data={
+                'offer': {
+                    'offer_id': offer.id,
+                    'name': offer.name
+                },
+                'proposal': {
+                    'proposal_id': proposal.id,
+                    'name': proposal.name
+                },
+                'user': {
+                    'user_id': offer.offerer.id,
+                    'name': offer.offerer.name,
+                    'profile_picture_url': offer.offerer.profile_picture_url
+                }
+            }))
+            tx.add(Activity.add_activity(offer.offerer, ActivityType.NEW_PROPOSAL, data={
+                'offer': {
+                    'offer_id': offer.id,
+                    'name': offer.name
+                },
+                'proposal': {
+                    'proposal_id': proposal.id,
+                    'name': proposal.name
+                },
+                'user': {
+                    'user_id': proposal.proposer.id,
+                    'name': proposal.proposer.name,
+                    'profile_picture_url': proposal.proposer.profile_picture_url
+                }
+            }))
+
             proposal_details = proposal.as_dict()
 
         return proposal_details

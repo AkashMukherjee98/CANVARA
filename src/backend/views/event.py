@@ -20,6 +20,8 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
 
 blueprint = Blueprint('event', __name__, url_prefix='/events')
 
@@ -55,7 +57,7 @@ class EventAPI(AuthenticatedAPIBase):
         return jsonify(events)
 
     @staticmethod
-    def post():
+    def post():  # pylint: disable=too-many-locals
         payload = request.json
         event_id = str(uuid.uuid4())
         now = datetime.utcnow()
@@ -94,6 +96,21 @@ class EventAPI(AuthenticatedAPIBase):
             tx.add(event)
 
             event.update_details(payload)
+
+            # Insert activity details in DB
+            activity_data = {
+                'event': {
+                    'event_id': event.id,
+                    'name': event.name
+                },
+                'user': {
+                    'user_id': primary_organizer.id,
+                    'name': primary_organizer.name,
+                    'profile_picture_url': primary_organizer.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(primary_organizer, ActivityType.NEW_EVENT_POSTED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(primary_organizer.customer, ActivityType.NEW_EVENT_POSTED, data=activity_data))
 
             event_details = event.as_dict()
         return event_details

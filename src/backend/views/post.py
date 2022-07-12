@@ -141,8 +141,8 @@ class PostAPI(AuthenticatedAPIBase):
                     'profile_picture_url': post.owner.profile_picture_url
                 }
             }
-            tx.add(Activity.add_activity(owner, ActivityType.GIG_POSTED, data=activity_data))
-            tx.add(ActivityGlobal.add_activity(owner.customer, ActivityType.GIG_POSTED, data=activity_data))
+            tx.add(Activity.add_activity(post.owner, ActivityType.GIG_POSTED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(post.owner.customer, ActivityType.GIG_POSTED, data=activity_data))
 
             return post.as_dict()
 

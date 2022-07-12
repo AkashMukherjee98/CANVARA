@@ -18,6 +18,7 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
 
 blueprint = Blueprint('community', __name__, url_prefix='/communities')
 
@@ -79,6 +80,23 @@ class CommunityAPI(AuthenticatedAPIBase):
             tx.add(community)
 
             community.update_details(payload)
+
+            # Insert activity details in DB
+            activity_data = {
+                'community': {
+                    'community_id': community.id,
+                    'name': community.name
+                },
+                'user': {
+                    'user_id': primary_moderator.id,
+                    'name': primary_moderator.name,
+                    'profile_picture_url': primary_moderator.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(primary_moderator, ActivityType.NEW_COMMUNITY_CREATED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(
+                primary_moderator.customer, ActivityType.NEW_COMMUNITY_CREATED, data=activity_data))
+
             community_details = community.as_dict()
 
         return community_details

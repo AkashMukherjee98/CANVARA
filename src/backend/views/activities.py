@@ -17,7 +17,7 @@ blueprint = Blueprint('activities', __name__, url_prefix='/activities')
 blueprint_myactivities = Blueprint('myactivities', __name__, url_prefix='/myactivities')
 
 
-@blueprint.route('')
+@blueprint.route('/my')
 class ActivityAPI(AuthenticatedAPIBase):
     @staticmethod
     def get():
@@ -50,6 +50,7 @@ class ActivityGlobalAPI(AuthenticatedAPIBase):
             }
 
 
+# Old my activities code starts here - DEPRICATED
 @blueprint_myactivities.route('')
 class MyActivityAPI(AuthenticatedAPIBase):
     @staticmethod

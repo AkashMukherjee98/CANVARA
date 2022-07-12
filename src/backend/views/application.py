@@ -71,8 +71,7 @@ class PostApplicationAPI(AuthenticatedAPIBase):
                     'name': application.post.name
                 },
                 'application': {
-                    'application_id': application.id,
-                    'description': application.details['description']
+                    'application_id': application.id
                 },
                 'user': {
                     'user_id': application.post.owner.id,
@@ -86,8 +85,7 @@ class PostApplicationAPI(AuthenticatedAPIBase):
                     'name': application.post.name
                 },
                 'application': {
-                    'application_id': application.id,
-                    'description': application.details['description']
+                    'application_id': application.id
                 },
                 'user': {
                     'user_id': application.applicant.id,
@@ -155,8 +153,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                             'name': application.post.name
                         },
                         'application': {
-                            'application_id': application.id,
-                            'description': application.details['description']
+                            'application_id': application.id
                         },
                         'user': {
                             'user_id': application.post.owner.id,
@@ -170,8 +167,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                             'name': application.post.name
                         },
                         'application': {
-                            'application_id': application.id,
-                            'description': application.details['description']
+                            'application_id': application.id
                         },
                         'user': {
                             'user_id': application.applicant.id,
@@ -185,8 +181,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                             'name': application.post.name
                         },
                         'application': {
-                            'application_id': application.id,
-                            'description': application.details['description']
+                            'application_id': application.id
                         },
                         'user': {
                             'user_id': application.applicant.id,
@@ -204,8 +199,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                             'name': application.post.name
                         },
                         'application': {
-                            'application_id': application.id,
-                            'description': application.details['description']
+                            'application_id': application.id
                         },
                         'user': {
                             'user_id': application.post.owner.id,
@@ -219,8 +213,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
                             'name': application.post.name
                         },
                         'application': {
-                            'application_id': application.id,
-                            'description': application.details['description']
+                            'application_id': application.id
                         },
                         'user': {
                             'user_id': application.applicant.id,

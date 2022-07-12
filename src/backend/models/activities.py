@@ -25,6 +25,15 @@ class ActivityType(enum.Enum):
     GIG_ASSIGNED = 'gig_assigned'
     APPLICATION_REJECTED = 'application_rejected'
 
+    NEW_OFFER_POSTED = 'new_offer_posted'
+    NEW_PROPOSAL = 'new_proposal'
+
+    NEW_POSITION_POSTED = 'new_position_posted'
+
+    NEW_COMMUNITY_CREATED = 'new_community_created'
+
+    NEW_EVENT_POSTED = 'new_event_posted'
+
     @classmethod
     def lookup(cls, activity_type):
         try:
@@ -165,6 +174,7 @@ class ActivityGlobal(ModelBase):
         }
 
 
+# Old my activities code starts here - DEPRICATED
 class MyActivity():
     # Get activities counts
     @classmethod

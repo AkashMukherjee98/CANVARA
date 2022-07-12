@@ -21,7 +21,7 @@ tags:
   - name: backgroundpictures
   - name: slack
 paths:
-  /activities:
+  /activities/my:
     get:
       summary: List my activities
       operationId: list_activities

@@ -4150,6 +4150,90 @@ paths:
                   $ref: '#/components/schemas/Banner'
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/resume':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a resume upload
+      operationId: upload_resume
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: resume.pdf
+                  content_type: application/pdf
+      tags:
+        - users
+  '/users/{user_id}/resume/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize resume upload
+      operationId: finalize_resume_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
+    delete:
+      summary: Delete a resume
+      operationId: delete_resume
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
   '/users/{user_id}/introduction_video':
     parameters:
       - schema:

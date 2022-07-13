@@ -92,7 +92,7 @@ class User(ModelBase):
     feedback_list = relationship("Feedback", foreign_keys="Feedback.user_id", back_populates="user")
 
     community_memberships = relationship("Community", secondary='community_membership', primaryjoin=(
-        "and_(CommunityMembership.community_id==Community.id, "
+        "and_(CommunityMembership.member_id==User.id, CommunityMembership.community_id==Community.id, "
         "CommunityMembership.status == 'active')"))
     bookmark_user = relationship("UserBookmark", foreign_keys="[UserBookmark.bookmarked_user_id]")
     # TODO: (santanu) After DS work on matching reason, need to add proper relationship table

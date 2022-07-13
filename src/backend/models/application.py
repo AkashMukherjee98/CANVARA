@@ -126,7 +126,7 @@ class Application(ModelBase):
             'applicant': self.applicant.as_custom_dict([
                 'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
             ]),
-            'description': self.details['description'],
+            'description': self.details['description'] if self.details else None,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_updated_at': self.last_updated_at.isoformat() if self.last_updated_at else None

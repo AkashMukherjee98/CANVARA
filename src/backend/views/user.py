@@ -17,6 +17,9 @@ from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.models.notification import Notification
 
+from backend.models.activities import Activity, ActivityGlobal, ActivityType
+
+
 blueprint = Blueprint('user', __name__, url_prefix='/users')
 customer_user_blueprint = Blueprint('customer_user', __name__, url_prefix='/customers/<customer_id>/users')
 
@@ -55,6 +58,17 @@ class CustomerUserAPI(AuthenticatedAPIBase):
             if payload.get('desired_skills'):
                 User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
                 user.set_desired_skills(tx, payload['desired_skills'])
+
+            # Insert activity details in DB
+            activity_data = {
+                'user': {
+                    'user_id': user.id,
+                    'name': user.name,
+                    'profile_picture_url': user.profile_picture_url
+                }
+            }
+            tx.add(Activity.add_activity(user, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(user.customer, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
 
             user_details = user.as_dict()
         return user_details
@@ -142,6 +156,10 @@ class UserByIdAPI(AuthenticatedAPIBase):
     def put(user_id):
         with transaction() as tx:
             user = User.lookup(tx, user_id)
+            title_last = user.profile['title'] if (
+                hasattr(user, 'profile') and 'title' in user.profile) else ''
+            mentorship_offered_last = user.profile['mentorship_offered'] if (
+                hasattr(user, 'profile') and 'mentorship_offered' in user.profile) else False
 
             payload = request.json
 
@@ -169,6 +187,34 @@ class UserByIdAPI(AuthenticatedAPIBase):
                 user.set_desired_skills(tx, payload['desired_skills'])
 
             user.update_profile(payload)
+
+            # Title has been updated
+            if 'title' in payload and payload['title'] != title_last:
+                # Insert activity details in DB
+                activity_data = {
+                    'user': {
+                        'user_id': user.id,
+                        'name': user.name,
+                        'profile_picture_url': user.profile_picture_url
+                    }
+                }
+                tx.add(Activity.add_activity(user, ActivityType.NEW_ROLE, data=activity_data))
+                tx.add(ActivityGlobal.add_activity(user.customer, ActivityType.NEW_ROLE, data=activity_data))
+
+            # Mentorship offered is true
+            if 'mentorship_offered' in payload and payload['mentorship_offered'] is True:
+                if payload['mentorship_offered'] != mentorship_offered_last:
+                    # Insert activity details in DB
+                    activity_data = {
+                        'user': {
+                            'user_id': user.id,
+                            'name': user.name,
+                            'profile_picture_url': user.profile_picture_url
+                        }
+                    }
+                    tx.add(Activity.add_activity(user, ActivityType.NEW_MENTORSHIP_BEING_OFFERED, data=activity_data))
+                    tx.add(ActivityGlobal.add_activity(
+                        user.customer, ActivityType.NEW_MENTORSHIP_BEING_OFFERED, data=activity_data))
 
         # Fetch the user again from the database so the updates made above are reflected in the response
         with transaction() as tx:

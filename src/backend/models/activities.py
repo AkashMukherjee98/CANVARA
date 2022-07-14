@@ -47,7 +47,7 @@ class ActivityType(enum.Enum):
             raise InvalidArgumentError(f"Invalid activity type: {activity_type}") from ex
 
     @classmethod
-    def relate(cls, activities_in):
+    def types(cls, activities_in):
         activity_types = []
         if 'gigs' in activities_in:
             activity_types.append(ActivityType.GIG_POSTED.value)
@@ -130,18 +130,18 @@ class Activity(ModelBase):
         if start is None:
             start = cls.ACTIVITY_DEFAULT_START
 
-        actvities = tx.query(cls).where(and_(
+        activities = tx.query(cls).where(and_(
             cls.user_id == user_id,
             cls.status != ActivityStatus.DELETED.value
         ))
 
-        activity_types = ActivityType.relate(activities_in)
+        activity_types = ActivityType.types(activities_in)
         if activity_types:
-            actvities = actvities.where(Activity.type.in_(activity_types))
+            activities = activities.where(Activity.type.in_(activity_types))
 
-        actvities = actvities.order_by(Activity.created_at.desc()).offset(start).limit(limit)
+        activities = activities.order_by(Activity.created_at.desc()).offset(start).limit(limit)
 
-        return actvities.all()
+        return activities.all()
 
     @classmethod
     def unread_count(cls, tx, user_id):
@@ -199,18 +199,18 @@ class ActivityGlobal(ModelBase):
         if start is None:
             start = cls.ACTIVITY_DEFAULT_START
 
-        actvities = tx.query(cls).where(and_(
+        activities = tx.query(cls).where(and_(
             cls.customer_id == customer_id,
             cls.status != ActivityStatus.DELETED.value
         ))
 
-        activity_types = ActivityType.relate(activities_in)
+        activity_types = ActivityType.types(activities_in)
         if activity_types:
-            actvities = actvities.where(ActivityGlobal.type.in_(activity_types))
+            activities = activities.where(ActivityGlobal.type.in_(activity_types))
 
-        actvities = actvities.order_by(ActivityGlobal.created_at.desc()).offset(start).limit(limit)
+        activities = activities.order_by(ActivityGlobal.created_at.desc()).offset(start).limit(limit)
 
-        return actvities.all()
+        return activities.all()
 
     def as_dict(self):
         return {

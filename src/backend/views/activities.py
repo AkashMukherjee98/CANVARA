@@ -31,7 +31,6 @@ class ActivityAPI(AuthenticatedAPIBase):
                 tx, user_id, activities_in=activities_in, start=start, limit=limit)
 
             return {
-                'aca': len(activities),
                 'activities': [activitiy.as_dict() for activitiy in activities],
                 'total_unread': Activity.unread_count(tx, user_id),
             }

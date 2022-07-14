@@ -31,8 +31,13 @@ class ActivityType(enum.Enum):
     NEW_POSITION_POSTED = 'new_position_posted'
 
     NEW_COMMUNITY_CREATED = 'new_community_created'
+    NEW_MEMBER_IN_YOUR_COMMUNITY = 'new_member_in_your_community'
 
     NEW_EVENT_POSTED = 'new_event_posted'
+
+    NEW_EMPLOYEE_JOINED = 'new_employee_joined'
+    NEW_ROLE = 'new_role'
+    NEW_MENTORSHIP_BEING_OFFERED = 'new_mentorship_being_offered'
 
     @classmethod
     def lookup(cls, activity_type):
@@ -40,6 +45,32 @@ class ActivityType(enum.Enum):
             return cls(activity_type)
         except ValueError as ex:
             raise InvalidArgumentError(f"Invalid activity type: {activity_type}") from ex
+
+    @classmethod
+    def types(cls, activities_in):
+        activity_types = []
+        if 'gigs' in activities_in:
+            activity_types.append(ActivityType.GIG_POSTED.value)
+            activity_types.append(ActivityType.APPLICATION_SUBMITTED.value)
+            activity_types.append(ActivityType.GIG_ASSIGNED.value)
+            activity_types.append(ActivityType.APPLICATION_REJECTED.value)
+        if 'offers' in activities_in:
+            activity_types.append(ActivityType.NEW_OFFER_POSTED.value)
+            activity_types.append(ActivityType.NEW_PROPOSAL.value)
+        if 'positions' in activities_in:
+            activity_types.append(ActivityType.NEW_POSITION_POSTED.value)
+        if 'communities' in activities_in:
+            activity_types.append(ActivityType.NEW_COMMUNITY_CREATED.value)
+            activity_types.append(ActivityType.NEW_MEMBER_IN_YOUR_COMMUNITY.value)
+        if 'events' in activities_in:
+            activity_types.append(ActivityType.NEW_EVENT_POSTED.value)
+        if 'people' in activities_in:
+            activity_types.append(ActivityType.NEW_EMPLOYEE_JOINED.value)
+            activity_types.append(ActivityType.NEW_ROLE.value)
+        if 'mentors' in activities_in:
+            activity_types.append(ActivityType.NEW_MENTORSHIP_BEING_OFFERED.value)
+
+        return activity_types
 
 
 class ActivityStatus(enum.Enum):
@@ -92,17 +123,25 @@ class Activity(ModelBase):
         )
 
     @classmethod
-    def find_multiple(cls, tx, user_id, start=None, limit=None):
+    def find_multiple(cls, tx, user_id, activities_in, start=None, limit=None):  # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
         limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
         if start is None:
             start = cls.ACTIVITY_DEFAULT_START
 
-        return tx.query(cls).where(and_(
+        activities = tx.query(cls).where(and_(
             cls.user_id == user_id,
             cls.status != ActivityStatus.DELETED.value
-        )).order_by(Activity.created_at.desc()).offset(start).limit(limit).all()
+        ))
+
+        activity_types = ActivityType.types(activities_in)
+        if activity_types:
+            activities = activities.where(Activity.type.in_(activity_types))
+
+        activities = activities.order_by(Activity.created_at.desc()).offset(start).limit(limit)
+
+        return activities.all()
 
     @classmethod
     def unread_count(cls, tx, user_id):
@@ -153,17 +192,25 @@ class ActivityGlobal(ModelBase):
         )
 
     @classmethod
-    def find_multiple(cls, tx, customer_id, start=None, limit=None):
+    def find_multiple(cls, tx, customer_id, activities_in, start=None, limit=None):  # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
         limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
         if start is None:
             start = cls.ACTIVITY_DEFAULT_START
 
-        return tx.query(cls).where(and_(
+        activities = tx.query(cls).where(and_(
             cls.customer_id == customer_id,
             cls.status != ActivityStatus.DELETED.value
-        )).order_by(ActivityGlobal.created_at.desc()).offset(start).limit(limit).all()
+        ))
+
+        activity_types = ActivityType.types(activities_in)
+        if activity_types:
+            activities = activities.where(ActivityGlobal.type.in_(activity_types))
+
+        activities = activities.order_by(ActivityGlobal.created_at.desc()).offset(start).limit(limit)
+
+        return activities.all()
 
     def as_dict(self):
         return {

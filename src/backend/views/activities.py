@@ -23,10 +23,12 @@ class ActivityAPI(AuthenticatedAPIBase):
     def get():
         start = int(request.args.get('start')) if request.args.get('start') is not None else None
         limit = int(request.args.get('limit')) if request.args.get('limit') is not None else None
+        activities_in = request.args.get('activities_in').split("|") if request.args.get('activities_in') is not None else []
 
         user_id = current_cognito_jwt['sub']
         with transaction() as tx:
-            activities = Activity.find_multiple(tx, user_id, start=start, limit=limit)
+            activities = Activity.find_multiple(
+                tx, user_id, activities_in=activities_in, start=start, limit=limit)
 
             return {
                 'activities': [activitiy.as_dict() for activitiy in activities],
@@ -40,10 +42,12 @@ class ActivityGlobalAPI(AuthenticatedAPIBase):
     def get():
         start = int(request.args.get('start')) if request.args.get('start') is not None else None
         limit = int(request.args.get('limit')) if request.args.get('limit') is not None else None
+        activities_in = request.args.get('activities_in').split("|") if request.args.get('activities_in') is not None else []
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            activities = ActivityGlobal.find_multiple(tx, user.customer_id, start=start, limit=limit)
+            activities = ActivityGlobal.find_multiple(
+                tx, user.customer_id, activities_in=activities_in, start=start, limit=limit)
 
             return {
                 'activities': [activitiy.as_dict() for activitiy in activities]

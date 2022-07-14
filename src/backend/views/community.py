@@ -363,6 +363,25 @@ class CommunityMembershipAPI(AuthenticatedAPIBase):
             )
             tx.add(membership_create)
 
+            # If community membership is approved
+            if community_membership_status == CommunityMembershipStatus.ACTIVE.value:
+                for membership in community.members:
+                    if membership.member_id != member.id:
+                        # Insert activity details in DB
+                        activity_data = {
+                            'community': {
+                                'community_id': community.id,
+                                'name': community.name
+                            },
+                            'user': {
+                                'user_id': member.id,
+                                'name': member.name,
+                                'profile_picture_url': member.profile_picture_url
+                            }
+                        }
+                        tx.add(Activity.add_activity(
+                            membership.member, ActivityType.NEW_MEMBER_IN_YOUR_COMMUNITY, data=activity_data))
+
             return {
                 'membership_id': membership_create.id,
                 'status': membership_create.status,
@@ -408,6 +427,25 @@ class CommunityMembershipByIdAPI(AuthenticatedAPIBase):
             if status in [CommunityMembershipStatus.DISAPPROVED, CommunityMembershipStatus.ACTIVE]:
                 community_membership.status = status.value
                 community_membership.last_updated_at = now
+
+            # If community membership is approved
+            if status.value == CommunityMembershipStatus.ACTIVE.value:
+                for membership in community.members:
+                    if membership.member_id != community_membership.member.id:
+                        # Insert activity details in DB
+                        activity_data = {
+                            'community': {
+                                'community_id': community.id,
+                                'name': community.name
+                            },
+                            'user': {
+                                'user_id': community_membership.member.id,
+                                'name': community_membership.member.name,
+                                'profile_picture_url': community_membership.member.profile_picture_url
+                            }
+                        }
+                        tx.add(Activity.add_activity(
+                            membership.member, ActivityType.NEW_MEMBER_IN_YOUR_COMMUNITY, data=activity_data))
 
         return {
             'status': community_membership.status,

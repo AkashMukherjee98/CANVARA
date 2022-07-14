@@ -31,6 +31,19 @@ paths:
         - AWSCognitoCanvaraPrototype: []
       parameters:
         - schema:
+            type: string
+            enum:
+              - gigs
+              - offers
+              - positions
+              - communities
+              - events
+              - people
+              - mentors
+          in: query
+          name: activities_in
+          description: Search activities in pipe(|) separated enum values, e.g. gigs|offers|positions
+        - schema:
             type: integer
             default: 20
           in: query
@@ -83,6 +96,19 @@ paths:
       security:
         - AWSCognitoCanvaraPrototype: []
       parameters:
+        - schema:
+            type: string
+            enum:
+              - gigs
+              - offers
+              - positions
+              - communities
+              - events
+              - people
+              - mentors
+          in: query
+          name: activities_in
+          description: Search activities in pipe(|) separated enum values, e.g. gigs|offers|positions
         - schema:
             type: integer
             default: 20

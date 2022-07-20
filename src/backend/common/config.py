@@ -28,4 +28,11 @@ def get_canvara_config():
         'token': os.environ['SLACK_CANVARA_APP_BOT_TOKEN']
     }
 
+    config['rchilli'] = {
+        'apiurl': 'https://rest.rchilli.com/RChilliParser/Rchilli/parseResumeBinary',  # os.environ['RCHILLI_API_URL']
+        'userkey': 'KR0RC54B',  # os.environ['RCHILLI_USER_KEY']
+        'subuserid': 'Canvara Inc.',  # os.environ['RCHILLI_SUB_USER_ID']
+        'version': '8.0.0'
+    }
+
     return config

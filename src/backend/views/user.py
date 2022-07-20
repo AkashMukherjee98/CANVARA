@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
+from backend.common.resume import Resume
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.skill import Skill
@@ -405,6 +406,12 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             if status == UserUploadStatus.UPLOADED:
                 user.resume_file = user_upload
                 user_upload.status = status.value
+
+                # Processing resume file(rchilli)
+                file_path = user_upload.path
+                file_name = user_upload.metadata['original_filename']
+                json_data = Resume.convert_resume_to_json_data(file_path, file_name)
+                user.resume_data = json_data
 
         return {
             'status': user_upload.status,

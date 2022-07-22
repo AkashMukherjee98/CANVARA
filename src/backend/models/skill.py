@@ -62,7 +62,8 @@ class Skill(ModelBase):
             usage_count=0)
 
     @classmethod
-    def lookup_or_add(cls, tx, customer_id, skill_id=None, name=None, source='user_provided'):  # pylint: disable=too-many-arguments
+    def lookup_or_add(cls, tx, customer_id, skill_id=None, name=None, source='user_provided'):
+        # pylint: disable=too-many-arguments
         # Lookup the skill based on id or name, or add a new custom skill
         skill = Skill.lookup(tx, customer_id, skill_id=skill_id, name=name, must_exist=False)
         if skill is None:

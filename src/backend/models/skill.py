@@ -51,9 +51,10 @@ class Skill(ModelBase):
         return skill
 
     @classmethod
-    def add_custom_skill(cls, name, customer_id):
+    def add_custom_skill(cls, customer_id, name, source):
         return Skill(
             id=str(uuid.uuid4()),
+            source=source,
             internal_name=name.lower(),
             display_name=name,
             customer_id=customer_id,
@@ -61,11 +62,12 @@ class Skill(ModelBase):
             usage_count=0)
 
     @classmethod
-    def lookup_or_add(cls, tx, customer_id, skill_id=None, name=None):
+    def lookup_or_add(cls, tx, customer_id, skill_id=None, name=None, source='user_provided'):
+        # pylint: disable=too-many-arguments
         # Lookup the skill based on id or name, or add a new custom skill
         skill = Skill.lookup(tx, customer_id, skill_id=skill_id, name=name, must_exist=False)
         if skill is None:
-            skill = Skill.add_custom_skill(name, customer_id)
+            skill = Skill.add_custom_skill(customer_id, name, source)
         return skill
 
     @classmethod

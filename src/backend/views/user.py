@@ -404,14 +404,18 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, user_id)
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             if status == UserUploadStatus.UPLOADED:
-                user.resume_file = user_upload
-                user_upload.status = status.value
-
                 # Processing resume file(rchilli)
                 file_path = user_upload.path
                 file_name = user_upload.metadata['original_filename']
-                json_data = Resume.convert_resume_to_json_data(file_path, file_name)
-                user.resume_data = json_data
+                resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
+
+                user.resume_file = user_upload
+                user.resume_data = resume_json
+                user_upload.status = status.value
+
+                # Store new skills
+                for skill in resume_json['SegregatedSkill']:
+                    Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
 
         return {
             'status': user_upload.status,

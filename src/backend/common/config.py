@@ -29,9 +29,9 @@ def get_canvara_config():
     }
 
     config['rchilli'] = {
-        'apiurl': 'https://rest.rchilli.com/RChilliParser/Rchilli/parseResumeBinary',  # os.environ['RCHILLI_API_URL']
-        'userkey': 'KR0RC54B',  # os.environ['RCHILLI_USER_KEY']
-        'subuserid': 'Canvara Inc.',  # os.environ['RCHILLI_SUB_USER_ID']
+        'apiurl': os.environ['RCHILLI_API_URL'],
+        'userkey': os.environ['RCHILLI_USER_KEY'],
+        'subuserid': os.environ['RCHILLI_SUB_USER_ID'],
         'version': '8.0.0'
     }
 

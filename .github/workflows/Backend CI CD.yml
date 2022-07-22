@@ -161,7 +161,10 @@ jobs:
 
       - name: Kill if there is an existing container
         run: |
-          docker rm $(docker stop $(docker ps -aq --filter "label=canvara:svc=backend"))
+          existing_container_id=$(docker ps -aq --filter "label=canvara:svc=backend")
+          if [ $existing_container_id ]; then
+          docker rm $(docker stop $existing_container_id)
+          fi
 
       - name: Run the image
         run: |
@@ -171,6 +174,10 @@ jobs:
           if [ !$new_container_id ]; then
           sleep 5
           fi
+          
+      - name: Remove old unused docker images
+        run: |
+          docker rmi $(docker images -f "dangling=true" -q)
 
       - name: slack message notification on failure
         if: failure()

@@ -221,8 +221,9 @@ class Post(ModelBase):
     @classmethod
     def search(  # noqa: C901
         cls, tx, user, owner_id=None, query=None, post_type_id=None, post_filter=None,
-        sort=None, keyword=None, status=None, project_size=None, target_date=None, location=None, department=None, limit=None
-    ):  # pylint: disable=too-many-arguments, disable=too-many-locals, disable=too-many-branches
+        sort=None, keyword=None, status=None, project_size=None, target_date=None, location=None, department=None, skill=None,
+        limit=None
+    ):  # pylint: disable=too-many-arguments, disable=too-many-locals, disable=too-many-branches, disable=too-many-statements
         if post_filter is None:
             post_filter = cls.DEFAULT_FILTER
 
@@ -286,6 +287,12 @@ class Post(ModelBase):
 
         if department is not None:
             posts = posts.filter(Post.details['department'].astext == department)  # pylint: disable=unsubscriptable-object
+
+        if skill is not None:
+            posts = posts.join(Post.required_skills.and_(
+                Post.id == PostSkill.post_id,
+                PostSkill.skill_id == skill.id
+            ))
 
         # Status(New)
         # TODO: (santanu) Need to improve conditions, as all are not correct

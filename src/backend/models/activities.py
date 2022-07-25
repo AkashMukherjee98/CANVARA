@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import relationship
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
 from .db import ModelBase
@@ -123,7 +123,7 @@ class Activity(ModelBase):
         )
 
     @classmethod
-    def find_multiple(cls, tx, user_id, activities_in, start=None, limit=None):  # pylint: disable=too-many-arguments
+    def find_multiple(cls, tx, user_id, activities_in, keyword, start=None, limit=None):  # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
         limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
@@ -138,6 +138,25 @@ class Activity(ModelBase):
         activity_types = ActivityType.types(activities_in)
         if activity_types:
             activities = activities.where(Activity.type.in_(activity_types))
+
+        if keyword is not None:
+            activities = activities.where(or_(
+                Activity.type.ilike(f'%{keyword}%'),
+                Activity.data['user']['name'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['gig']['name'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['application']['description'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['offer']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['proposal']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['position']['description'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['community']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                Activity.data['event']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+            ))
 
         activities = activities.order_by(Activity.created_at.desc()).offset(start).limit(limit)
 
@@ -192,7 +211,8 @@ class ActivityGlobal(ModelBase):
         )
 
     @classmethod
-    def find_multiple(cls, tx, customer_id, activities_in, start=None, limit=None):  # pylint: disable=too-many-arguments
+    def find_multiple(cls, tx, customer_id, activities_in, keyword, start=None, limit=None):
+        # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
         limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
@@ -207,6 +227,25 @@ class ActivityGlobal(ModelBase):
         activity_types = ActivityType.types(activities_in)
         if activity_types:
             activities = activities.where(ActivityGlobal.type.in_(activity_types))
+
+        if keyword is not None:
+            activities = activities.where(or_(
+                ActivityGlobal.type.ilike(f'%{keyword}%'),
+                ActivityGlobal.data['user']['name'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['gig']['name'].astext.ilike(f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['application']['description'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['offer']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['proposal']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['position']['description'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['community']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+                ActivityGlobal.data['event']['name'].astext.ilike(
+                    f'%{keyword}%'),  # pylint: disable=unsubscriptable-object
+            ))
 
         activities = activities.order_by(ActivityGlobal.created_at.desc()).offset(start).limit(limit)
 

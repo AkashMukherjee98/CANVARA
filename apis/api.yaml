@@ -44,6 +44,11 @@ paths:
           name: activities_in
           description: Search activities in pipe(|) separated enum values, e.g. gigs|offers|positions
         - schema:
+            type: string
+          in: query
+          name: keyword
+          description: Search keyword for activities.
+        - schema:
             type: integer
             default: 20
           in: query
@@ -109,6 +114,11 @@ paths:
           in: query
           name: activities_in
           description: Search activities in pipe(|) separated enum values, e.g. gigs|offers|positions
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: Search keyword for activities.
         - schema:
             type: integer
             default: 20

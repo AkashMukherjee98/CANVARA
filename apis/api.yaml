@@ -2861,6 +2861,11 @@ paths:
           in: query
           name: department
           description: 'Department filter for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: skill_id
+          description: 'Skill id filter for gigs.'
     post:
       summary: Add a new post
       tags:

@@ -11,6 +11,7 @@ from backend.common.http import make_no_content_response
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.location import Location
+from backend.models.skill import Skill
 from backend.models.post import Post, PostSort, PostStatusFilter, PostFilter, PostStatus, UserPostBookmark, UserPostLike
 from backend.models.post_type import PostType
 from backend.models.user import User
@@ -49,6 +50,9 @@ class PostAPI(AuthenticatedAPIBase):
 
             location = Location.lookup(tx, request.args.get('location_id')) if 'location_id' in request.args else None
 
+            skill = Skill.lookup(tx, user.customer_id,
+                                 request.args.get('skill_id')) if 'skill_id' in request.args else None
+
             posts = Post.search(
                 tx,
                 user,
@@ -64,7 +68,8 @@ class PostAPI(AuthenticatedAPIBase):
                 project_size=project_size,
                 target_date=target_date,
                 location=location,
-                department=department
+                department=department,
+                skill=skill
             )
             posts = [post.as_dict(user=user) for post in posts]
         return jsonify(posts)

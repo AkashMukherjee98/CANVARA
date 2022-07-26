@@ -171,6 +171,8 @@ class Community(ModelBase):
         add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
         add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
+        add_if_required('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
+
         return community
 
     @classmethod
@@ -228,7 +230,13 @@ class Community(ModelBase):
 
         communities = communities.options(query_options)
 
-        return communities
+        # Transform dataset with is_bookmarked flag
+        communities_ = []
+        for community in communities:
+            community.is_bookmarked = any(bookmark.user_id == user.id for bookmark in community.bookmark_users)
+            communities_.append(community)
+
+        return communities_
 
     def add_gallery_media(self, media):
         # Community can have limited number of images and video for gallery

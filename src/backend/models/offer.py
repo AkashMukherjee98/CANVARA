@@ -120,6 +120,7 @@ class Offer(ModelBase):
         add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
         add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
+        add_if_required('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
         add_if_required('proposal_count', len(self.proposals))
 
         return offer
@@ -187,7 +188,14 @@ class Offer(ModelBase):
         ]
 
         offers = offers.options(query_options)
-        return offers
+
+        # Transform dataset with is_bookmarked flag
+        offers_ = []
+        for offer in offers:
+            offer.is_bookmarked = any(bookmark.user_id == user.id for bookmark in offer.bookmark_users)
+            offers_.append(offer)
+
+        return offers_
 
     @classmethod
     def my_bookmarks(

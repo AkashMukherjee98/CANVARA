@@ -674,7 +674,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OfferMinimal'
+                  allOf:
+                    - $ref: '#/components/schemas/OfferMinimal'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this offer has been bookmarked by the current user or not.
       operationId: list_offers
       description: ''
       security:
@@ -1241,7 +1247,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Position'
+                  allOf:
+                    - $ref: '#/components/schemas/Position'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this position has been bookmarked by the current user or not.
       operationId: list_positions
       description: ''
       security:
@@ -1471,7 +1483,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Event'
+                  allOf:
+                    - $ref: '#/components/schemas/Event'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this event has been bookmarked by the current user or not.
       operationId: list_events
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -2128,7 +2146,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Community'
+                  allOf:
+                    - $ref: '#/components/schemas/Community'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this community has been bookmarked by the current user or not.
       operationId: list_communities
       description: ''
       security:
@@ -4120,6 +4144,9 @@ paths:
                     matching_reason:
                       type: string
                       description: Reason for recomending this user.
+                    is_bookmarked:
+                      type: boolean
+                      description: Whether people has been bookmarked by the current user or not.
       operationId: list_user
       security:
         - AWSCognitoCanvaraPrototype: []

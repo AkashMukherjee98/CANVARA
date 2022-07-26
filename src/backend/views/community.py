@@ -46,7 +46,7 @@ class CommunityAPI(AuthenticatedAPIBase):
             )
             communities = [community.as_dict([
                 'primary_moderator', 'location', 'community_logo', 'type', 'hashtags', 'sponsor_events',
-                'created_at', 'last_updated_at'
+                'created_at', 'last_updated_at', 'is_bookmarked'
             ]) for community in communities]
         return jsonify(communities)
 

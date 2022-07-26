@@ -117,7 +117,7 @@ class UsersAPI(AuthenticatedAPIBase):
                 'introduction', 'introduction_video', 'hashtags',
                 'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
                 'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
-                'matching_reason'
+                'matching_reason', 'is_bookmarked'
             ]) for user in users]
         return jsonify(users)
 

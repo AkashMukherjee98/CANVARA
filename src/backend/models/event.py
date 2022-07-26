@@ -127,6 +127,8 @@ class Event(ModelBase):
         add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
         add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
+        add_if_required('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
+
         return event
 
     def as_summary_dict(self):
@@ -154,7 +156,7 @@ class Event(ModelBase):
         return event
 
     @classmethod
-    def search(  # noqa: C901
+    def search(  # noqa: C901 # pylint: disable=too-many-locals
         cls, tx, user,
         keyword=None, location=None, sponsor_community=None, event_date=None,
         volunteers_events_only=None, remote_attendance_support=None,
@@ -215,7 +217,14 @@ class Event(ModelBase):
         ]
 
         events = events.options(query_options)
-        return events
+
+        # Transform dataset with is_bookmarked flag
+        events_ = []
+        for event in events:
+            event.is_bookmarked = any(bookmark.user_id == user.id for bookmark in event.bookmark_users)
+            events_.append(event)
+
+        return events_
 
     @classmethod
     def my_bookmarks(

@@ -144,14 +144,19 @@ class User(ModelBase):
         )
 
     @classmethod
-    def lookup(cls, tx, user_id):
+    def lookup(cls, tx, user_id, user_=None):
         user = tx.get(cls, user_id)
         if user is None:
             raise DoesNotExistError(f"User '{user_id}' does not exist")
+
+        if user_ is not None:
+            # Transform dataset with is_bookmarked flag
+            user.is_bookmarked = any(bookmark.user_id == user_.id for bookmark in user.bookmark_user)
+
         return user
 
     @classmethod
-    def search(  # noqa: C901
+    def search(  # noqa: C901 # pylint: disable=too-many-locals, disable=too-many-branches
         cls, tx, user,
         user_type=None, keyword=None, title=None, department=None, skill=None, location=None, language=None,
         tenure_gte=None, tenure_lte=None
@@ -223,7 +228,13 @@ class User(ModelBase):
         query_options = []
         users = users.options(query_options)
 
-        return users
+        # Transform dataset with is_bookmarked flag
+        users_ = []
+        for user_ in users:
+            user_.is_bookmarked = any(bookmark.user_id == user.id for bookmark in user_.bookmark_user)
+            users_.append(user_)
+
+        return users_
 
     def validate_manager(self, manager):
         if manager.id == self.id:
@@ -416,6 +427,8 @@ class User(ModelBase):
 
         add_if_not_none('matching_reason', self.matching_reason)
 
+        add_if_not_none('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
+
         return user
 
     def as_dict(self, scrub_feedback=False):  # noqa: C901
@@ -508,6 +521,8 @@ class User(ModelBase):
         user['relevant_skills_recommendation'] = []
         # TODO: (santanu) Get Linkedin profile suggestions based on user(DS)
         user['linkedin_profiles_suggestion'] = []
+
+        add_if_not_none('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
 
         return user
 

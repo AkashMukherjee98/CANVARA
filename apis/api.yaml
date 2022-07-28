@@ -674,7 +674,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OfferMinimal'
+                  allOf:
+                    - $ref: '#/components/schemas/OfferMinimal'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this offer has been bookmarked by the current user or not.
       operationId: list_offers
       description: ''
       security:
@@ -730,7 +736,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Offer'
+                allOf:
+                  - $ref: '#/components/schemas/OfferMinimal'
+                  - type: object
+                    properties:
+                      is_bookmarked:
+                        type: boolean
+                        description: Whether this offer has been bookmarked by the current user or not.
       operationId: get_offer
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -1241,7 +1253,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Position'
+                  allOf:
+                    - $ref: '#/components/schemas/Position'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this position has been bookmarked by the current user or not.
       operationId: list_positions
       description: ''
       security:
@@ -1327,7 +1345,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Position'
+                allOf:
+                  - $ref: '#/components/schemas/Position'
+                  - type: object
+                    properties:
+                      is_bookmarked:
+                        type: boolean
+                        description: Whether this position has been bookmarked by the current user or not.
       operationId: get_position
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -1471,7 +1495,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Event'
+                  allOf:
+                    - $ref: '#/components/schemas/Event'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this event has been bookmarked by the current user or not.
       operationId: list_events
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -1573,7 +1603,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
+                allOf:
+                  - $ref: '#/components/schemas/Event'
+                  - type: object
+                    properties:
+                      is_bookmarked:
+                        type: boolean
+                        description: Whether this event has been bookmarked by the current user or not.
       operationId: get_event
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -2128,7 +2164,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Community'
+                  allOf:
+                    - $ref: '#/components/schemas/Community'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this community has been bookmarked by the current user or not.
       operationId: list_communities
       description: ''
       security:
@@ -2228,7 +2270,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Community'
+                allOf:
+                  - $ref: '#/components/schemas/Community'
+                  - type: object
+                    properties:
+                      is_bookmarked:
+                        type: boolean
+                        description: Whether this community has been bookmarked by the current user or not.
       operationId: get_community
       security:
         - AWSCognitoCanvaraPrototype: []
@@ -3683,7 +3731,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserWithTeam'
+                allOf:
+                  - $ref: '#/components/schemas/UserWithTeam'
+                  - type: object
+                    properties:
+                      is_bookmarked:
+                        type: boolean
+                        description: Whether people has been bookmarked by the current user or not.
       security:
         - AWSCognitoCanvaraPrototype: []
     put:
@@ -4120,6 +4174,9 @@ paths:
                     matching_reason:
                       type: string
                       description: Reason for recomending this user.
+                    is_bookmarked:
+                      type: boolean
+                      description: Whether people has been bookmarked by the current user or not.
       operationId: list_user
       security:
         - AWSCognitoCanvaraPrototype: []

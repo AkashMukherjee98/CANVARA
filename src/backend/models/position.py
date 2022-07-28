@@ -92,6 +92,8 @@ class Position(ModelBase):
         add_if_not_none('benefits', self.details.get('benefits'))
         add_if_not_none('apply_url', self.details.get('apply_url'))
 
+        add_if_not_none('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
+
         position['pay_currency'] = self.pay_currency
         position['pay_minimum'] = float(self.pay_minimum)
         position['pay_maximum'] = float(self.pay_maximum)
@@ -114,13 +116,18 @@ class Position(ModelBase):
         return True
 
     @classmethod
-    def lookup(cls, tx, position_id, must_exist=True):
+    def lookup(cls, tx, position_id, user=None, must_exist=True):
         position = tx.query(cls).where(and_(
             cls.id == position_id,
             cls.status == PositionStatus.ACTIVE.value
         )).one_or_none()
         if position is None and must_exist:
             raise DoesNotExistError(f"Position '{position_id}' does not exist")
+
+        if user is not None:
+            # Transform dataset with is_bookmarked flag
+            position.is_bookmarked = any(bookmark.user_id == user.id for bookmark in position.bookmark_users)
+
         return position
 
     @classmethod
@@ -164,7 +171,13 @@ class Position(ModelBase):
         if limit is not None:
             positions = positions.limit(int(limit))
 
-        return positions
+        # Transform dataset with is_bookmarked flag
+        positions_ = []
+        for position in positions:
+            position.is_bookmarked = any(bookmark.user_id == user.id for bookmark in position.bookmark_users)
+            positions_.append(position)
+
+        return positions_
 
     @classmethod
     def my_bookmarks(

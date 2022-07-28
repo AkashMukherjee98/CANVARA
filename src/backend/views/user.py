@@ -117,7 +117,7 @@ class UsersAPI(AuthenticatedAPIBase):
                 'introduction', 'introduction_video', 'hashtags',
                 'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
                 'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
-                'matching_reason'
+                'matching_reason', 'is_bookmarked'
             ]) for user in users]
         return jsonify(users)
 
@@ -144,7 +144,8 @@ class UserByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(user_id):
         with transaction() as tx:
-            user = User.lookup(tx, user_id)
+            user_ = User.lookup(tx, current_cognito_jwt['sub'])
+            user = User.lookup(tx, user_id, user_)
 
             # If the user is viewing someone else's profile,
             # remove concerns and additional_comments from the feedback

@@ -176,13 +176,18 @@ class Community(ModelBase):
         return community
 
     @classmethod
-    def lookup(cls, tx, community_id, must_exist=True):
+    def lookup(cls, tx, community_id, user=None, must_exist=True):
         community = tx.query(cls).where(and_(
             cls.id == community_id,
             cls.status == CommunityStatus.ACTIVE.value
         )).one_or_none()
         if community is None and must_exist:
             raise DoesNotExistError(f"Community '{community_id}' does not exist")
+
+        if user is not None:
+            # Transform dataset with is_bookmarked flag
+            community.is_bookmarked = any(bookmark.user_id == user.id for bookmark in community.bookmark_users)
+
         return community
 
     @classmethod

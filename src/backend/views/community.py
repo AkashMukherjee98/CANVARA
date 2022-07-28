@@ -107,7 +107,8 @@ class CommunityByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(community_id):
         with transaction() as tx:
-            community = Community.lookup(tx, community_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            community = Community.lookup(tx, community_id, user)
             return community.as_dict()
 
     @staticmethod

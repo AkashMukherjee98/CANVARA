@@ -121,7 +121,8 @@ class EventByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(event_id):
         with transaction() as tx:
-            event = Event.lookup(tx, event_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            event = Event.lookup(tx, event_id, user)
             return event.as_dict()
 
     @staticmethod

@@ -144,10 +144,15 @@ class User(ModelBase):
         )
 
     @classmethod
-    def lookup(cls, tx, user_id):
+    def lookup(cls, tx, user_id, user_=None):
         user = tx.get(cls, user_id)
         if user is None:
             raise DoesNotExistError(f"User '{user_id}' does not exist")
+
+        if user_ is not None:
+            # Transform dataset with is_bookmarked flag
+            user.is_bookmarked = any(bookmark.user_id == user_.id for bookmark in user.bookmark_user)
+
         return user
 
     @classmethod
@@ -516,6 +521,8 @@ class User(ModelBase):
         user['relevant_skills_recommendation'] = []
         # TODO: (santanu) Get Linkedin profile suggestions based on user(DS)
         user['linkedin_profiles_suggestion'] = []
+
+        add_if_not_none('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
 
         return user
 

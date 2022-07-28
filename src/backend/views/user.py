@@ -144,7 +144,8 @@ class UserByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(user_id):
         with transaction() as tx:
-            user = User.lookup(tx, user_id)
+            user_ = User.lookup(tx, current_cognito_jwt['sub'])
+            user = User.lookup(tx, user_id, user_)
 
             # If the user is viewing someone else's profile,
             # remove concerns and additional_comments from the feedback

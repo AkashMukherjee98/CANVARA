@@ -100,7 +100,8 @@ class OfferByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(offer_id):
         with transaction() as tx:
-            offer = Offer.lookup(tx, offer_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            offer = Offer.lookup(tx, offer_id, user)
             return offer.as_dict()
 
     @staticmethod

@@ -118,7 +118,8 @@ class PositionByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(position_id):
         with transaction() as tx:
-            position = Position.lookup(tx, position_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            position = Position.lookup(tx, position_id, user)
             return position.as_dict()
 
     @staticmethod

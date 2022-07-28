@@ -126,7 +126,7 @@ class Offer(ModelBase):
         return offer
 
     @classmethod
-    def lookup(cls, tx, offer_id, status=None):
+    def lookup(cls, tx, offer_id, user=None, status=None):
         offer = tx.query(cls).where(and_(
             cls.id == offer_id,
             cls.status != OfferStatus.DELETED.value
@@ -138,6 +138,11 @@ class Offer(ModelBase):
         offer = offer.one_or_none()
         if offer is None:
             raise DoesNotExistError(f"Offer '{offer_id}' does not exist")
+
+        if user is not None:
+            # Transform dataset with is_bookmarked flag
+            offer.is_bookmarked = any(bookmark.user_id == user.id for bookmark in offer.bookmark_users)
+
         return offer
 
     @classmethod

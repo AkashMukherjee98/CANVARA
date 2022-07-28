@@ -146,13 +146,18 @@ class Event(ModelBase):
         return event
 
     @classmethod
-    def lookup(cls, tx, event_id, must_exist=True):
+    def lookup(cls, tx, event_id, user=None, must_exist=True):
         event = tx.query(cls).where(and_(
             cls.id == event_id,
             cls.status == EventStatus.ACTIVE.value
         )).one_or_none()
         if event is None and must_exist:
             raise DoesNotExistError(f"Event '{event_id}' does not exist")
+
+        if user is not None:
+            # Transform dataset with is_bookmarked flag
+            event.is_bookmarked = any(bookmark.user_id == user.id for bookmark in event.bookmark_users)
+
         return event
 
     @classmethod

@@ -12,6 +12,7 @@ from backend.common.resume import Resume
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.skill import Skill
+from backend.models.customer import Customer
 from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
@@ -46,6 +47,7 @@ class CustomerUserAPI(AuthenticatedAPIBase):
             name=payload['name'],
         )
         with transaction() as tx:
+            customer = Customer.lookup(tx, customer_id)
             tx.add(user)
             user.update_profile(payload)
 
@@ -69,7 +71,7 @@ class CustomerUserAPI(AuthenticatedAPIBase):
                 }
             }
             tx.add(Activity.add_activity(user, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
-            tx.add(ActivityGlobal.add_activity(user.customer, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(customer, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
 
             user_details = user.as_dict()
         return user_details

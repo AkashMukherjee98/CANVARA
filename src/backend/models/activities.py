@@ -30,6 +30,8 @@ class ActivityType(enum.Enum):
 
     NEW_POSITION_POSTED = 'new_position_posted'
 
+    NEW_ASSIGNMENT_CREATED = 'NEW_ASSIGNMENT_CREATED'
+
     NEW_COMMUNITY_CREATED = 'new_community_created'
     NEW_MEMBER_IN_YOUR_COMMUNITY = 'new_member_in_your_community'
 

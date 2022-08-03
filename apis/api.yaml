@@ -7,6 +7,7 @@ tags:
   - name: activities
   - name: marketplaces
   - name: shareitems
+  - name: assignments
   - name: projects
   - name: clients
   - name: offers
@@ -428,6 +429,279 @@ paths:
                     description: List of events.
       security:
         - AWSCognitoCanvaraPrototype: []
+  /assignments:
+    post:
+      summary: Add a new assignment
+      tags:
+        - assignments
+      operationId: create_post
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this assignment.
+                role:
+                  type: string
+                  description: Role for this assignment.
+                project_id:
+                  type: string
+                  description: Unique identifier of the project.
+                location_id:
+                  type: string
+                  description: Unique identifier of the location for this post.
+                start_date:
+                  type: string
+                  description: 'Start date for this assignment, in ISO 8601 format.'
+                people_needed:
+                  type: integer
+                  description: Number of people needed for this assignment.
+                required_skills:
+                  type: array
+                  description: Must-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                description:
+                  type: string
+                  description: Description for this assignment.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hastags or keywords.
+              required:
+                - name
+                - project_id
+                - location_id
+                - description
+                - start_date
+                - people_needed
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+    get:
+      summary: List all assignments
+      tags:
+        - assignments
+      operationId: list_assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for assignments.'
+        - schema:
+            type: string
+          in: query
+          name: start_date
+          description: 'Date filter upto start date.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location id filter for list of assignments.'
+        - schema:
+            type: string
+          in: query
+          name: role
+          description: 'Role filter for assignments.'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assignment'
+  '/assignments/{assignment_id}':
+    parameters:
+      - schema:
+          type: string
+        name: assignment_id
+        in: path
+        required: true
+    get:
+      summary: Get details of an assignment
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+      operationId: get_post
+    put:
+      summary: Update details of an assignment
+      tags:
+        - assignments
+      operationId: update_assignment_id
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this assignment.
+                role:
+                  type: string
+                  description: Role for this assignment.
+                project_id:
+                  type: string
+                  description: Unique identifier of the project.
+                location_id:
+                  type: string
+                  description: Unique identifier of the location for this post.
+                start_date:
+                  type: string
+                  description: 'Start date for this assignment, in ISO 8601 format.'
+                people_needed:
+                  type: integer
+                  description: Number of people needed for this assignment.
+                required_skills:
+                  type: array
+                  description: Must-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                description:
+                  type: string
+                  description: Description for this assignment.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hastags or keywords.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+    delete:
+      summary: Delete a assignment
+      tags:
+        - assignments
+      operationId: delete_assignment
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: No Content
+  '/assignments/{assignment_id}/video_description':
+    parameters:
+      - schema:
+          type: string
+        name: assignment_id
+        in: path
+        required: true
+        description: Unique identifier of the assignment.
+    put:
+      summary: Create request for a assignment video upload
+      operationId: upload_assignment_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: assignment_video.mp4
+                  content_type: video/mp4
+  '/assignments/{assignment_id}/overview_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: assignment_id
+        in: path
+        required: true
+        description: Unique identifier of the assignment.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize assignment video upload
+      operationId: finalize_assignment_video_upload
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+    delete:
+      summary: Delete a assignment video description
+      operationId: delete_assignment_video
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: No Content
   /projects:
     post:
       summary: Add a new project
@@ -5326,6 +5600,51 @@ paths:
         - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
+    Assignment:
+      title: Project
+      type: object
+      properties:
+        assignment_id:
+          type: string
+          description: Unique identifier of the assignment.
+        project_id:
+          type: string
+          description: Unique identifier of the project.
+        location_id:
+          type: string
+          description: Unique identifier of the location for this post.
+        name:
+          type: string
+          description: Name of this assignment.
+        role:
+          type: string
+          description: Role for this assignment.
+        start_date:
+          type: string
+          description: 'Start date for this assignment, in ISO 8601 format.'
+        people_needed:
+          type: integer
+          description: Number of people needed for this assignment.
+        required_skills:
+          type: array
+          description: Must-have skills for this post.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        description:
+          type: string
+          description: Description for this assignment.
+        hashtags:
+          type: array
+          items:
+            type: string
+          description: List of hastags or keywords.
+      required:
+        - name
+        - project_id
+        - location_id
+        - description
+        - start_date
+        - people_needed
     Project:
       title: Project
       type: object

@@ -533,7 +533,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Assignment'
+                  allOf:
+                    - $ref: '#/components/schemas/Assignment'
+                    - type: object
+                      properties:
+                        is_bookmarked:
+                          type: boolean
+                          description: Whether this assignment has been bookmarked by the current user or not.
   '/assignments/{assignment_id}':
     parameters:
       - schema:
@@ -553,7 +559,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Assignment'
+                allOf:
+                  - $ref: '#/components/schemas/Assignment'
+                  - type: object
+                    properties:
+                      is_bookmarked:
+                        type: boolean
+                        description: Whether this assignment has been bookmarked by the current user or not.
       operationId: get_post
     put:
       summary: Update details of an assignment
@@ -697,6 +709,154 @@ paths:
       operationId: delete_assignment_video
       tags:
         - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: No Content
+  '/assignments/{assignment_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: assignment_id
+        in: path
+        required: true
+        description: Unique identifier of the assignment.
+    put:
+      summary: Bookmark a assignment
+      operationId: add_assignmen_bookmark
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: ''
+    delete:
+      summary: Remove bookmark for a assignment
+      operationId: delete_assignment_bookmark
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: No Content
+  '/assignments/{assignment_id}/applications':
+    get:
+      summary: List all applications
+      tags:
+        - assignments
+      operationId: list_assignment_application
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - active
+              - selected
+              - rejected
+              - suspended
+              - completed
+            default: all
+          in: query
+          name: filter
+          description: Filter for the results.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssignmentApplication'
+    post:
+      summary: Create a new application
+      tags:
+        - assignments
+      operationId: create_assignment_application
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: Description of the application.
+              required:
+                - description
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentApplication'
+  '/assignments/applications/{application_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a application
+      tags:
+        - assignments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentApplication'
+      operationId: get_assignment_application
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a application
+      tags:
+        - assignments
+      operationId: update_assignment_application
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: Description of the application.
+                status:
+                  type: string
+                  description: Current status of this application.
+                  enum:
+                    - active_read
+                    - selected
+                    - rejected
+                    - suspended
+                    - completed
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentApplication'
+    delete:
+      summary: Delete an application
+      tags:
+        - assignments
+      operationId: delete_assignment_application
       security:
         - AWSCognitoCanvaraPrototype: []
       responses:
@@ -5613,6 +5773,19 @@ components:
         location_id:
           type: string
           description: Unique identifier of the location for this post.
+        creator:
+          type: object
+          description: Information about the creator.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
         name:
           type: string
           description: Name of this assignment.
@@ -5645,6 +5818,118 @@ components:
         - description
         - start_date
         - people_needed
+    AssignmentApplication:
+      title: Application
+      type: object
+      properties:
+        application_id:
+          type: string
+          description: Unique identifier for this application.
+        assignment:
+          type: object
+          description: Information about the assignment.
+          properties:
+            assignment_id:
+              type: string
+              description: Unique identifier of the assignment.
+            project_id:
+              type: string
+              description: Unique identifier of the project.
+            location_id:
+              type: string
+              description: Unique identifier of the location for this post.
+            creator:
+              type: object
+              description: Information about the creator.
+              properties:
+                user_id:
+                  type: string
+                  description: Unique identifier for the user.
+                name:
+                  type: string
+                  description: Name of the user.
+                profile_picture_url:
+                  type: string
+                  description: The URL of user's profile picture.
+            name:
+              type: string
+              description: Name of this assignment.
+            role:
+              type: string
+              description: Role for this assignment.
+            start_date:
+              type: string
+              description: 'Start date for this assignment, in ISO 8601 format.'
+            people_needed:
+              type: integer
+              description: Number of people needed for this assignment.
+            required_skills:
+              type: array
+              description: Must-have skills for this post.
+              items:
+                $ref: '#/components/schemas/SkillWithLevel'
+            description:
+              type: string
+              description: Description for this assignment.
+            hashtags:
+              type: array
+              items:
+                type: string
+              description: List of hastags or keywords.
+        applicant:
+          type: object
+          description: Information about the applicant.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            slack_teams_messaging_id:
+              type: string
+              description: Messaging handle of the user.
+        description:
+          type: string
+          description: Description of the application.
+        status:
+          type: string
+          description: Current status of this application.
+        decided_at:
+          type: string
+          description: 'Date and time when the status of the proposal is "selected", in ISO 8601 format.'
+        closed_at:
+          type: string
+          description: 'Date and time when the status of the proposal is "in_progress", in ISO 8601 format.'
+        created_at:
+          type: string
+          description: 'Date and time when this offer was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+      required:
+        - description
     Project:
       title: Project
       type: object

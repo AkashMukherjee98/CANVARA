@@ -7,6 +7,8 @@ tags:
   - name: activities
   - name: marketplaces
   - name: shareitems
+  - name: projects
+  - name: clients
   - name: offers
   - name: positions
   - name: communities
@@ -426,6 +428,247 @@ paths:
                     description: List of events.
       security:
         - AWSCognitoCanvaraPrototype: []
+  /projects:
+    post:
+      summary: Add a new project
+      tags:
+        - projects
+      operationId: create_project
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this project.
+                client_id:
+                  type: string
+                  description: ID of the client.
+              required:
+                - name
+                - client_id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    get:
+      summary: List all projects
+      operationId: list_projects
+      description: ''
+      tags:
+        - projects
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Project'
+  '/projects/{project_id}':
+    parameters:
+      - schema:
+          type: string
+        name: project_id
+        in: path
+        required: true
+    put:
+      summary: Update details of a project
+      tags:
+        - projects
+      operationId: update_project
+      security:
+        - AWSCognitoCanvaraPrototype: []      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this project.
+                client_id:
+                  type: string
+                  description: ID of the client.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+  /clients:
+    post:
+      summary: Add a new client
+      tags:
+        - clients
+      operationId: create_client
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the client.
+              required:
+                - name
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    get:
+      summary: List all clients
+      operationId: list_clients
+      description: ''
+      tags:
+        - clients
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Client'
+  '/clients/{client_id}':
+    parameters:
+      - schema:
+          type: string
+        name: client_id
+        in: path
+        required: true
+    put:
+      summary: Update details of a client
+      tags:
+        - clients
+      operationId: update_client
+      security:
+        - AWSCognitoCanvaraPrototype: []      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this client.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+  '/clients/{client_id}/client_logo':
+    parameters:
+      - schema:
+          type: string
+        name: client_id
+        in: path
+        required: true
+        description: Unique identifier of the client.
+    put:
+      summary: Create request for a client logo upload
+      operationId: upload_logo_image
+      tags:
+        - clients
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: client_logo.jpg
+                  content_type: image/jpg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+  '/clients/{client_id}/client_logo/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: client_id
+        in: path
+        required: true
+        description: Unique identifier of the client.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize client logo upload
+      operationId: finalize_client_logo_upload
+      tags:
+        - clients
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+    delete:
+      summary: Delete a client logo
+      operationId: delete_clientcommunity_logo
+      tags:
+        - clients
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: No Content
   /customers:
     get:
       summary: List all customers
@@ -5083,6 +5326,47 @@ paths:
         - AWSCognitoCanvaraPrototype: []
 components:
   schemas:
+    Project:
+      title: Project
+      type: object
+      properties:
+        project_id:
+          type: string
+          description: Unique identifier for this project.
+        name:
+          type: string
+          description: Name of this project.
+        client:
+          type: object
+          description: Information about the client.
+          required:
+            - client_id
+            - name
+          properties:
+            client_id:
+              type: string
+              description: Unique identifier for the client.
+            name:
+              type: string
+              description: Name of the client.
+            client_logo:
+              type: string
+              description: The URL of client logo.
+      required:
+        - name
+        - client_id
+    Client:
+      title: Client
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: Unique identifier for this client.
+        name:
+          type: string
+          description: Name of this client.
+      required:
+        - name
     Share:
       title: Share item
       type: object

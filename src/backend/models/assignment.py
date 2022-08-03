@@ -28,10 +28,7 @@ class AssignmentSortFilter(Enum):
 
 
 class AssignmentStatus(Enum):
-    # Community is available for users
     ACTIVE = 'active'
-
-    # Community has been deleted
     DELETED = 'deleted'
 
 
@@ -149,7 +146,7 @@ class Assignment(ModelBase):
             assignment.is_bookmarked = any(bookmark.user_id == user.id for bookmark in assignment.bookmark_users)
             assignments_.append(assignment)
 
-        return assignments
+        return assignments_
 
     @classmethod
     def my_bookmarks(
@@ -181,3 +178,128 @@ class AssignmentBookmark(ModelBase):  # pylint: disable=too-few-public-methods
         if bookmark is None and must_exist:
             raise DoesNotExistError(f"Bookmark for assignment '{assignment_id}' and user '{user_id}' does not exist")
         return bookmark
+
+
+class AssignmentApplicationStatus(Enum):
+    NEW = 'new'
+    ACTIVE_READ = 'active_read'
+    SELECTED = 'selected'
+    REJECTED = 'rejected'
+    SUSPENDED = 'suspended'
+    COMPLETED = 'completed'
+    DELETED = 'deleted'
+
+    @classmethod
+    def lookup(cls, application_status):
+        if application_status is None:
+            return None
+
+        try:
+            return cls(application_status.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Invalid application status: {application_status}.") from ex
+
+
+class AssignmentApplicationFilter(Enum):
+    # All applications except deleted
+    ALL = 'all'
+
+    # New and active_read applications
+    ACTIVE = 'active'
+
+    SELECTED = 'selected'
+    REJECTED = 'rejected'
+    SUSPENDED = 'suspended'
+    COMPLETED = 'completed'
+
+    @classmethod
+    def lookup(cls, filter_key):
+        if filter_key is None:
+            return None
+
+        try:
+            return cls(filter_key.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Unsupported filter: {filter_key}.") from ex
+
+
+class AssignmentApplication(ModelBase):
+    __tablename__ = 'assignment_application'
+
+    assignment = relationship(Assignment, foreign_keys="[AssignmentApplication.assignment_id]")
+    applicant = relationship(User, foreign_keys="[AssignmentApplication.applicant_id]")
+    details = None
+
+    def update_details(self, payload):
+        details = copy.deepcopy(self.details) if self.details else {}
+        details_fields = [
+            'description'
+        ]
+
+        for field_term in details_fields:
+            if payload.get(field_term) is not None:
+                if payload[field_term]:
+                    details[field_term] = payload[field_term]
+                elif field_term in details:
+                    del details[field_term]
+
+        self.details = details
+
+    def as_dict(self):
+        application = {
+            'application_id': self.id,
+            'description': self.details.get('description')
+        }
+
+        def add_if_not_none(key, value):
+            if value is not None:
+                application[key] = value
+
+        add_if_not_none('assignment', self.assignment.as_dict())
+        add_if_not_none('applicant', self.applicant.as_custom_dict([
+            'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
+            ]) if self.applicant else None)
+
+        add_if_not_none('status', self.status)
+        add_if_not_none('decided_at', self.decided_at.isoformat() if self.decided_at else None)
+        add_if_not_none('closed_at', self.closed_at.isoformat() if self.closed_at else None)
+
+        add_if_not_none('created_at', self.created_at.isoformat() if self.created_at else None)
+        add_if_not_none('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
+
+        return application
+
+    @classmethod
+    def lookup(cls, tx, application_id, must_exist=True):
+        application = tx.query(cls).where(and_(
+            cls.id == application_id,
+            cls.status != AssignmentApplicationStatus.DELETED.value
+        )).one_or_none()
+        if application is None and must_exist:
+            raise DoesNotExistError(f"Application '{application_id}' does not exist")
+        return application
+
+    @classmethod
+    def search(cls, tx, user, assignment_id, application_filter=None):  # pylint: disable=too-many-arguments
+        applications = tx.query(cls).where(and_(
+            User.customer_id == user.customer_id,
+            cls.assignment_id == assignment_id,
+            cls.status != AssignmentApplicationStatus.DELETED.value
+        ))
+
+        if application_filter == AssignmentApplicationFilter.ACTIVE:
+            applications = applications.where(cls.status.in_([
+                AssignmentApplicationStatus.NEW.value, AssignmentApplicationStatus.ACTIVE_READ.value]))
+        elif application_filter == AssignmentApplicationFilter.SELECTED:
+            applications = applications.where(cls.status == AssignmentApplicationStatus.SELECTED.value)
+        elif application_filter == AssignmentApplicationFilter.REJECTED:
+            applications = applications.where(cls.status == AssignmentApplicationStatus.REJECTED.value)
+        elif application_filter == AssignmentApplicationFilter.SUSPENDED:
+            applications = applications.where(cls.status == AssignmentApplicationStatus.SUSPENDED.value)
+        elif application_filter == AssignmentApplicationFilter.COMPLETED:
+            applications = applications.where(cls.status == AssignmentApplicationStatus.COMPLETED.value)
+
+        query_options = []
+
+        applications = applications.options(query_options)
+        return applications

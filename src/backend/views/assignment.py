@@ -14,8 +14,8 @@ from backend.models.user import User
 from backend.models.location import Location
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.models.project import Project
-from backend.models.assignment import Assignment, AssignmentStatus, AssignmentSortFilter
-from backend.models.assignment import AssignmentBookmark
+from backend.models.assignment import Assignment, AssignmentStatus, AssignmentSortFilter, AssignmentBookmark
+from backend.models.assignment import AssignmentApplication, AssignmentApplicationStatus, AssignmentApplicationFilter
 
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
@@ -162,7 +162,7 @@ class AssignmentVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
             'type': 'assignment_video',
         }
         return AssignmentVideoAPI.create_user_upload(
-            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'communities', metadata)
+            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'assignments', metadata)
 
 
 @blueprint.route('/<assignment_id>/video_description/<upload_id>')
@@ -175,7 +175,7 @@ class AssignmentVideoByIdAPI(AuthenticatedAPIBase):
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             assignment = Assignment.lookup(tx, assignment_id)
             if status == UserUploadStatus.UPLOADED:
-                assignment.video_overview_id = user_upload.id
+                assignment.video_description_id = user_upload.id
                 user_upload.status = status.value
 
             return {
@@ -189,7 +189,7 @@ class AssignmentVideoByIdAPI(AuthenticatedAPIBase):
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             assignment = Assignment.lookup(tx, assignment_id)
 
-            assignment.video_overview_id = None
+            assignment.video_description_id = None
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()
 
@@ -215,4 +215,104 @@ class AssignmentBookmarkAPI(AuthenticatedAPIBase):
 
             bookmark = AssignmentBookmark.lookup(tx, user.id, assignment.id)
             tx.delete(bookmark)
+        return make_no_content_response()
+
+
+@blueprint.route('/<assignment_id>/applications')
+class AssignmentApplicationAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def post(assignment_id):
+        payload = request.json
+        application_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+
+        mandatory_fields = {'description'}
+        missing_fields = mandatory_fields - set(payload.keys())
+        if missing_fields:
+            raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            assignment = Assignment.lookup(tx, assignment_id)
+            application = AssignmentApplication(
+                id=application_id,
+                assignment=assignment,
+                applicant=user,
+                status=AssignmentApplicationStatus.NEW.value,
+                created_at=now,
+                last_updated_at=now
+            )
+            tx.add(application)
+            application.update_details(payload)
+
+            application_details = application.as_dict()
+
+        return application_details
+
+    @staticmethod
+    def get(assignment_id):
+        application_filter = AssignmentApplicationFilter.lookup(request.args.get('filter'))
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            applications = AssignmentApplication.search(
+                tx,
+                user,
+                assignment_id,
+                application_filter=application_filter
+            )
+            applications = [application.as_dict() for application in applications]
+        return jsonify(applications)
+
+
+@blueprint.route('/applications/<application_id>')
+class AssignmentApplicationByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get(application_id):
+        with transaction() as tx:
+            application = AssignmentApplication.lookup(tx, application_id)
+            return application.as_dict()
+
+    @staticmethod
+    def put(application_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            application = AssignmentApplication.lookup(tx, application_id)
+            payload = request.json
+
+            application.update_details(payload)
+
+            if 'status' in payload:
+                new_status = AssignmentApplicationStatus.lookup(payload['status'])
+
+                if application.status != new_status:
+                    application.status = new_status.value
+
+                    if new_status in [AssignmentApplicationStatus.SELECTED, AssignmentApplicationStatus.REJECTED]:
+                        application.decided_at = now
+                    if new_status in [AssignmentApplicationStatus.COMPLETED, AssignmentApplicationStatus.SUSPENDED]:
+                        application.closed_at = now
+
+            application.last_updated_at = now
+
+        # Fetch from the database to get updated response
+        with transaction() as tx:
+            application = AssignmentApplication.lookup(tx, application_id)
+            application_details = application.as_dict()
+        return application_details
+
+    @staticmethod
+    def delete(application_id):
+        now = datetime.utcnow()
+
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            application = AssignmentApplication.lookup(tx, application_id)
+
+            # For now, only the applicant is allowed to delete the application
+            if application.applicant_id != user.id:
+                raise NotAllowedError(f"User '{user.id}' is not the creator of this application")
+            application.status = AssignmentApplicationStatus.DELETED.value
+            application.last_updated_at = now
         return make_no_content_response()

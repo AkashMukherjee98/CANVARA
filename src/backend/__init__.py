@@ -7,7 +7,7 @@ from flask_smorest import Api
 
 
 API_TITLE = 'Canvara Backend API'
-API_VERSION = '0.52.0'
+API_VERSION = '0.54.0'
 OPENAPI_VERSION = '3.0.0'
 
 

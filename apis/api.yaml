@@ -759,8 +759,6 @@ paths:
               - active
               - selected
               - rejected
-              - suspended
-              - completed
             default: all
           in: query
           name: filter
@@ -843,8 +841,6 @@ paths:
                     - active_read
                     - selected
                     - rejected
-                    - suspended
-                    - completed
       responses:
         '200':
           description: OK
@@ -5761,7 +5757,7 @@ paths:
 components:
   schemas:
     Assignment:
-      title: Project
+      title: Assignment
       type: object
       properties:
         assignment_id:

@@ -9,6 +9,7 @@ from .db import ModelBase
 from .location import Location
 from .user import User
 from .user_upload import UserUpload
+from .skill import SkillWithLevelMixin
 from .project import Project
 
 
@@ -41,8 +42,12 @@ class Assignment(ModelBase):
 
     video_description = relationship(UserUpload, foreign_keys="[Assignment.video_description_id]")
 
+    required_skills = relationship("AssignmentSkill")
+
     bookmark_users = relationship("AssignmentBookmark", back_populates="assignment")
     details = None
+
+    MAX_SKILLS = 50
 
     def update_details(self, assignment_payload):
         details = copy.deepcopy(self.details) if self.details else {}
@@ -50,12 +55,12 @@ class Assignment(ModelBase):
             'description'
         ]
 
-        for filed in details_fields:
-            if assignment_payload.get(filed) is not None:
-                if assignment_payload[filed]:
-                    details[filed] = assignment_payload[filed]
-                elif filed in details:
-                    del details[filed]
+        for field in details_fields:
+            if assignment_payload.get(field) is not None:
+                if assignment_payload[field]:
+                    details[field] = assignment_payload[field]
+                elif field in details:
+                    del details[field]
 
         if assignment_payload.get('hashtags') is not None:
             if assignment_payload['hashtags']:
@@ -64,6 +69,27 @@ class Assignment(ModelBase):
                 del details['hashtags']
 
         self.details = details
+
+    @classmethod
+    def validate_skills(cls, skills):
+        num_skills_selected = len(skills)
+
+        if num_skills_selected > cls.MAX_SKILLS:
+            raise InvalidArgumentError(
+                f"Skills selected: {num_skills_selected} You can't select more than {cls.MAX_SKILLS} skills.")
+
+        skill_names_seen = set()
+        for skill in skills:
+            # Make sure there are no duplicate entries
+            name = skill['name'].lower()
+            if name in skill_names_seen:
+                raise InvalidArgumentError(f"Multiple skill '{skill['name']}' found with same name.")
+            skill_names_seen.add(name)
+
+            AssignmentSkill.validate_skill_level(skill['name'], skill.get('level'))
+
+    def set_skills(self, tx, skills):
+        AssignmentSkill.update_skills(tx, self.customer_id, self.required_skills, skills)
 
     def as_dict(self, return_keys=all):  # if return_keys=all return everything, if any key(s) specified then return those only
         assignment = {
@@ -81,6 +107,8 @@ class Assignment(ModelBase):
 
         add_if_required(
             'video_description', self.video_description.as_dict(method='get') if self.video_description else None)
+
+        add_if_required('required_skills', [skill.as_dict() for skill in self.required_skills])
 
         add_if_required('role', self.role if self.role else None)
         add_if_required('start_date', self.start_date if self.start_date else None)
@@ -166,6 +194,10 @@ class Assignment(ModelBase):
         return assignments
 
 
+class AssignmentSkill(ModelBase, SkillWithLevelMixin):
+    __tablename__ = 'assignment_skill'
+
+
 class AssignmentBookmark(ModelBase):  # pylint: disable=too-few-public-methods
     __tablename__ = 'assignment_bookmark'
 
@@ -185,8 +217,7 @@ class AssignmentApplicationStatus(Enum):
     ACTIVE_READ = 'active_read'
     SELECTED = 'selected'
     REJECTED = 'rejected'
-    SUSPENDED = 'suspended'
-    COMPLETED = 'completed'
+
     DELETED = 'deleted'
 
     @classmethod
@@ -209,8 +240,6 @@ class AssignmentApplicationFilter(Enum):
 
     SELECTED = 'selected'
     REJECTED = 'rejected'
-    SUSPENDED = 'suspended'
-    COMPLETED = 'completed'
 
     @classmethod
     def lookup(cls, filter_key):
@@ -294,10 +323,6 @@ class AssignmentApplication(ModelBase):
             applications = applications.where(cls.status == AssignmentApplicationStatus.SELECTED.value)
         elif application_filter == AssignmentApplicationFilter.REJECTED:
             applications = applications.where(cls.status == AssignmentApplicationStatus.REJECTED.value)
-        elif application_filter == AssignmentApplicationFilter.SUSPENDED:
-            applications = applications.where(cls.status == AssignmentApplicationStatus.SUSPENDED.value)
-        elif application_filter == AssignmentApplicationFilter.COMPLETED:
-            applications = applications.where(cls.status == AssignmentApplicationStatus.COMPLETED.value)
 
         query_options = []
 

@@ -60,8 +60,11 @@ class AssignmentAPI(AuthenticatedAPIBase):
                 last_updated_at=now
             )
             tx.add(assignment)
-
             assignment.update_details(payload)
+
+            if payload.get('required_skills'):
+                Assignment.validate_skills(payload['required_skills'])
+                assignment.set_skills(tx, payload['required_skills'])
 
             # Insert activity details in DB
             activity_data = {
@@ -122,6 +125,10 @@ class AssignmentByIdAPI(AuthenticatedAPIBase):
 
             assignment.last_updated_at = now
             assignment.update_details(payload)
+
+            if payload.get('required_skills'):
+                Assignment.validate_skills(payload['required_skills'])
+                assignment.set_skills(tx, payload['required_skills'])
 
         # Fetch from the database to get updated response
         with transaction() as tx:
@@ -291,8 +298,6 @@ class AssignmentApplicationByIdAPI(AuthenticatedAPIBase):
 
                     if new_status in [AssignmentApplicationStatus.SELECTED, AssignmentApplicationStatus.REJECTED]:
                         application.decided_at = now
-                    if new_status in [AssignmentApplicationStatus.COMPLETED, AssignmentApplicationStatus.SUSPENDED]:
-                        application.closed_at = now
 
             application.last_updated_at = now
 

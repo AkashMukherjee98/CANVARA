@@ -9,7 +9,7 @@ from backend.common.exceptions import InvalidArgumentError
 
 from backend.models.db import transaction
 from backend.models.user import User
-from backend.models.project import Project, ProjectStatus
+from backend.models.project import Project, ProjectStatus, ProjectStatusFilter
 from backend.models.client import Client
 
 from backend.views.base import AuthenticatedAPIBase
@@ -52,11 +52,17 @@ class ProjectAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def get():
+        status = ProjectStatusFilter.lookup(request.args.get('status'))
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
+            client = Client.lookup(tx, request.args.get('client_id')) if 'client_id' in request.args else None
+
             projects = Project.search(
                 tx,
-                user.customer_id
+                user.customer_id,
+                client=client,
+                status=status
             )
             projects = [project.as_dict() for project in projects]
         return jsonify(projects)
@@ -74,6 +80,11 @@ class ProjectByIdAPI(AuthenticatedAPIBase):
 
             if payload.get('name'):
                 project.name = payload['name']
+
+            if payload.get('status'):
+                new_status = ProjectStatus.lookup(payload['status'])
+                if project.status != new_status:
+                    project.status = new_status.value
 
             project.last_updated_at = now
 

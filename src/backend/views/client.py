@@ -11,7 +11,7 @@ from backend.common.exceptions import InvalidArgumentError
 from backend.models.db import transaction
 from backend.models.user import User
 from backend.models.user_upload import UserUpload, UserUploadStatus
-from backend.models.client import Client, ClientStatus
+from backend.models.client import Client, ClientStatus, ClientStatusFilter
 
 from backend.views.base import AuthenticatedAPIBase
 from backend.views.user_upload import UserUploadMixin
@@ -51,11 +51,14 @@ class ClientAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def get():
+        status = ClientStatusFilter.lookup(request.args.get('status'))
+
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             clients = Client.search(
                 tx,
-                user.customer_id
+                user.customer_id,
+                status=status
             )
             clients = [client.as_dict() for client in clients]
         return jsonify(clients)
@@ -74,6 +77,11 @@ class ClientByIdAPI(AuthenticatedAPIBase):
             if payload.get('name'):
                 client.name = payload['name']
 
+            if payload.get('status'):
+                new_status = ClientStatus.lookup(payload['status'])
+                if client.status != new_status:
+                    client.status = new_status.value
+
             client.last_updated_at = now
 
         with transaction() as tx:
@@ -83,7 +91,7 @@ class ClientByIdAPI(AuthenticatedAPIBase):
 
 
 @blueprint.route('/<client_id>/client_logo')
-class CommunityLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
+class ClientLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(client_id):
         metadata = {
@@ -91,12 +99,12 @@ class CommunityLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
             'resource_id': client_id,
             'type': 'client_logo',
         }
-        return CommunityLogoAPI.create_user_upload(
-            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'communities', metadata)
+        return ClientLogoAPI.create_user_upload(
+            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'clients', metadata)
 
 
 @blueprint.route('/<client_id>/client_logo/<upload_id>')
-class CommunityLogoByIdAPI(AuthenticatedAPIBase):
+class ClientLogoByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(client_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])

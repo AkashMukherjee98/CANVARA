@@ -660,7 +660,7 @@ paths:
                 value:
                   filename: assignment_video.mp4
                   content_type: video/mp4
-  '/assignments/{assignment_id}/overview_video/{upload_id}':
+  '/assignments/{assignment_id}/video_description/{upload_id}':
     parameters:
       - schema:
           type: string
@@ -896,6 +896,21 @@ paths:
         - projects
       security:
         - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: client_id
+          description: 'Client Id filter for projet list.'
+        - schema:
+            type: string
+            enum:
+              - all
+              - active
+              - inactive
+          in: query
+          name: status
+          description: 'Status filter for projet.'
       responses:
         '200':
           description: OK
@@ -926,12 +941,18 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  description: Name of this project.
                 client_id:
                   type: string
                   description: ID of the client.
+                name:
+                  type: string
+                  description: Name of this project.
+                status:
+                  type: string
+                  description: Change status of the project.
+                  enum:
+                    - inactive
+                    - active
       responses:
         '200':
           description: OK
@@ -973,6 +994,16 @@ paths:
         - clients
       security:
         - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - active
+              - inactive
+          in: query
+          name: status
+          description: 'Status filter for client.'
       responses:
         '200':
           description: OK
@@ -1006,6 +1037,12 @@ paths:
                 name:
                   type: string
                   description: Name of this client.
+                status:
+                  type: string
+                  description: Change status of the client.
+                  enum:
+                    - inactive
+                    - active
       responses:
         '200':
           description: OK
@@ -5782,6 +5819,27 @@ components:
             profile_picture_url:
               type: string
               description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            slack_teams_messaging_id:
+              type: string
+              description: Messaging handle of the user.
         name:
           type: string
           description: Name of this assignment.
@@ -5807,6 +5865,9 @@ components:
           items:
             type: string
           description: List of hastags or keywords.
+        video_description:
+          $ref: '#/components/schemas/UserUpload'
+          description: Video description of assignment.
       required:
         - name
         - project_id
@@ -5847,6 +5908,27 @@ components:
                 profile_picture_url:
                   type: string
                   description: The URL of user's profile picture.
+                title:
+                  type: string
+                  description: Title of the user.
+                pronoun:
+                  type: string
+                  description: Pronoun.
+                location:
+                  type: string
+                  description: Location of the user.
+                department:
+                  type: string
+                  description: Department of the user.
+                email:
+                  type: string
+                  description: Email of the user.
+                phone_number:
+                  type: string
+                  description: Phone number of the user.
+                slack_teams_messaging_id:
+                  type: string
+                  description: Messaging handle of the user.
             name:
               type: string
               description: Name of this assignment.
@@ -5950,8 +6032,11 @@ components:
               type: string
               description: Name of the client.
             client_logo:
-              type: string
-              description: The URL of client logo.
+              $ref: '#/components/schemas/UserUpload'
+              description: Logo of the client.
+        status:
+          type: string
+          description: Status of the project.
       required:
         - name
         - client_id
@@ -5965,6 +6050,12 @@ components:
         name:
           type: string
           description: Name of this client.
+        client_logo:
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the client.
+        status:
+          type: string
+          description: Status of the client.
       required:
         - name
     Share:

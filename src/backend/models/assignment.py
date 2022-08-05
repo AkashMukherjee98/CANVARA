@@ -101,7 +101,9 @@ class Assignment(ModelBase):
             if (return_keys is all or key in return_keys) and value is not None:
                 assignment[key] = value
 
-        add_if_required('creator', self.creator.as_summary_dict())
+        add_if_required('creator', self.creator.as_custom_dict([
+            'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
+        ]))
         add_if_required('project', self.project.as_dict())
         add_if_required('location', self.location.as_dict())
 
@@ -111,6 +113,7 @@ class Assignment(ModelBase):
         add_if_required('required_skills', [skill.as_dict() for skill in self.required_skills])
 
         add_if_required('role', self.role if self.role else None)
+        add_if_required('people_needed', self.people_needed if self.people_needed else None)
         add_if_required('start_date', self.start_date if self.start_date else None)
 
         add_if_required('description', self.details.get('description'))
@@ -287,7 +290,7 @@ class AssignmentApplication(ModelBase):
         add_if_not_none('assignment', self.assignment.as_dict())
         add_if_not_none('applicant', self.applicant.as_custom_dict([
             'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
-            ]) if self.applicant else None)
+            ]))
 
         add_if_not_none('status', self.status)
         add_if_not_none('decided_at', self.decided_at.isoformat() if self.decided_at else None)

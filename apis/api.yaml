@@ -611,6 +611,12 @@ paths:
                   items:
                     type: string
                   description: List of hastags or keywords.
+                status:
+                  type: string
+                  description: Change status of the assignment.
+                  enum:
+                    - closed
+                    - active
       responses:
         '200':
           description: OK
@@ -901,7 +907,7 @@ paths:
             type: string
           in: query
           name: client_id
-          description: 'Client Id filter for projet list.'
+          description: 'Client Id filter for project list.'
         - schema:
             type: string
             enum:
@@ -910,7 +916,7 @@ paths:
               - inactive
           in: query
           name: status
-          description: 'Status filter for projet.'
+          description: 'Status filter for project.'
       responses:
         '200':
           description: OK
@@ -5868,6 +5874,15 @@ components:
         video_description:
           $ref: '#/components/schemas/UserUpload'
           description: Video description of assignment.
+        status:
+          type: string
+          description: Current status of this assignment.
+        created_at:
+          type: string
+          description: 'Date and time when this assignment was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this assignment was last updated, in ISO 8601 format.'
       required:
         - name
         - project_id
@@ -6002,10 +6017,10 @@ components:
           description: 'Date and time when the status of the proposal is "in_progress", in ISO 8601 format.'
         created_at:
           type: string
-          description: 'Date and time when this offer was created, in ISO 8601 format.'
+          description: 'Date and time when this application was created, in ISO 8601 format.'
         last_updated_at:
           type: string
-          description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+          description: 'Date and time when this application was last updated, in ISO 8601 format.'
       required:
         - description
     Project:

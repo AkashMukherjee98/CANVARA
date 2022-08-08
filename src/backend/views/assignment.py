@@ -123,6 +123,11 @@ class AssignmentByIdAPI(AuthenticatedAPIBase):
             if payload.get('location_id'):
                 assignment.location = Location.lookup(tx, payload['location_id'])
 
+            if 'status' in payload:
+                new_status = AssignmentStatus.lookup(payload['status'])
+                if assignment.status != new_status:
+                    assignment.status = new_status.value
+
             assignment.last_updated_at = now
             assignment.update_details(payload)
 

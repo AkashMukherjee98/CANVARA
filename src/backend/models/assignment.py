@@ -30,7 +30,18 @@ class AssignmentSortFilter(Enum):
 
 class AssignmentStatus(Enum):
     ACTIVE = 'active'
+    CLOSED = 'closed'
     DELETED = 'deleted'
+
+    @classmethod
+    def lookup(cls, assignment_status):
+        if assignment_status is None:
+            return None
+
+        try:
+            return cls(assignment_status.lower())
+        except ValueError as ex:
+            raise InvalidArgumentError(f"Invalid assignment status: {assignment_status}.") from ex
 
 
 class Assignment(ModelBase):
@@ -119,6 +130,7 @@ class Assignment(ModelBase):
         add_if_required('description', self.details.get('description'))
         add_if_required('hashtags', self.details.get('hashtags'))
 
+        add_if_required('status', self.status)
         add_if_required('created_at', self.created_at.isoformat() if self.created_at else None)
         add_if_required('last_updated_at', self.last_updated_at.isoformat() if self.last_updated_at else None)
 
@@ -130,7 +142,7 @@ class Assignment(ModelBase):
     def lookup(cls, tx, assignment_id, user=None, must_exist=True):
         assignment = tx.query(cls).where(and_(
             cls.id == assignment_id,
-            cls.status == AssignmentStatus.ACTIVE.value
+            cls.status != AssignmentStatus.DELETED.value
         )).one_or_none()
         if assignment is None and must_exist:
             raise DoesNotExistError(f"Assignment '{assignment_id}' does not exist")
@@ -147,7 +159,7 @@ class Assignment(ModelBase):
     ):  # pylint: disable=too-many-arguments, disable=unsubscriptable-object
         assignments = tx.query(cls).where(and_(
             Assignment.customer_id == user.customer_id,
-            cls.status == AssignmentStatus.ACTIVE.value
+            cls.status != AssignmentStatus.DELETED.value
         ))
 
         if sort is not None and sort == AssignmentSortFilter.LATEST:

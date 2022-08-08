@@ -1,0 +1,257 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Canvara CICD Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths-ignore: '.github/**'
+
+env:
+    REGISTRY: ghcr.io
+    VERSION: master
+    IMAGE_NAME: ${{ github.repository }}
+    IMAGE_ID: $REGISTRY/$IMAGE_NAME
+
+jobs:
+  checkout:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:        
+      - name: slack message notification for the start of the pull request job
+        uses: docker://technosophos/slack-notify
+        if: github.event_name == 'pull_request'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend workflow triggered by "${{ github.event.pull_request.user.login }}" for PR number "${{ github.event.pull_request.number }}" with pull_request_url "${{ github.event.pull_request.html_url }}"
+
+      
+      - name: slack message notification for the start of the push job
+        uses: docker://technosophos/slack-notify
+        if: github.event_name == 'push'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend workflow triggered by "${{ github.event.commits[0].author.name }}" for the changes "${{ github.event.commits[0].message }}" commit_url "${{ github.event.commits[0].url }}"
+
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('pip_requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          if [ -f pip_requirements.txt ]; then pip install -r pip_requirements.txt; fi
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+      - name: Test with pylint
+        run: |
+          if [ -f pip_test_requirements.txt ]; then pip install -r pip_test_requirements.txt; fi
+          pylint --rcfile .pylintrc src/backend
+      - name: Set environment variables
+        run: |
+          echo "PYTHONPATH=${{ github.workspace }}/src" >> $GITHUB_ENV
+      - name: Unit Test with pytest
+        run: |
+          pytest
+
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed at "checkout" job
+
+  build:
+    needs: checkout
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file deploy/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.CREATE_DOCKER_TOKEN }}
+
+      - name: Push image
+        run: |
+          IMAGE_ID=$REGISTRY/$IMAGE_NAME
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed at "build" job
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    env:
+      COGNITO_REGION: us-west-2
+      COGNITO_USERPOOL_ID: ${{ secrets.STAGE_COGNITO_USERPOOL_ID }}
+      COGNITO_APP_CLIENT_ID: ${{ secrets.STAGE_COGNITO_APP_CLIENT_ID }}
+      S3_USER_UPLOADS_BUCKET: canvara-user-uploads-stage
+      POSTGRES_USERNAME: ${{ secrets.RDS_USERNAME }}
+      POSTGRES_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+      POSTGRES_HOST: ${{ secrets.RDS_STAGE_HOST }}
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: ${{ secrets.RDS_DB_NAME }}
+      SLACK_POST_MESSAGE_URL: ${{ secrets.SLACK_POST_MESSAGE_URL }}
+      SLACK_CANVARA_APP_BOT_TOKEN: ${{ secrets.SLACK_CANVARA_APP_BOT_TOKEN }}
+      RCHILLI_API_URL: ${{ secrets.RCHILLI_API_URL }}
+      RCHILLI_USER_KEY: ${{ secrets.RCHILLI_USER_KEY }}
+      RCHILLI_SUB_USER_ID: ${{ secrets.RCHILLI_SUB_USER_ID }}
+
+    steps:
+      - name: Log in to the Container registry
+        run: |
+          docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.CREATE_DOCKER_TOKEN }}
+
+      - name: Check for existing images & then pull the latest image
+        run: |
+          #IMAGEID=$(docker images | awk 'NR > 1 {print $3}')
+          #if [ $IMAGEID ];
+          #then
+          #docker rmi $IMAGEID;
+          #fi
+          docker pull ghcr.io/canvarainc/backend:main
+
+      - name: Kill if there is an existing container
+        run: |
+          existing_container_id=$(docker ps -aq --filter "label=canvara:svc=backend")
+          if [ $existing_container_id ]; then
+          docker rm $(docker stop $existing_container_id)
+          fi
+
+      - name: Run the image
+        run: |
+          docker run --detach -v /home/ubuntu/docker_logs:/canvara/logs --label canvara:svc=backend --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} --env CANVARA_ENV=stage --env COGNITO_REGION=$COGNITO_REGION --env COGNITO_USERPOOL_ID=$COGNITO_USERPOOL_ID --env COGNITO_APP_CLIENT_ID=$COGNITO_APP_CLIENT_ID --env S3_USER_UPLOADS_BUCKET=$S3_USER_UPLOADS_BUCKET --env POSTGRES_USERNAME=$POSTGRES_USERNAME --env POSTGRES_PASSWORD=$POSTGRES_PASSWORD --env POSTGRES_HOST=$POSTGRES_HOST --env POSTGRES_PORT=$POSTGRES_PORT --env POSTGRES_DATABASE=$POSTGRES_DATABASE --env SLACK_POST_MESSAGE_URL=$SLACK_POST_MESSAGE_URL --env SLACK_CANVARA_APP_BOT_TOKEN=$SLACK_CANVARA_APP_BOT_TOKEN --env RCHILLI_API_URL=$RCHILLI_API_URL --env RCHILLI_USER_KEY=$RCHILLI_USER_KEY --env RCHILLI_SUB_USER_ID=$RCHILLI_SUB_USER_ID -p 8000:8000 ghcr.io/canvarainc/backend:main
+          sleep 5
+          new_container_id=$(docker container ls -q -f "label=canvara:svc=backend")
+          if [ !$new_container_id ]; then
+          sleep 5
+          fi
+          
+      - name: Remove old unused docker images
+        run: |
+          docker rmi $(docker images -f "dangling=true" -q)
+
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed at "deploy" job
+
+  integration_test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: canvarainc/Automation
+          path: .
+          token: ${{ secrets.AUTOMATION_REPO_ACCESS_TOKEN }}
+          
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          #if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
+          
+      - name: Setting env variables & running the test
+        run: |
+          export CANVARA_ENV=stage
+          export AWS_CLIENT_ID=${{ secrets.AWS_CLIENT_ID }}
+          export AWS_STAGE_CLIENT_ID=${{ secrets.AWS_STAGE_CLIENT_ID }}
+          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          export AWS_COGNITO_ADMIN_USER=${{ secrets.AWS_COGNITO_ADMIN_USER }}
+          export AWS_COGNITO_ADMIN_PASSWORD=${{ secrets.AWS_COGNITO_ADMIN_PASSWORD }}
+          export AWS_COGNITO_STAGE_ADMIN_PASSWORD=${{ secrets.AWS_COGNITO_STAGE_ADMIN_PASSWORD }}
+          export AWS_COGNITO_ADMIN_PASSWORD=${{ secrets.AWS_COGNITO_ADMIN_PASSWORD }}
+          export AWS_COGNITO_POSTER_USER=${{ secrets.AWS_COGNITO_POSTER_USER }}
+          export AWS_COGNITO_POSTER_PASSWORD=${{ secrets.AWS_COGNITO_POSTER_PASSWORD }}
+          export AWS_COGNITO_APPLICANT1_USER=${{ secrets.AWS_COGNITO_APPLICANT1_USER }}
+          export AWS_COGNITO_APPLICANT1_PASSWORD=${{ secrets.AWS_COGNITO_APPLICANT1_PASSWORD }}
+          export AWS_COGNITO_APPLICANT2_USER=${{ secrets.AWS_COGNITO_APPLICANT2_USER }}
+          export AWS_COGNITO_APPLICANT2_PASSWORD=${{ secrets.AWS_COGNITO_APPLICANT2_PASSWORD }}
+          export AWS_COGNITO_NEW_USER=${{ secrets.AWS_COGNITO_NEW_USER }}
+          export AWS_COGNITO_NEW_USER_PASSWORD=${{ secrets.AWS_COGNITO_NEW_USER_PASSWORD }}
+          export AWS_COGNITO_NEW_POSTER_USER=${{ secrets.AWS_COGNITO_NEW_POSTER_USER }}
+          export AWS_COGNITO_NEW_POSTER_USER_PASSWORD=${{ secrets.AWS_COGNITO_NEW_POSTER_USER_PASSWORD }}
+          export BASE_API_URL=${{ secrets.BASE_API_URL }}
+          export RDS_HOST=${{ secrets.RDS_STAGE_HOST }}
+          export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
+          export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
+          export RDS_DB_NAME=${{ secrets.RDS_DB_NAME }}
+          pytest src/tests/api/test_smoke_suite.py
+          
+      - name: Uploading the log file to the workflow
+        uses: actions/upload-artifact@v2
+        with:
+          name: run-log
+          path: src/test_execution_logs/
+
+      - name: slack message notification
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Stage Deploy Successful!!
+
+      - name: slack message notification on failure
+        if: failure()
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: Backend Deploy Failed!!

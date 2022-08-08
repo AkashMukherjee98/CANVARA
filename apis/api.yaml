@@ -1,0 +1,6480 @@
+openapi: 3.0.0
+info:
+  title: Canvara Backend API
+  version: 0.11.0
+servers: []
+tags:
+  - name: activities
+  - name: marketplaces
+  - name: shareitems
+  - name: offers
+  - name: positions
+  - name: communities
+  - name: events
+  - name: applications
+  - name: customers
+  - name: matches
+  - name: notifications
+  - name: onboarding
+  - name: posts
+  - name: users
+  - name: backgroundpictures
+  - name: slack
+paths:
+  /activities/my:
+    get:
+      summary: List my activities
+      operationId: list_activities
+      tags:
+        - activities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - gigs
+              - offers
+              - positions
+              - communities
+              - events
+              - people
+              - mentors
+          in: query
+          name: activities_in
+          description: Search activities in pipe(|) separated enum values, e.g. gigs|offers|positions
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: Search keyword for activities.
+        - schema:
+            type: integer
+            default: 20
+          in: query
+          name: limit
+          description: Maximum number of activities to return.
+        - schema:
+            type: integer
+          in: query
+          name: start
+          description: Start index from where to return the activities.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        activity_id:
+                          type: string
+                          description: Unique identifier of this activity.
+                        type:
+                          type: string
+                          description: Type of activity.
+                        data:
+                          type: object
+                          description: Data to display in the activity.
+                        created_at:
+                          type: string
+                          description: 'UTC date and time when this activity was created, in ISO 8601 format.'
+                        status:
+                          type: string
+                          description: Status of the activity.
+                          enum:
+                            - read
+                            - unread
+                  total_unread:
+                    type: number
+  /activities/global:
+    get:
+      summary: List global activities
+      operationId: list_activities_global
+      tags:
+        - activities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - gigs
+              - offers
+              - positions
+              - communities
+              - events
+              - people
+              - mentors
+          in: query
+          name: activities_in
+          description: Search activities in pipe(|) separated enum values, e.g. gigs|offers|positions
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: Search keyword for activities.
+        - schema:
+            type: integer
+            default: 20
+          in: query
+          name: limit
+          description: Maximum number of activities to return.
+        - schema:
+            type: integer
+          in: query
+          name: start
+          description: Start index from where to return the activities.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        activity_id:
+                          type: string
+                          description: Unique identifier of this activity.
+                        type:
+                          type: string
+                          description: Type of activity.
+                        data:
+                          type: object
+                          description: Data to display in the activity.
+                        created_at:
+                          type: string
+                          description: 'UTC date and time when this activity was created, in ISO 8601 format.'
+  /myactivities:
+    get:
+      summary: List my activities
+      operationId: get_activities
+      description: ''
+      tags:
+        - activities
+      deprecated: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: object
+                    description: List of all posts.
+                    properties:
+                      gigs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Offer'
+                        description: List of offers.
+                      positions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                        description: List of positions.
+                  applications:
+                    type: object
+                    description: List of applications.
+                    properties:
+                      applications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Application'
+                        description: List of application.
+                      proposals:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Proposal'
+                        description: List of proposals.
+                  tasks:
+                    type: object
+                    description: List of tasks.
+                    properties:
+                      applications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Application'
+                        description: List of applications.
+                      proposals:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Proposal'
+                        description: List of proposals.
+                  connections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                    description: List of connections.
+                  communities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Community'
+                    description: List of communities.
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    description: List of events.
+                  bookmarks:
+                    type: object
+                    description: List of all bookmarks.
+                    properties:
+                      gigs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Post'
+                        description: List of gigs.
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OfferMinimal'
+                        description: List of offers.
+                      positions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                        description: List of positions.
+                      communities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Community'
+                        description: List of communities.
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        description: List of events.
+                      peoples:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserSummary'
+                        description: List of peoples.
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /shareitems:
+    post:
+      summary: Share an item with users
+      tags:
+        - shareitems
+      operationId: create_share
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Share'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                share_with_user_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: List of user ids.
+                item_type:
+                  type: string
+                  description: Type or identifier of the shareable item.
+                  enum:
+                    - gig
+                    - offer
+                    - position
+                    - event
+                    - community
+                    - people
+                item_id:
+                  type: string
+                  description: Item id(e.g. gig_id or event_id) based on the item type.
+                message:
+                  type: string
+                  description: Optional message for the share.
+              required:
+                - share_with_user_ids
+                - item_type
+                - item_id
+    get:
+      summary: List all shared items
+      operationId: get_share
+      description: ''
+      tags:
+        - shareitems
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Share'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/marketplaces/opportunities':
+    get:
+      summary: List all opportunities
+      operationId: get_opportunities
+      description: ''
+      tags:
+        - marketplaces
+      parameters:
+        - schema:
+            type: string
+            default: recommended
+            enum:
+            - recommended
+            - latest
+          in: query
+          name: sortby
+          description: 'Sort items in each category'
+        - schema:
+            type: number
+          in: query
+          name: limit
+          description: 'Limit of the items in each category'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gigs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+                    description: List of gigs.
+                  offers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Offer'
+                    description: List of offers.
+                  positions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                    description: List of positions.
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/marketplaces/connections':
+    get:
+      summary: List all connections
+      operationId: get_connections
+      description: ''
+      tags:
+        - marketplaces
+      parameters:
+        - schema:
+            type: string
+            default: recommended
+            enum:
+            - recommended
+            - latest
+          in: query
+          name: sortby
+          description: 'Sort items in each category'
+        - schema:
+            type: number
+          in: query
+          name: limit
+          description: 'Limit of the items in each category'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  peoples:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                    description: List of peoples.
+                  communities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Community'
+                    description: List of communities.
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                    description: List of events.
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /customers:
+    get:
+      summary: List all customers
+      tags:
+        - customers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+              examples: {}
+      operationId: list_customers
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new customer
+      tags:
+        - customers
+      operationId: create_customer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+  '/customers/{customer_id}':
+    parameters:
+      - schema:
+          type: string
+        name: customer_id
+        in: path
+        required: true
+    get:
+      summary: Get customer details
+      tags:
+        - customers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+      operationId: get_customer
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Delete a customer
+      tags:
+        - customers
+      operationId: delete_customer
+      responses:
+        '200':
+          description: OK
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a customer
+      tags:
+        - customers
+      operationId: update_customer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+  '/customers/{customer_id}/users':
+    parameters:
+      - schema:
+          type: string
+        name: customer_id
+        in: path
+        required: true
+    get:
+      summary: List all users for a customer
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserWithTeam'
+      operationId: list_users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new user for a customer
+      tags:
+        - users
+      operationId: create_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                username:
+                  type: string
+                name:
+                  type: string
+                title:
+                  type: string
+                location:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                current_skills:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevelAndExpert'
+                desired_skills:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Skill'
+                email:
+                  type: string
+                phone_number:
+                  type: string
+                linkedin_url:
+                  type: string
+                manager_id:
+                  type: string
+                hidden_secrets:
+                  type: string
+                career_goals:
+                  type: string
+                career_goals_visibility:
+                  type: boolean
+                superpowers:
+                  type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
+                company_start_date:
+                  type: string
+                pronoun:
+                  type: string
+                department:
+                  type: string
+                introduction:
+                  type: string
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                slack_teams_messaging_id:
+                  type: string
+                mentorship_offered:
+                  type: boolean
+                mentorship_description:
+                  type: string
+                mentorship_hashtags:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - user_id
+                - name
+  /offers:
+    get:
+      summary: List all offers
+      tags:
+        - offers
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for offer list.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for offer.'
+        - schema:
+            type: string
+          in: query
+          name: location
+          description: 'Text filter based on offerer location.'
+        - schema:
+            type: string
+            enum:
+              - open
+              - underway
+              - suspended
+          in: query
+          name: status
+          description: 'Status filter for offer.'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OfferMinimal'
+      operationId: list_offers
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Create a new offer
+      tags:
+        - offers
+      operationId: create_offer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the offer.
+                overview_text:
+                  type: string
+                  description: Description of the offer.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hashtags.
+              required:
+                - name
+                - overview_text
+  '/offers/{offer_id}':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a offer
+      tags:
+        - offers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+      operationId: get_offer
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a offer
+      tags:
+        - offers
+      operationId: update_offer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the offer.
+                overview_text:
+                  type: string
+                  description: Description of the offer.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hashtags.
+                status:
+                  type: string
+                  description: Status update for offer.
+                  enum:
+                    - suspended
+                    - completed
+                    - active
+    delete:
+      summary: Delete an offer
+      tags:
+        - offers
+      operationId: delete_offer
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/offers/{offer_id}/offer_video':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+        description: Unique identifier of the offer.
+    put:
+      summary: Create request for a offer video upload
+      operationId: upload_offer_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: offer_video.mp4
+                  content_type: video/mp4
+  '/offers/{offer_id}/offer_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+        description: Unique identifier of the offer.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize offer video upload
+      operationId: finalize_offer_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a offer video
+      operationId: delete_offer_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/offers/{offer_id}/proposals':
+    get:
+      summary: List all proposals
+      tags:
+        - offers
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - active
+              - selected
+              - rejected
+              - in_progress
+              - suspended
+              - completed
+            default: all
+          in: query
+          name: filter
+          description: Filter for the results.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProposalMinimal'
+      operationId: list_proposals
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Create a new proposal
+      tags:
+        - offers
+      operationId: create_proposal
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the project.
+                overview_text:
+                  type: string
+                  description: Description of the proposal.
+              required:
+                - name
+                - overview_text
+  '/offers/{offer_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: offer_id
+        in: path
+        required: true
+        description: Unique identifier of the offer.
+    put:
+      summary: Bookmark an offer
+      operationId: add_offer_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for an offer
+      operationId: delete_offer_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/proposals/{proposal_id}':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a proposal
+      tags:
+        - offers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      operationId: get_proposal
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a proposal
+      tags:
+        - offers
+      operationId: update_proposal
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the project.
+                overview_text:
+                  type: string
+                  description: Description of the proposal.
+                status:
+                  type: string
+                  description: Current status of this proposal.
+                  enum:
+                    - active_read
+                    - selected
+                    - rejected
+                    - in_progress
+                    - suspended
+                    - completed
+    delete:
+      summary: Delete an proposal
+      tags:
+        - offers
+      operationId: delete_proposal
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/proposals/{proposal_id}/proposal_video':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+    put:
+      summary: Create request for a proposal video upload
+      operationId: upload_proposal_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: proposal_video.mp4
+                  content_type: video/mp4
+  '/proposals/{proposal_id}/proposal_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize proposal video upload
+      operationId: finalize_proposal_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a proposal video
+      operationId: delete_proposal_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/proposals/{proposal_id}/offerer-feedback':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+    put:
+      summary: Add feedback for offerer
+      operationId: add_offerer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  description: Feedback comment
+                concerns:
+                  type: string
+                  description: Feedback concern
+                additional_comments:
+                  type: string
+                  description: Feedback additional comment
+  '/proposals/{proposal_id}/proposer-feedback':
+    parameters:
+      - schema:
+          type: string
+        name: proposal_id
+        in: path
+        required: true
+        description: Unique identifier of the proposal.
+    put:
+      summary: Add feedback for proposer
+      operationId: add_proposer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+      tags:
+        - offers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  description: Feedback comment
+                concerns:
+                  type: string
+                  description: Feedback concern
+                additional_comments:
+                  type: string
+                  description: Feedback additional comment
+  /positions:
+    get:
+      summary: List all positions
+      tags:
+        - positions
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for positions.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for position.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location filter for position.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter(Text) for position.'
+        - schema:
+            type: string
+          in: query
+          name: role
+          description: 'Role filter for position.'
+        - schema:
+            type: string
+            enum:
+              - Full Time
+              - Part Time
+          in: query
+          name: role_type
+          description: 'Role/Employment type filter for position.'
+        - schema:
+            type: string
+          in: query
+          name: pay_grade
+          description: 'Pay grade filter for position(based on customer profile).'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Position'
+      operationId: list_positions
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new position
+      tags:
+        - positions
+      operationId: create_position
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                manager_id:
+                  type: string
+                  description: Reference about the manager.
+                location_id:
+                  type: string
+                  description: Location reference of this position.
+                role_type:
+                  type: string
+                  description: Role Type of this position.
+                  enum:
+                    - Full Time
+                    - Part Time
+                role:
+                  type: string
+                  description: Role of this position.
+                department:
+                  type: string
+                  description: Department for the position.
+                description:
+                  type: string
+                  description: Description of this position.
+                benefits:
+                  type: string
+                  description: Benefits for this position.
+                pay_currency:
+                  type: string
+                  description: Payout currency for this position.
+                pay_minimum:
+                  type: number
+                  multipleOf: 0.01
+                  description: Minimum payout for this position.
+                pay_maximum:
+                  type: number
+                  multipleOf: 0.01
+                  description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
+              required:
+                - manager_id
+                - location_id
+                - role_type
+                - role
+                - description
+  '/positions/{position_id}':
+    parameters:
+      - schema:
+          type: string
+        name: position_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a position
+      tags:
+        - positions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      operationId: get_position
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a position
+      tags:
+        - positions
+      operationId: update_position
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                manager_id:
+                  type: string
+                  description: Reference about the manager.
+                location_id:
+                  type: string
+                  description: Location reference of this position.
+                role_type:
+                  type: string
+                  description: Role Type of this position.
+                  enum:
+                    - Full Time
+                    - Part Time
+                role:
+                  type: string
+                  description: Role of this position.
+                department:
+                  type: string
+                  description: Department for the position.
+                description:
+                  type: string
+                  description: Description of this position.
+                benefits:
+                  type: string
+                  description: Benefits for this position.
+                pay_currency:
+                  type: string
+                  description: Payout currency for this position.
+                pay_minimum:
+                  type: number
+                  multipleOf: 0.01
+                  description: Minimum payout for this position.
+                pay_maximum:
+                  type: number
+                  multipleOf: 0.01
+                  description: Maximum payout for this position.
+                apply_url:
+                  type: string
+                  description: Apply URL for this position.
+    delete:
+      summary: Delete a position
+      tags:
+        - positions
+      operationId: delete_position
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/positions/{position_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: position_id
+        in: path
+        required: true
+        description: Unique identifier of the position.
+    put:
+      summary: Bookmark a position
+      operationId: add_position_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - positions
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a position
+      operationId: delete_position_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - positions
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /events:
+    get:
+      summary: List all events
+      tags:
+        - events
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for events.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location filter for events.'
+        - schema:
+            type: string
+          in: query
+          name: sponsor_community_id
+          description: 'Sponsor Community filter for events.'
+        - schema:
+            type: string
+          in: query
+          name: event_date
+          description: 'Event Date filter in ISO 8601 format (YYYY-MM-DD).'
+        - schema:
+            type: boolean
+          in: query
+          name: volunteers_events_only
+          description: 'Show volunteers events only(true/false).'
+        - schema:
+            type: boolean
+          in: query
+          name: remote_attendance_support
+          description: 'Show remote attendance supported events(true/false).'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+      operationId: list_events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new event
+      tags:
+        - events
+      operationId: create_event
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secondary_organizer_id:
+                  type: string
+                  description: Information about the secondary organizer of the event.
+                name:
+                  type: string
+                  description: Name of the event.
+                start_datetime:
+                  type: string
+                  description: Start date & time of the event, in ISO 8601 format.
+                end_datetime:
+                  type: string
+                  description: End date & time of the event, in ISO 8601 format.
+                location_id:
+                  type: string
+                  description: Location reference of this event.
+                sponsor_community_id:
+                  type: string
+                  description: Sponsor community for this event.
+                overview:
+                  type: string
+                  description: Description of the event.
+                external_event_link:
+                  type: string
+                  description: External event link.
+                volunteer_event:
+                  type: boolean
+                  description: Event type is volunteer or not.
+                maximum_participants:
+                  type: integer
+                  description: Number of people needed for the event.
+                employee_only:
+                  type: boolean
+                  description: Employee only event or not.
+                open_for_outsiders:
+                  type: boolean
+                  description: Open for outsiders or not.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Contact email.
+                contact_phone:
+                  type: string
+                  description: Contact phone.
+                contact_messaging:
+                  type: string
+                  description: Contact Slack or Teams messaging Id.
+                rsvp_required:
+                  type: boolean
+                  description: RSVP is required or not.
+                rsvp_link:
+                  type: string
+                  description: RSVP external link.
+              required:
+                - name
+                - start_datetime
+                - end_datetime
+                - location_id
+                - overview
+  '/events/{event_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+    get:
+      summary: Get details of an event
+      tags:
+        - events
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      operationId: get_event
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of an event
+      tags:
+        - events
+      operationId: update_event
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secondary_organizer_id:
+                  type: string
+                  description: Information about the secondary organizer of the event.
+                name:
+                  type: string
+                  description: Name of the event.
+                start_datetime:
+                  type: string
+                  description: Start date & time of the event, in ISO 8601 format.
+                end_datetime:
+                  type: string
+                  description: End date & time of the event, in ISO 8601 format.
+                location_id:
+                  type: string
+                  description: Location reference of this event.
+                sponsor_community_id:
+                  type: string
+                  description: Sponsor community for this event.
+                overview:
+                  type: string
+                  description: Description of the event.
+                external_event_link:
+                  type: string
+                  description: External event link.
+                volunteer_event:
+                  type: boolean
+                  description: Event type is volunteer or not.
+                maximum_participants:
+                  type: integer
+                  description: Number of people needed for the event.
+                employee_only:
+                  type: boolean
+                  description: Employee only event or not.
+                open_for_outsiders:
+                  type: boolean
+                  description: Open for outsiders or not.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Contact email.
+                contact_phone:
+                  type: string
+                  description: Contact phone.
+                contact_messaging:
+                  type: string
+                  description: Contact Slack or Teams messaging Id.
+                rsvp_required:
+                  type: boolean
+                  description: RSVP is required or not.
+                rsvp_link:
+                  type: string
+                  description: RSVP external link.
+    delete:
+      summary: Delete an event
+      tags:
+        - events
+      operationId: delete_event
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/event_logo':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Create request for event logo upload
+      operationId: upload_event_logo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: event_logo.jpeg
+                  content_type: image/jpeg
+  '/events/{event_id}/event_logo/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize event logo upload
+      operationId: finalize_event_logo_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete event logo
+      operationId: delete_event_logo
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/overview_video':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Create request for a overview video upload
+      operationId: upload_event_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: event_video.mp4
+                  content_type: video/mp4
+  '/events/{event_id}/overview_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Finalize event overview video upload
+      operationId: finalize_event_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete event overview video
+      operationId: delete_event_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+  '/events/{event_id}/comments':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    post:
+      summary: Add a comment for an event
+      operationId: add_event_comment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment_id:
+                    type: string
+                    description: Unique identifier for this comment.
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Comment text.
+              required:
+                - comment
+  '/events/{event_id}/comments/{comment_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+      - schema:
+          type: string
+        name: comment_id
+        in: path
+        required: true
+        description: Unique id of the comment.
+    put:
+      summary: Update comment for an event
+      operationId: update_event_comment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment_id:
+                    type: string
+                    description: Unique identifier for this comment.
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Comment text.
+              required:
+                - comment
+    delete:
+      summary: Delete a comment
+      operationId: delete_event_comment
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/rsvp':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Provide or update rsvp confirmation
+      operationId: add_update_rsvp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rsvp_id:
+                    type: string
+                    description: Unique identifier of the rsvp.
+                  status:
+                    type: string
+                    enum:
+                      - yes
+                      - no
+                      - maybe
+                    description: Status for provided rsvp.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status for rsvp.
+                  enum:
+                    - yes
+                    - no
+                    - maybe
+              required:
+                - status
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Delete a rsvp
+      operationId: delete_rsvp
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/events/{event_id}/gallery':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a event gallery image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: event_image.jpg
+                  content_type: image/jpeg
+      tags:
+        - events
+  '/events/{event_id}/gallery/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize event gallery image or video upload
+      operationId: finalize_event_gallery_media
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - events
+    delete:
+      summary: Delete a event gallery image or video
+      operationId: delete_event_gallery_media
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - events
+  '/events/{event_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: event_id
+        in: path
+        required: true
+        description: Unique identifier of the event.
+    put:
+      summary: Bookmark event
+      operationId: add_event_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for event
+      operationId: delete_event_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - events
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /communities:
+    get:
+      summary: List all communities
+      tags:
+        - communities
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for community.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for community.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location filter for community.'
+        - schema:
+            type: string
+            enum:
+              - Engineering
+              - Sports
+              - Social Activities
+          in: query
+          name: community_type
+          description: 'Community type filter.'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Community'
+      operationId: list_communities
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add a new community
+      tags:
+        - communities
+      operationId: create_community
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this community.
+                secondary_moderator_id:
+                  type: string
+                  description: Information about the secondary moderator of the community.
+                location_id:
+                  type: string
+                  description: Location reference of this community.
+                type:
+                  type: string
+                  description: Type of this community.
+                  enum:
+                    - Engineering
+                    - Sports
+                    - Social Activities
+                membership_approval_required:
+                  type: boolean
+                  description: Membership approval is required or not for the community.
+                mission:
+                  type: string
+                  description: Mission of this community.
+                target_audience:
+                  type: string
+                  description: Target audiences of this community.
+                activities:
+                  type: string
+                  description: Activities of this community.
+                hashtags:
+                  type: array
+                  description: Hashtags of this community.
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Email of this community.
+                contact_phone:
+                  type: string
+                  description: Phone number of this community.
+                contact_messaging:
+                  type: string
+                  description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
+              required:
+                - name
+                - location_id
+                - language
+                - type
+                - membership_approval_required
+                - mission
+  '/communities/{community_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a community
+      tags:
+        - communities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+      operationId: get_community
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a community
+      tags:
+        - communities
+      operationId: update_community
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Community'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this community.
+                secondary_moderator_id:
+                  type: string
+                  description: Information about the secondary moderator of the community.
+                location_id:
+                  type: string
+                  description: Location reference of this community.
+                type:
+                  type: string
+                  description: Type of this community.
+                  enum:
+                    - Engineering
+                    - Sports
+                    - Social Activities
+                membership_approval_required:
+                  type: boolean
+                  description: Membership approval is required or not for the community.
+                mission:
+                  type: string
+                  description: Mission of this community.
+                target_audience:
+                  type: string
+                  description: Target audiences of this community.
+                activities:
+                  type: string
+                  description: Activities of this community.
+                hashtags:
+                  type: array
+                  description: Hashtags of this community.
+                  items:
+                    type: string
+                contact_email:
+                  type: string
+                  description: Email of this community.
+                contact_phone:
+                  type: string
+                  description: Phone number of this community.
+                contact_messaging:
+                  type: string
+                  description: Messaging id of this community.
+                member_can_create_events:
+                  type: boolean
+                  description: Members are allowed to create events or not.
+                member_can_post_photos:
+                  type: boolean
+                  description: Members are allowed to post photos or not.
+                member_can_post_updates:
+                  type: boolean
+                  description: Members are allowed to post updates or not.
+    delete:
+      summary: Delete a community
+      tags:
+        - communities
+      operationId: delete_community
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/community_logo':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    put:
+      summary: Create request for a community logo upload
+      operationId: upload_logo_image
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_logo.jpg
+                  content_type: image/jpg
+  '/communities/{community_id}/community_logo/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community logo upload
+      operationId: finalize_community_logo_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a community logo
+      operationId: delete_community_logo
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/overview_video':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    put:
+      summary: Create request for a community video upload
+      operationId: upload_community_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_video.mp4
+                  content_type: video/mp4
+  '/communities/{community_id}/overview_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community video upload
+      operationId: finalize_community_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a community video
+      operationId: delete_community_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/announcements':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    post:
+      summary: Add a community announcement
+      operationId: add_community_announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcement_id:
+                    type: string
+                    description: Unique identifier for this announcement.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcement:
+                  type: string
+                  description: Announcement text.
+              required:
+                - announcement
+  '/communities/{community_id}/announcements/{announcement_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: announcement_id
+        in: path
+        required: true
+        description: Unique id of the announcement.
+    put:
+      summary: Update community announcement
+      operationId: update_community_announcement
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcement_id:
+                    type: string
+                    description: Unique identifier for this announcement.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcement:
+                  type: string
+                  description: Announcement text.
+              required:
+                - announcement
+    delete:
+      summary: Delete a community announcement
+      operationId: delete_community_announcement
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/members':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    post:
+      summary: Join as a community member
+      operationId: join_community_member
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membership_id:
+                    type: string
+                    description: Unique identifier for membership.
+                  status:
+                    type: string
+                    description: Status for joining.
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Disjoin a community member
+      operationId: disjoin_community_member
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/communities/{community_id}/members/{membership_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+      - schema:
+          type: string
+        name: membership_id
+        in: path
+        required: true
+        description: Unique identifier for membership.
+    put:
+      summary: Approve or Disapprove community membership
+      operationId: confirm_community_membership
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the approve or disapprove
+                  enum:
+                    - active
+                    - disapproved
+              required:
+                - status
+  '/communities/{community_id}/gallery':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a community gallery image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: community_image.jpg
+                  content_type: image/jpeg
+      tags:
+        - communities
+  '/communities/{community_id}/gallery/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize community gallery image or video upload
+      operationId: finalize_community_gallery_media
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - communities
+    delete:
+      summary: Delete a community gallery image or video
+      operationId: delete_community_gallery_media
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - communities
+  '/communities/{community_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: community_id
+        in: path
+        required: true
+        description: Unique identifier of the community.
+    put:
+      summary: Bookmark a community
+      operationId: add_community_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a community
+      operationId: delete_community_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - communities
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /posts:
+    get:
+      summary: List all posts
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+      operationId: list_posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: post_owner_id
+          description: Unique identifier of the post owner.
+        - schema:
+            type: string
+          in: query
+          name: q
+          description: The search query.
+          deprecated: true
+        - schema:
+            type: string
+            default: curated
+          in: query
+          name: filter
+          description: Filter for the results.
+          deprecated: true
+        - schema:
+            type: string
+          in: query
+          name: type
+          description: 'Unique identifier of the post type for search for. If absent, return posts of all types.'
+          deprecated: true
+        - schema:
+            type: string
+            enum:
+              - latest
+              - recommended
+            default: recommended
+          in: query
+          name: sort
+          description: 'Sorting identifier for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for gigs.'
+        - schema:
+            type: string
+            enum:
+              - open
+              - underway
+              - completed
+              - suspended
+          in: query
+          name: status
+          description: 'Status filter for list of gigs.'
+        - schema:
+            type: string
+            enum:
+              - s
+              - m
+              - l
+          in: query
+          name: project_size
+          description: 'Project size filter for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: target_date
+          description: 'Date filter upto target date.'
+        - schema:
+            type: string
+          in: query
+          name: location_id
+          description: 'Location id filter for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter for list of gigs.'
+        - schema:
+            type: string
+          in: query
+          name: skill_id
+          description: 'Skill id filter for gigs.'
+    post:
+      summary: Add a new post
+      tags:
+        - posts
+      operationId: create_post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of this post.
+                task_owner_id:
+                  type: string
+                  deprecated: true
+                post_type_id:
+                  type: string
+                  description: Unique identifier of the post type for this post.
+                description:
+                  type: string
+                  description: Description of this post.
+                size:
+                  type: string
+                  description: T-shirt size of this post.
+                  enum:
+                    - S
+                    - M
+                    - L
+                target_date:
+                  type: string
+                  description: 'Target date for the completion of work described in this post, in ISO 8601 format.'
+                expiration_date:
+                  type: string
+                  description: ISO 8601 formatted Date on which this post expires if no candidate is selected.
+                language:
+                  type: string
+                  description: Language for this post.
+                location_id:
+                  type: string
+                  description: Unique identifier of the location for this post.
+                people_needed:
+                  type: integer
+                  description: Number of people needed for this post.
+                required_skills:
+                  type: array
+                  description: Must-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                desired_skills:
+                  type: array
+                  description: Nice-to-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                candidate_description:
+                  type: string
+                  description: Description of an ideal candidate for this post.
+                auto_assign:
+                  type: boolean
+                  description: Automatically select applications or not.
+                canvara_kudos:
+                  type: boolean
+                  description: Canvara kudos true or false.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hastags or keywords.
+                highlighted_communities:
+                  type: array
+                  description: Highlighted Community ids for gig.
+                  items:
+                    type: string
+              required:
+                - name
+                - post_type_id
+                - size
+                - target_date
+                - language
+                - location_id
+                - people_needed
+  '/posts/{post_id}':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+      operationId: get_post
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a post
+      tags:
+        - posts
+      operationId: update_post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_owner_id:
+                  type: string
+                  deprecated: true
+                name:
+                  type: string
+                  description: Name of this post.
+                post_type_id:
+                  type: string
+                  description: Unique identifier of the post type for this post.
+                status:
+                  type: string
+                  description: Current status of this post.
+                description:
+                  type: string
+                  description: Description of this post.
+                size:
+                  type: string
+                  description: T-shirt size of this post.
+                  enum:
+                    - S
+                    - M
+                    - L
+                target_date:
+                  type: string
+                  description: 'Target date for the completion of work described in this post, in ISO 8601 format.'
+                expiration_date:
+                  type: string
+                  description: ISO 8601 formatted Date on which this post expires if no candidate is selected.
+                language:
+                  type: string
+                  description: Language for this post.
+                location_id:
+                  type: string
+                  description: Unique identifier of the location for this post.
+                people_needed:
+                  type: integer
+                  description: Number of people needed for this post.
+                required_skills:
+                  type: array
+                  description: Must-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                desired_skills:
+                  type: array
+                  description: Nice-to-have skills for this post.
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevel'
+                candidate_description:
+                  type: string
+                  description: Description of an ideal candidate for this post.
+                auto_assign:
+                  type: boolean
+                  description: Automatically select applications or not.
+                canvara_kudos:
+                  type: boolean
+                  description: Canvara kudos true or false.
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of hastags or keywords.
+                highlighted_communities:
+                  type: array
+                  description: Highlighted Community ids for gig.
+                  items:
+                    type: string
+    delete:
+      summary: Delete a post
+      tags:
+        - posts
+      operationId: delete_post
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/posts/{post_id}/applications':
+    get:
+      summary: List all applications for a post
+      tags:
+        - applications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+      operationId: list_applications_by_post
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - active
+              - selected
+              - passed
+            default: all
+          in: query
+          name: filter
+          description: Filter for the results.
+    post:
+      summary: Add a new application for a post
+      operationId: create_application
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+      tags:
+        - applications
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+  '/posts/{post_id}/performers':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    get:
+      summary: List all performers for a post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Performer'
+      operationId: list_performers
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters: []
+      tags:
+        - posts
+  '/posts/{post_id}/performers/{performer_id}':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: performer_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a performer
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Performer'
+      operationId: get_performer
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a performer
+      operationId: update_performer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Performer'
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - in_progress
+                    - suspended
+                    - stopped
+                    - complete
+  '/posts/{post_id}/performers/{performer_id}/feedback':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: performer_id
+        in: path
+        required: true
+    get:
+      summary: Get feedback for a performer
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: get_performer_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add feedback for a performer
+      tags:
+        - posts
+      operationId: create_performer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
+    put:
+      summary: update feedback for a performer
+      tags:
+        - posts
+      operationId: update_performer_feedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
+  '/posts/{post_id}/video':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post.
+    put:
+      summary: Create request for a post video upload
+      operationId: upload_post_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_video.mp4
+                  content_type: video/mp4
+  '/posts/{post_id}/video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize post video upload
+      operationId: finalize_post_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a post video
+      operationId: delete_post_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/posts/{post_id}/like':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post.
+    put:
+      summary: Add like for a post
+      operationId: add_post_like
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove like for a post
+      operationId: delete_post_like
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/posts/{post_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+        description: Unique identifier of the post.
+    put:
+      summary: Bookmark a post
+      operationId: add_post_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a post
+      operationId: delete_post_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - posts
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/posts/{post_id}/feedback':
+    parameters:
+      - schema:
+          type: string
+        name: post_id
+        in: path
+        required: true
+    get:
+      summary: List all feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feedback'
+      operationId: list_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Add feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: create_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
+    put:
+      summary: update feedback for a post
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+      operationId: update_post_feedback
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                concerns:
+                  type: string
+                additional_comments:
+                  type: string
+  /applications:
+    get:
+      summary: List all applications
+      tags:
+        - applications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+      operationId: list_applications_by_applicant
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/applications/{application_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+    get:
+      summary: Get details of an application
+      tags:
+        - applications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+      operationId: get_application
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of an application
+      operationId: update_application
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - active_read
+                    - selected
+                    - passed
+      tags:
+        - applications
+    delete:
+      summary: Delete an application
+      operationId: delete_application
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - applications
+  '/applications/{application_id}/video':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+        description: Unique identifier of the application.
+    put:
+      summary: Create request for an application video upload
+      operationId: upload_application_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - applications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_video.mp4
+                  content_type: video/mp4
+  '/applications/{application_id}/video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+        description: Unique identifier of the application.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize application video upload
+      operationId: finalize_application_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - applications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete an application video
+      operationId: delete_application_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - applications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    get:
+      summary: Get user details
+      tags:
+        - users
+      operationId: get_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithTeam'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Update details of a user
+      tags:
+        - users
+      operationId: update_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                name:
+                  type: string
+                title:
+                  type: string
+                location:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                current_skills:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SkillWithLevelAndExpert'
+                desired_skills:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Skill'
+                email:
+                  type: string
+                phone_number:
+                  type: string
+                linkedin_url:
+                  type: string
+                manager_id:
+                  type: string
+                hidden_secrets:
+                  type: string
+                career_goals:
+                  type: string
+                career_goals_visibility:
+                  type: boolean
+                superpowers:
+                  type: string
+                trying_to_learn:
+                  type: string
+                trying_to_learn_visibility:
+                  type: boolean
+                company_start_date:
+                  type: string
+                pronoun:
+                  type: string
+                department:
+                  type: string
+                introduction:
+                  type: string
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                slack_teams_messaging_id:
+                  type: string
+                mentorship_offered:
+                  type: boolean
+                mentorship_description:
+                  type: string
+                mentorship_hashtags:
+                  type: array
+                  items:
+                    type: string
+                background_picture_id:
+                  type: string
+                  description: Background picture reference.
+  '/users/{user_id}/fun_fact':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a user fun fact image or video upload
+      operationId: upload_profile_fun_fact
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_video.mp4
+                  content_type: video/mp4
+      tags:
+        - users
+  '/users/{user_id}/fun_fact/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize user fun fact image or video upload
+      operationId: finalize_profile_fun_fact_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
+    delete:
+      summary: Delete a user fun fact
+      operationId: delete_profile_fun_fact
+      responses:
+        '204':
+          description: No Content
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/profile_picture':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a profile picture upload
+      operationId: upload_profile_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/profile_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize profile picture upload
+      operationId: finalize_profile_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/background_picture':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a background picture upload
+      operationId: upload_background_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: background_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  '/users/{user_id}/background_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize background picture upload
+      operationId: finalize_background_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - users
+  /users/me:
+    get:
+      summary: Get details of the current authenticated user
+      tags:
+        - users
+      operationId: get_current_user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithNavigationCues'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/bookmark':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+        description: Unique identifier of the user.
+    put:
+      summary: Bookmark a people
+      operationId: add_people_bookmark
+      responses:
+        '204':
+          description: ''
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    delete:
+      summary: Remove bookmark for a people
+      operationId: delete_people_bookmark
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /users:
+    get:
+      summary: List all users
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    user_id:
+                      type: string
+                      description: Unique identifier for the user.
+                    name:
+                      type: string
+                      description: Name of the user.
+                    profile_picture_url:
+                      type: string
+                      description: The URL of user's profile picture.
+                    title:
+                      type: string
+                      description: Title of the user.
+                    pronoun:
+                      type: string
+                      description: Pronoun.
+                    location:
+                      type: string
+                      description: Location of the user.
+                    department:
+                      type: string
+                      description: Department of the user.
+                    expert_skills:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SkillWithLevelAndExpert'
+                      description: Expert skills of the user.
+                    introduction:
+                      type: string
+                      description: Introduction of the user.
+                    hashtags:
+                      type: array
+                      items:
+                        type: string
+                      description: Hastags of the user.
+                    email:
+                      type: string
+                      description: Email of the user.
+                    phone_number:
+                      type: string
+                      description: Phone number of the user.
+                    linkedin_url:
+                      type: string
+                      description: Linkedin URL of the user.
+                    slack_teams_messaging_id:
+                      type: string
+                      description: Slack/Team handle of the user.
+                    mentorship_offered:
+                      type: boolean
+                      description: User is a mentor or not.
+                    mentorship_description:
+                      type: string
+                      description: Mentorship description.
+                    mentorship_hashtags:
+                      type: array
+                      items:
+                        type: string
+                      description: Mentorship hashtags.
+                    matching_reason:
+                      type: string
+                      description: Reason for recomending this user.
+      operationId: list_user
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - all
+              - expert
+              - mentor
+            default: all
+          in: query
+          name: user_type
+          description: 'type filter for list of users.'
+        - schema:
+            type: string
+          in: query
+          name: keyword
+          description: 'Search keyword for users.'
+        - schema:
+            type: string
+          in: query
+          name: title
+          description: 'Title/role filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: department
+          description: 'Department filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: skill_id
+          description: 'Skill id filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: location
+          description: 'Location string filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: language
+          description: 'Language filter for user.'
+        - schema:
+            type: string
+          in: query
+          name: tenure_lte
+          description: 'Minimum tenure(number of year) with the company.'
+        - schema:
+            type: string
+          in: query
+          name: tenure_gte
+          description: 'Maximum tenure(number of year) with the company.'
+  /banners:
+    get:
+      summary: List all banners
+      tags:
+        - users
+      operationId: list_banners
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banner'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/resume':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a resume upload
+      operationId: upload_resume
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: resume.pdf
+                  content_type: application/pdf
+      tags:
+        - users
+  '/users/{user_id}/resume/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize resume upload
+      operationId: finalize_resume_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
+    delete:
+      summary: Delete a resume
+      operationId: delete_resume
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/introduction_video':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a introduction video upload
+      operationId: upload_introduction_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: introduction_video.avi
+                  content_type: video/x-msvideo
+      tags:
+        - users
+  '/users/{user_id}/introduction_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize introduction video upload
+      operationId: finalize_introduction_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
+    delete:
+      summary: Delete a introduction video
+      operationId: delete_introduction_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/mentorship_video':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+    put:
+      summary: Create request for a mentorship video upload
+      operationId: upload_mentorship_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: mentorship_video.avi
+                  content_type: video/x-msvideo
+      tags:
+        - users
+  '/users/{user_id}/mentorship_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: user_id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize mentorship video upload
+      operationId: finalize_mentorship_video_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      tags:
+        - users
+    delete:
+      summary: Delete a mentorship video
+      operationId: delete_mentorship_video
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - users
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /onboarding/product_preferences:
+    get:
+      summary: List all products that user can select
+      tags:
+        - onboarding
+      operationId: list_products
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductPreference'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    post:
+      summary: Set product preferences during onboarding
+      tags:
+        - onboarding
+      operationId: set_product_preferences
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductPreference'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductPreference'
+  /onboarding/current_skills:
+    post:
+      summary: Set current skills during onboarding
+      tags:
+        - onboarding
+      operationId: set_current_skills
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkillWithLevelAndExpert'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SkillWithLevelAndExpert'
+  /onboarding/desired_skills:
+    post:
+      summary: Set desired skills during onboarding
+      tags:
+        - onboarding
+      operationId: set_desired_skills
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Skill'
+  /onboarding/linkedin:
+    post:
+      summary: Set LinkedIn profile url during onboarding
+      tags:
+        - onboarding
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  linkedin_url:
+                    type: string
+                required:
+                  - linkedin_url
+      operationId: set_linkedin_url
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                linkedin_url:
+                  type: string
+              required:
+                - linkedin_url
+  /onboarding/profile_picture:
+    put:
+      summary: Create request for a profile picture upload
+      tags:
+        - onboarding
+      operationId: upload_profile_picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: my_image.jpeg
+                  content_type: image/jpeg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/onboarding/profile_picture/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize profile picture upload
+      tags:
+        - onboarding
+      operationId: finalize_profile_picture_upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /backgroundpictures:
+    get:
+      summary: List all background pictures
+      tags:
+        - backgroundpictures
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BackgroundPicture'
+      operationId: list_backgroundpictures
+      description: ''
+      security:
+        - AWSCognitoCanvaraPrototype: []
+    put:
+      summary: Create request for a background picture upload
+      operationId: upload_backgroundpicture
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: bg_picture.jpg
+                  content_type: image/jpg
+  '/backgroundpictures/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize background picture upload
+      operationId: finalize_backgroundpicture_upload
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+      tags:
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+    delete:
+      summary: Delete a background picture
+      operationId: delete_backgroundpicture
+      responses:
+        '204':
+          description: No Content
+      tags:
+        - backgroundpictures
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /skills:
+    get:
+      summary: Search skills
+      tags:
+        - onboarding
+      operationId: search_skills
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: q
+          description: The search query
+  /post_types:
+    get:
+      summary: List all post types available to user
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostType'
+      operationId: list_post_types
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /locations:
+    get:
+      summary: List all post locations available to user
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+      operationId: list_locations
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /languages:
+    get:
+      summary: List all post languages available to user
+      tags:
+        - posts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      operationId: list_languages
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  /matches:
+    post:
+      summary: Add a new match between a user and a post
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPostMatch'
+      operationId: create_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                post_id:
+                  type: string
+                match_level:
+                  type: integer
+              required:
+                - user_id
+                - post_id
+                - match_level
+      tags:
+        - matches
+    get:
+      summary: List all matches based on given criteria
+      operationId: list_matches
+      responses:
+        '200':
+          description: OK
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: user_id
+        - schema:
+            type: string
+          in: query
+          name: post_id
+      tags:
+        - matches
+  '/matches/{match_id}':
+    parameters:
+      - schema:
+          type: string
+        name: match_id
+        in: path
+        required: true
+    get:
+      summary: Get details of a match
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPostMatch'
+      operationId: get_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters: []
+      tags:
+        - matches
+    put:
+      summary: Update details of a match
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPostMatch'
+      operationId: update_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                match_level:
+                  type: integer
+              required:
+                - match_level
+      tags:
+        - matches
+    delete:
+      summary: Delete a match
+      responses:
+        '204':
+          description: No Content
+      operationId: delete_match
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      tags:
+        - matches
+  /notifications:
+    get:
+      summary: List all notifications for the user
+      tags:
+        - notifications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  total_unread:
+                    type: number
+      operationId: list_notifications
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      parameters:
+        - schema:
+            type: integer
+            default: 20
+          in: query
+          name: limit
+          description: Maximum number of notifications to return.
+        - schema:
+            type: integer
+          in: query
+          name: start
+          description: Start index from where to return the notifications.
+  '/notifications/{notification_id}':
+    parameters:
+      - schema:
+          type: string
+        name: notification_id
+        in: path
+        required: true
+        description: Unique identifier of the notification.
+    put:
+      summary: Update status of a notification
+      tags:
+        - notifications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+      operationId: update_notification
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - read
+                    - unread
+    delete:
+      summary: Delete a notification
+      tags:
+        - notifications
+      responses:
+        '204':
+          description: No Content
+      operationId: delete_notification
+      security:
+        - AWSCognitoCanvaraPrototype: []
+  '/slack/user':
+    put:
+      summary: Update slack details for the users
+      tags:
+        - slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackUpdateUserResponse'
+      operationId: update_slack
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackUpdateUserRequest'
+            examples:
+              Example:
+                value:
+                  slack_id: "slack_id"
+                  workspace_id: "workspace_id"
+        security:
+          - AWSCognitoCanvaraPrototype: []
+  '/slack/notification':
+    post:
+      summary: Send a notification in slack
+      tags:
+        - slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackNotificationResponse'
+        operationId: slack_notification
+        security:
+          - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackNotificationRequest'
+            examples:
+              Example:
+                value:
+                  text: "Hello"
+      security:
+        - AWSCognitoCanvaraPrototype: []
+components:
+  schemas:
+    Share:
+      title: Share item
+      type: object
+      properties:
+        share_id:
+          type: string
+          description: Unique identifier for the shareable.
+        share_by:
+          $ref: '#/components/schemas/UserSummary'
+          description: Person, who shared this item.
+        item_type:
+          type: string
+          enum:
+            - gig
+            - offer
+            - position
+            - event
+            - community
+            - people
+          description: Item type of the shareable item.
+        item:
+          description: Item details.
+          oneOf:
+            - $ref: '#/components/schemas/PostSummary'
+            - $ref: '#/components/schemas/OfferSummary'
+            - $ref: '#/components/schemas/Position'
+            - $ref: '#/components/schemas/EventSummary'
+            - $ref: '#/components/schemas/CommunitySummary'
+            - $ref: '#/components/schemas/UserSummary'
+        message:
+          type: string
+          description: Optional message.
+    Position:
+      title: Position details
+      type: object
+      properties:
+        position_id:
+          type: string
+          description: Unique identifier for position.
+        hiring_manager:
+          type: object
+          description: Information about the manager.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            location:
+              type: string
+              description: Location of the higring manager.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
+        location:
+          $ref: '#/components/schemas/Location'
+        role_type:
+          type: string
+          description: Role Type of this position.
+          enum:
+            - Full Time
+            - Part Time
+        role:
+          type: string
+          description: Role of this position.
+        department:
+          type: string
+          description: Department for the position.
+        description:
+          type: string
+          description: Description of this position.
+        benefits:
+          type: string
+          description: Benefits for this position.
+        pay_currency:
+          type: string
+          description: Payout currency for this position.
+        pay_minimum:
+          type: number
+          multipleOf: 0.01
+          description: Minimum payout for this position.
+        pay_maximum:
+          type: number
+          multipleOf: 0.01
+          description: Maximum payout for this position.
+        apply_url:
+          type: string
+          description: Apply URL for this position.
+      required:
+        - hiring_manager
+        - location
+        - role_type
+        - role
+        - description
+        - pay_currency
+        - pay_minimum
+        - pay_maximum
+    Community:
+      title: Community
+      type: object
+      properties:
+        community_id:
+          type: string
+          description: Unique identifier for this community.
+        name:
+          type: string
+          description: Name of this community.
+        primary_moderator:
+          type: object
+          description: Information about the owner/primary moderator of the community.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        secondary_moderator:
+          type: object
+          description: Information about the secondary moderator of the community.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        location:
+          $ref: '#/components/schemas/Location'
+        sponsor_events:
+          type: array
+          description: Events sponsored by this community.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/EventSummary'
+              - type: string
+        community_logo:
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the community.
+        overview_video:
+          $ref: '#/components/schemas/UserUpload'
+          description: Overview video of the community.
+        type:
+          type: string
+          description: Types of this community.
+        membership_approval_required:
+          type: boolean
+          description: Membership approval is required or not for the community.
+        mission:
+          type: string
+          description: Mission of this community.
+        target_audience:
+          type: string
+          description: Target audiences of this community.
+        activities:
+          type: string
+          description: Activities of this community.
+        announcements:
+          type: array
+          description: Announcements of this community.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/CommunityAnnouncement'
+              - type: string
+        members:
+          type: array
+          description: Members of this community.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/CommunityMember'
+              - type: string
+        gallery:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
+              - type: string
+        hashtags:
+          type: array
+          description: Hashtags of this community.
+          items:
+            type: string
+        contact_email:
+          type: string
+          description: Email of this community.
+        contact_phone:
+          type: string
+          description: Phone number of this community.
+        contact_messaging:
+          type: string
+          description: Messaging id of this community.
+        member_can_create_events:
+          type: boolean
+          description: Members are allowed to create events or not.
+        member_can_post_photos:
+          type: boolean
+          description: Members are allowed to post photos or not.
+        member_can_post_updates:
+          type: boolean
+          description: Members are allowed to post updates or not.
+        created_at:
+          type: string
+          description: 'Date and time when this community was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this community was last updated, in ISO 8601 format.'
+      required:
+        - name
+        - location_id
+        - type
+        - membership_approval_required
+        - mission
+    CommunitySummary:
+      title: Community Summary
+      type: object
+      properties:
+        community_id:
+          type: string
+          description: Unique identifier for the community.
+        name:
+          type: string
+          description: Name of this community.
+        community_logo:
+          type: string
+          description: The URL of community logo.
+    CommunityAnnouncement:
+      title: Announcement for a community.
+      type: object
+      properties:
+        announcement_id:
+          type: string
+          description: Unique identifier for the announcement.
+        creator:
+          $ref: '#/components/schemas/UserSummary'
+          description: Creator of the announcement.
+        date_time:
+          type: string
+          description: 'Date & time of the announcement, in ISO 8601 format.'
+        announcement:
+          type: string
+          description: Announcement text.
+      required:
+        - announcement
+    CommunityMember:
+      title: Members for a community.
+      type: object
+      properties:
+        membership_id:
+          type: string
+          description: Unique identifier for the membership.
+        member:
+          $ref: '#/components/schemas/UserSummary'
+          description: Profile of the member.
+        status:
+          type: string
+          description: Membership status, either pending for approval or active.
+        join_date:
+          type: string
+          description: 'Date & time of joining, in ISO 8601 format.'
+    Customer:
+      title: Customer
+      type: object
+      x-examples: {}
+      properties:
+        customer_id:
+          type: string
+        name:
+          type: string
+      required:
+        - customer_id
+        - name
+    UserSummary:
+      title: Summary for a user
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier for the user.
+        name:
+          type: string
+          description: Name of the user.
+        profile_picture_url:
+          type: string
+          description: The URL of user's profile picture.
+    User:
+      title: User
+      type: object
+      properties:
+        customer_id:
+          type: string
+        user_id:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        title:
+          type: string
+        profile_picture_url:
+          type: string
+        background_picture_url:
+          type: string
+        location:
+          type: string
+        customer_name:
+          type: string
+        email:
+          type: string
+        phone_number:
+          type: string
+        linkedin_url:
+          type: string
+        manager:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        product_preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPreference'
+        current_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillWithLevelAndExpert'
+        desired_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        fun_facts:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
+              - type: string
+        introduction:
+          type: string
+        introduction_video:
+          $ref: '#/components/schemas/UserUpload'
+        career_goals:
+          type: string
+        career_goals_visibility:
+          type: boolean
+        hidden_secrets:
+          type: string
+        superpowers:
+          type: string
+        trying_to_learn:
+          type: string
+        trying_to_learn_visibility:
+          type: boolean
+        company_start_date:
+          type: string
+        pronoun:
+          type: string
+        department:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        feedback:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feedback'
+        allow_demo_mode:
+          type: boolean
+        onboarding_complete:
+          type: boolean
+        hashtags:
+          type: array
+          items:
+            type: string
+        slack_teams_messaging_id:
+          type: string
+        mentorship_offered:
+          type: boolean
+        mentorship_description:
+          type: string
+        mentorship_hashtags:
+          type: array
+          items:
+            type: string
+        mentorship_video:
+          $ref: '#/components/schemas/UserUpload'
+        resume_file:
+          $ref: '#/components/schemas/UserUpload'
+        community_memberships:
+          type: array
+          description: Community memberships for user.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/CommunitySummary'
+              - type: string
+        relevant_skills_recommendation:
+          type: array
+          items:
+            type: string
+        linkedin_profiles_suggestion:
+          type: array
+          items:
+            type: string
+      required:
+        - customer_id
+        - user_id
+        - name
+    UserWithTeam:
+      title: UserWithNavigationCues
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            team:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserSummary'
+              description: List of team members.
+    UserWithNavigationCues:
+      title: UserWithNavigationCues
+      allOf:
+        - $ref: '#/components/schemas/UserWithTeam'
+        - type: object
+          properties:
+            profile_completion:
+              type: integer
+              description: Profile completion percentage.
+            unread_notifications:
+              type: integer
+              description: Number of unread_notifications.
+    Offer:
+      allOf:
+        - $ref: '#/components/schemas/OfferMinimal'
+        - title: Offer
+        - type: object
+          properties:
+            overview_video:
+              $ref: '#/components/schemas/UserUpload'
+              description: Overview video for the offer.
+    OfferSummary:
+      title: Summary for a offer
+      type: object
+      properties:
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        name:
+          type: string
+          description: Name of this offer.
+    OfferMinimal:
+      title: Offer
+      type: object
+      properties:
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        offerer:
+          type: object
+          description: Information about the owner/offerer of the offer.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone of the user.
+        name:
+          type: string
+          description: Name of this offer.
+        overview_text:
+          type: string
+          description: Overview text for the offer.
+        hashtags:
+          type: array
+          description: Hashtags of this offer.
+          items:
+            type: string
+        status:
+          type: string
+          description: Current status of this offer.
+        created_at:
+          type: string
+          description: 'Date and time when this offer was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+        proposal_count:
+          type: number
+          description: Number of proposals belongs to this offer
+      required:
+        - name
+        - overview_text
+    Proposal:
+      allOf:
+        - $ref: '#/components/schemas/ProposalMinimal'
+        - title: Proposal
+        - type: object
+          properties:
+            overview_video:
+              $ref: '#/components/schemas/UserUpload'
+              description: Overview video for the proposal.
+    ProposalMinimal:
+      title: Proposal
+      type: object
+      properties:
+        proposal_id:
+          type: string
+          description: Unique identifier for this proposal.
+        offer_id:
+          type: string
+          description: Unique identifier for this offer.
+        offer:
+          type: object
+          description: Information about the offer.
+          properties:
+            offer_id:
+              type: string
+              description: Unique identifier for this offer.
+            offerer:
+              type: object
+              description: Information about the offer creator.
+              properties:
+                user_id:
+                  type: string
+                  description: Unique identifier for the user.
+                name:
+                  type: string
+                  description: Name of the user.
+                profile_picture_url:
+                  type: string
+                  description: The URL of user's profile picture.
+                title:
+                  type: string
+                  description: Title of the user.
+                pronoun:
+                  type: string
+                  description: Pronoun.
+                location:
+                  type: string
+                  description: Location of the user.
+                department:
+                  type: string
+                  description: Department of the user.
+            name:
+              type: string
+              description: Name of this offer.
+            overview_text:
+              type: string
+              description: Description of the offer.
+            overview_video:
+              $ref: '#/components/schemas/UserUpload'
+            hashtags:
+              type: array
+              description: Hashtags of this offer.
+              items:
+                type: string
+            status:
+              type: string
+              description: Current status of this offer.
+            created_at:
+              type: string
+              description: 'Date and time when this offer was created, in ISO 8601 format.'
+            last_updated_at:
+              type: string
+              description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+        proposer:
+          type: object
+          description: Information about the owner/proposer of the proposal.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            slack_teams_messaging_id:
+              type: string
+              description: Messaging handle of the user.
+        name:
+          type: string
+          description: Name of this project.
+        overview_text:
+          type: string
+          description: Description of the proposal.
+        proposer_feedback:
+          type: object
+          description: Feedback for the proposer.
+          properties:
+            comments:
+              type: string
+              description: Feedback comment
+            concerns:
+              type: string
+              description: Feedback concern
+            additional_comments:
+              type: string
+              description: Feedback additional comments
+        proposer_feedback_at:
+          type: string
+          description: 'Date and time when feedback for proposer was given, in ISO 8601 format.'
+        offerer_feedback:
+          type: object
+          description: Feedback for the offerer.
+          properties:
+            comments:
+              type: string
+              description: Feedback comment
+            concerns:
+              type: string
+              description: Feedback concern
+            additional_comments:
+              type: string
+              description: Feedback additional comments
+        offerer_feedback_at:
+          type: string
+          description: 'Date and time when feedback for offerer was given, in ISO 8601 format.'
+        status:
+          type: string
+          description: Current status of this proposal.
+        decided_at:
+          type: string
+          description: 'Date and time when the status of the proposal is "selected", in ISO 8601 format.'
+        closed_at:
+          type: string
+          description: 'Date and time when the status of the proposal is "in_progress", in ISO 8601 format.'
+        created_at:
+          type: string
+          description: 'Date and time when this offer was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this offer was last updated, in ISO 8601 format.'
+      required:
+        - name
+        - overview_text
+    Event:
+      title: Event
+      type: object
+      description: ''
+      properties:
+        primary_organizer:
+          type: object
+          description: Information about the primary organizer of the event.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        secondary_organizer:
+          type: object
+          description: Information about the secondary organizer of the event.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+        name:
+          type: string
+          description: Name of the event.
+        start_datetime:
+          type: string
+          description: Start date & time of the event, in ISO 8601 format.
+        end_datetime:
+          type: string
+          description: End date & time of the event, in ISO 8601 format.
+        location:
+          $ref: '#/components/schemas/Location'
+        sponsor_community:
+          type: object
+          description: Information about the sponsor community.
+          required:
+            - community_id
+            - name
+          properties:
+            community_id:
+              type: string
+              description: Unique identifier for the community.
+            name:
+              type: string
+              description: Name of the community.
+            community_logo:
+              type: string
+              description: The URL of community logo.
+        overview:
+          type: string
+          description: Description of the event.
+        event_logo:
+          $ref: '#/components/schemas/UserUpload'
+          description: Logo of the event.
+        overview_video:
+          $ref: '#/components/schemas/UserUpload'
+          description: Overview video of the event.
+        external_event_link:
+          type: string
+          description: External event link.
+        volunteer_event:
+          type: boolean
+          description: Event type is volunteer or not.
+        maximum_participants:
+          type: integer
+          description: Number of people needed for the event.
+        employee_only:
+          type: boolean
+          description: Employee only event or not.
+        open_for_outsiders:
+          type: boolean
+          description: Open for outsiders or not.
+        hashtags:
+          type: array
+          items:
+            type: string
+        contact_email:
+          type: string
+          description: Contact email.
+        contact_phone:
+          type: string
+          description: Contact phone.
+        contact_messaging:
+          type: string
+          description: Contact Slack or Teams messaging Id.
+        rsvp_required:
+          type: boolean
+          description: RSVP is required or not.
+        rsvp_link:
+          type: string
+          description: RSVP external link.
+        comments:
+          type: array
+          description: Comments for the event.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/EventComment'
+              - type: string
+        rsvp:
+          type: array
+          description: Given rsvp consent by users.
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/EventRSVP'
+              - type: string
+        gallery:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/UserUpload'
+              - type: string
+        created_at:
+          type: string
+          description: 'Date and time when this event was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this event was last updated, in ISO 8601 format.'
+      required:
+        - name
+        - event_date
+        - start_time
+        - end_time
+        - location
+        - language
+        - overview
+    EventSummary:
+      title: Event Summary
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: Unique identifier for the event.
+        name:
+          type: string
+          description: Name of the event.
+        event_logo:
+          type: string
+          description: The URL of event logo.
+    EventComment:
+      title: Comment for an event.
+      type: object
+      properties:
+        comment_id:
+          type: string
+          description: Unique identifier for the comment.
+        creator:
+          $ref: '#/components/schemas/UserSummary'
+          description: Creator of the comment.
+        datetime:
+          type: string
+          description: 'Date & time of the comment, in ISO 8601 format.'
+        comment:
+          type: string
+          description: Comment text.
+    EventRSVP:
+      title: RSVP of a user.
+      type: object
+      properties:
+        guest:
+          $ref: '#/components/schemas/UserSummary'
+          description: Consent provider of RSVP.
+        date_time:
+          type: string
+          description: 'Date & time of RSVP given, in ISO 8601 format.'
+        status:
+          type: string
+          description: Status of RSVP.
+    Post:
+      title: Post
+      type: object
+      description: ''
+      properties:
+        customer_id:
+          type: string
+          deprecated: true
+          description: Unique identifier of the customer to which this post belongs.
+        post_id:
+          type: string
+          description: Unique identifier for this post.
+        post_owner_id:
+          type: string
+          deprecated: true
+          description: Unique identifier of the owner of this post.
+        post_owner:
+          type: object
+          description: Information about the owner of this post.
+          required:
+            - user_id
+            - name
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            location:
+              type: string
+              description: Location of the post owner.
+        task_owner_id:
+          type: string
+          deprecated: true
+        post_type:
+          $ref: '#/components/schemas/PostType'
+        name:
+          type: string
+          description: Name of this post.
+        status:
+          type: string
+          description: Current status of this post.
+        summary:
+          type: string
+          deprecated: true
+          description: Name of this post.
+        description:
+          type: string
+          description: Description of this post.
+        video_url:
+          type: string
+          description: The URL of video description for this post.
+        description_video:
+          $ref: '#/components/schemas/UserUpload'
+        size:
+          type: string
+          description: T-shirt size of this post.
+          enum:
+            - S
+            - M
+            - L
+        location:
+          $ref: '#/components/schemas/Location'
+        people_needed:
+          type: integer
+          description: Number of people needed for this post.
+        language:
+          type: string
+          description: Language for this post.
+        required_skills:
+          type: array
+          description: Must-have skills for this post.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        desired_skills:
+          type: array
+          description: Nice-to-have skills for this post.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        candidate_description:
+          type: string
+          description: Description of an ideal candidate for this post.
+        auto_assign:
+          type: boolean
+          description: Automatically select applications or not.
+        canvara_kudos:
+          type: boolean
+          description: Canvara kudos true or false.
+        hashtags:
+          type: array
+          items:
+            type: string
+          description: List of hastags or keywords.
+        highlighted_communities:
+          type: array
+          description: Highlighted Community ids for gig.
+          items:
+            type: object
+            description: Information about the community.
+            required:
+              - community_id
+              - name
+            properties:
+              community_id:
+                type: string
+                description: Unique identifier for the community.
+              name:
+                type: string
+                description: Name of the community.
+              community_logo:
+                type: string
+                description: The URL of community logo.
+        match_level:
+          type: number
+          description: A number between 0 and 100 indicating how close of a match this post is for the current user. Returned only for active posts and if the current user is not the post owner.
+        matched_skills:
+          type: array
+          description: Post's skills that match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        unmatched_skills:
+          type: array
+          description: Post's skills that don't match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        is_bookmarked:
+          type: boolean
+          description: Whether this post has been bookmarked by the current user or not.
+        is_liked:
+          type: boolean
+          description: Whether this post has been liked by the current user or not.
+        target_date:
+          type: string
+          description: 'Target date for the completion of work described in this post, in ISO 8601 format.'
+        expiration_date:
+          type: string
+          description: ISO 8601 formatted Date on which this post expires if no candidate is selected.
+        created_at:
+          type: string
+          description: 'Date and time when this post was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this post was last updated, in ISO 8601 format.'
+      required:
+        - post_id
+        - post_owner
+        - post_type
+        - name
+        - status
+        - size
+        - location
+        - people_needed
+        - language
+        - target_date
+    PostSummary:
+      title: Summary for a gig
+      type: object
+      properties:
+        post_id:
+          type: string
+          description: Unique identifier for a gig.
+        name:
+          type: string
+          description: Name of this post.
+    Application:
+      title: Application
+      type: object
+      properties:
+        application_id:
+          type: string
+          description: Unique identifier for this application.
+        post_id:
+          type: string
+          description: Unique identifier for the post.
+        post:
+          type: object
+          description: Information about post.
+          properties:
+            post_id:
+              type: string
+              description: Unique identifier for this post.
+            owner:
+              type: object
+              description: Information about the post owner.
+              properties:
+                user_id:
+                  type: string
+                  description: Unique identifier for the user.
+                name:
+                  type: string
+                  description: Name of the user.
+                profile_picture_url:
+                  type: string
+                  description: The URL of user's profile picture.
+                title:
+                  type: string
+                  description: Title of the user.
+                pronoun:
+                  type: string
+                  description: Pronoun.
+                location:
+                  type: string
+                  description: Location of the user.
+                department:
+                  type: string
+                  description: Department of the user.
+            name:
+              type: string
+              description: Name of the post.
+            description:
+              type: string
+              description: Description of this post.
+            hashtags:
+              type: array
+              items:
+                type: string
+              description: List of hastags or keywords.
+            status:
+              type: string
+              description: Current status of this post.
+            created_at:
+              type: string
+              description: 'Date and time when this post was created, in ISO 8601 format.'
+            last_updated_at:
+              type: string
+              description: 'Date and time when this post was last updated, in ISO 8601 format.'
+        applicant_id:
+          type: string
+          description: Unique identifier for the user applying for the post.
+        applicant:
+          type: object
+          description: Information about the applicant.
+          properties:
+            user_id:
+              type: string
+              description: Unique identifier for the user.
+            name:
+              type: string
+              description: Name of the user.
+            profile_picture_url:
+              type: string
+              description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
+            location:
+              type: string
+              description: Location of the user.
+            department:
+              type: string
+              description: Department of the user.
+            email:
+              type: string
+              description: Email of the user.
+            phone_number:
+              type: string
+              description: Phone number of the user.
+            slack_teams_messaging_id:
+              type: string
+              description: Messaging handle of the user.
+        description:
+          type: string
+          description: Additional information for this application.
+        video_url:
+          type: string
+          description: The URL of video for this application.
+        description_video:
+          $ref: '#/components/schemas/UserUpload'
+        matched_skills:
+          type: array
+          description: Post's skills that match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        unmatched_skills:
+          type: array
+          description: Post's skills that don't match the user's skills.
+          items:
+            $ref: '#/components/schemas/SkillWithLevel'
+        status:
+          type: string
+          description: Current status of this application.
+        created_at:
+          type: string
+          description: 'Date and time when this application was created, in ISO 8601 format.'
+        last_updated_at:
+          type: string
+          description: 'Date and time when this application was last updated, in ISO 8601 format.'
+    Performer:
+      title: Performer
+      type: object
+      properties:
+        post_id:
+          type: string
+        user_id:
+          type: string
+        performer:
+          $ref: '#/components/schemas/UserSummary'
+          description: Performer details.
+        status:
+          type: string
+          enum:
+            - in_progress
+            - suspended
+            - stopped
+            - complete
+            - reviewed
+    Skill:
+      title: Skill
+      type: object
+      properties:
+        skill_id:
+          type: string
+        name:
+          type: string
+    SkillWithLevel:
+      title: SkillWithLevel
+      allOf:
+        - $ref: '#/components/schemas/Skill'
+        - type: object
+          properties:
+            level:
+              type: integer
+    SkillWithLevelAndExpert:
+      title: SkillWithLevelAndExpert
+      allOf:
+        - $ref: '#/components/schemas/Skill'
+        - type: object
+          properties:
+            level:
+              type: integer
+              description: Level of skill.
+            is_expert:
+              type: boolean
+              description: Expert in this skill or not.
+    BackgroundPicture:
+      title: BackgroundPicture
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url for the uploaded file.
+    ProductPreference:
+      title: ProductPreference
+      type: object
+      properties:
+        product_id:
+          type: string
+        name:
+          type: string
+      required:
+        - product_id
+        - name
+    Location:
+      title: Location
+      type: object
+      properties:
+        location_id:
+          type: string
+          description: Unique identifier for this location.
+        name:
+          type: string
+          description: Name of this location.
+      required:
+        - location_id
+        - name
+    PostType:
+      title: PostType
+      type: object
+      properties:
+        post_type_id:
+          type: string
+        name:
+          type: string
+      required:
+        - post_type_id
+        - name
+    UserPostMatch:
+      title: UserPostMatch
+      type: object
+      properties:
+        match_id:
+          type: string
+        user_id:
+          type: string
+        post_id:
+          type: string
+        match_level:
+          type: string
+      required:
+        - match_id
+        - user_id
+        - post_id
+        - match_level
+    Banner:
+      title: Banner
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of banner.
+          enum:
+            - message
+            - progress
+        data:
+          type: object
+          description: Data to display in the banner.
+          properties:
+            title:
+              type: string
+            subtitle:
+              type: string
+            percent:
+              type: string
+      required:
+        - type
+        - data
+    UserUploadRequest:
+      title: UserUploadRequest
+      type: object
+      properties:
+        filename:
+          type: string
+          description: Name of the file being uploaded.
+        content_type:
+          type: string
+          description: Content type of the file being uploaded.
+      required:
+        - filename
+        - content_type
+    UserUploadResponse:
+      title: UserUploadResponse
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url where the file should be uploaded to.
+      required:
+        - upload_id
+        - url
+    UserUpload:
+      title: UserUpload
+      type: object
+      properties:
+        upload_id:
+          type: string
+          description: Unique identifier of this upload.
+        url:
+          type: string
+          description: Url for the uploaded file.
+        content_type:
+          type: string
+          description: Content type of the uploaded file.
+      required:
+        - url
+        - content_type
+    Notification:
+      title: Notification
+      type: object
+      properties:
+        notification_id:
+          type: string
+          description: Unique identifier of this notification.
+        type:
+          type: string
+          description: Type of notification.
+          enum:
+            - accepted
+            - rejected
+            - new_application
+            - new_match
+        data:
+          type: object
+          description: Data to display in the notification.
+        created_at:
+          type: string
+          description: 'UTC date and time when this notification was created, in ISO 8601 format.'
+        status:
+          type: string
+          description: Unread status of the notification.
+          enum:
+            - read
+            - unread
+      required:
+        - notification_id
+        - type
+        - data
+        - created_at
+        - status
+    Feedback:
+      title: Feedback
+      type: object
+      properties:
+        feedback_id:
+          type: string
+        post_id:
+          type: string
+        author:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        performer:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        post_owner:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+        comments:
+          type: string
+        concerns:
+          type: string
+        additional_comments:
+          type: string
+    SlackUpdateUserRequest:
+      title: Update Slack details for users request
+      type: object
+      properties:
+        slack_id:
+          type: string
+        workspace_id:
+          type: string
+    SlackUpdateUserResponse:
+      title: Update Slack details for users response
+      type: object
+      properties:
+        is_success:
+          type: boolean
+        message:
+          type: string
+    SlackNotificationRequest:
+      title: Slack send notification request
+      type: object
+      properties:
+        text:
+          type: string
+    SlackNotificationResponse:
+      title: Slack send notification response
+      type: object
+      properties:
+        is_success:
+          type: boolean
+        message:
+          type: string
+  securitySchemes:
+    AWSCognitoCanvaraPrototype:
+      type: http
+      scheme: bearer

@@ -157,7 +157,7 @@ class AssignmentByIdAPI(AuthenticatedAPIBase):
             assignment = Assignment.lookup(tx, assignment_id)
 
             # For now, only the creator is allowed to delete the assignment
-            if assignment.creator != user.id:
+            if assignment.creator != user:
                 raise NotAllowedError(f"User '{user.id}' is not the assignment creator")
             assignment.status = AssignmentStatus.DELETED.value
             assignment.last_updated_at = now

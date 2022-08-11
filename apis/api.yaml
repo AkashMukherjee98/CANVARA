@@ -864,6 +864,92 @@ paths:
       responses:
         '204':
           description: No Content
+  '/assignments/applications/{application_id}/application_video':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+        description: Unique identifier of the application.
+    put:
+      summary: Create request for a application video upload
+      operationId: upload_assignment_application_video
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUploadResponse'
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUploadRequest'
+            examples:
+              Example:
+                value:
+                  filename: application_video.mp4
+                  content_type: video/mp4
+  '/assignments/applications/{application_id}/application_video/{upload_id}':
+    parameters:
+      - schema:
+          type: string
+        name: application_id
+        in: path
+        required: true
+        description: Unique identifier of the application.
+      - schema:
+          type: string
+        name: upload_id
+        in: path
+        required: true
+        description: Unique identifier of the file upload.
+    put:
+      summary: Finalize application video upload
+      operationId: finalize_assignment_application_video_upload
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the file upload.
+                  enum:
+                    - uploaded
+              required:
+                - status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+    delete:
+      summary: Delete a application video description
+      operationId: delete_assignment_application_video
+      tags:
+        - assignments
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '204':
+          description: No Content
   /projects:
     post:
       summary: Add a new project
@@ -6006,6 +6092,9 @@ components:
         description:
           type: string
           description: Description of the application.
+        application_video:
+          $ref: '#/components/schemas/UserUpload'
+          description: Video description of application.
         status:
           type: string
           description: Current status of this application.

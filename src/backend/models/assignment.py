@@ -272,6 +272,8 @@ class AssignmentApplication(ModelBase):
 
     assignment = relationship(Assignment, foreign_keys="[AssignmentApplication.assignment_id]")
     applicant = relationship(User, foreign_keys="[AssignmentApplication.applicant_id]")
+
+    application_video = relationship(UserUpload, foreign_keys="[AssignmentApplication.application_video_id]")
     details = None
 
     def update_details(self, payload):
@@ -303,6 +305,9 @@ class AssignmentApplication(ModelBase):
         add_if_not_none('applicant', self.applicant.as_custom_dict([
             'title', 'pronoun', 'location', 'department', 'email', 'phone_number', 'slack_teams_messaging_id'
             ]))
+
+        add_if_not_none(
+            'application_video', self.application_video.as_dict(method='get') if self.application_video else None)
 
         add_if_not_none('status', self.status)
         add_if_not_none('decided_at', self.decided_at.isoformat() if self.decided_at else None)

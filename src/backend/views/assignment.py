@@ -326,3 +326,48 @@ class AssignmentApplicationByIdAPI(AuthenticatedAPIBase):
             application.status = AssignmentApplicationStatus.DELETED.value
             application.last_updated_at = now
         return make_no_content_response()
+
+
+@blueprint.route('/applications/<application_id>/application_video')
+class AssignmentApplicationVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
+    @staticmethod
+    def put(application_id):
+        metadata = {
+            'resource': 'assignment_application',
+            'resource_id': application_id,
+            'type': 'assignment_application_video',
+        }
+        return AssignmentVideoAPI.create_user_upload(
+            current_cognito_jwt['sub'], request.json['filename'],
+            request.json['content_type'], 'assignment_applications', metadata
+        )
+
+
+@blueprint.route('/applications/<application_id>/application_video/<upload_id>')
+class AssignmentApplicationVideoByIdAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def delete(application_id, upload_id):
+        with transaction() as tx:
+            application = AssignmentApplication.lookup(tx, application_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+
+            application.application_video_id = None
+            user_upload.status = UserUploadStatus.DELETED.value
+        return make_no_content_response()
+
+    @staticmethod
+    def put(application_id, upload_id):
+        with transaction() as tx:
+            application = AssignmentApplication.lookup(tx, application_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+
+            status = UserUploadStatus.lookup(request.json['status'])
+            if status == UserUploadStatus.UPLOADED:
+                application.application_video_id = user_upload.id
+                user_upload.status = status.value
+
+            return {
+                'status': user_upload.status,
+            }

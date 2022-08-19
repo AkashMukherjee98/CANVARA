@@ -155,12 +155,15 @@ class Assignment(ModelBase):
 
     @classmethod
     def search(
-        cls, tx, user, sort=None, keyword=None, location=None, limit=None
+        cls, tx, user, start_date=None, sort=None, keyword=None, location=None, limit=None
     ):  # pylint: disable=too-many-arguments, disable=unsubscriptable-object
         assignments = tx.query(cls).where(and_(
             Assignment.customer_id == user.customer_id,
             cls.status != AssignmentStatus.DELETED.value
         ))
+
+        if start_date is not None:
+            assignments = assignments.filter(Assignment.start_date <= start_date)
 
         if sort is not None and sort == AssignmentSortFilter.LATEST:
             assignments = assignments.order_by(Assignment.created_at.desc())

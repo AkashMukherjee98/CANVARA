@@ -88,6 +88,8 @@ class AssignmentAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def get():
+        start_date = DateTime.validate_and_convert_isoformat_to_date(
+            request.args.get('start_date'), 'start_date') if 'start_date' in request.args else None
         sort = AssignmentSortFilter.lookup(request.args.get('sort')) if 'sort' in request.args else None
         keyword = request.args.get('keyword', None)
 
@@ -98,6 +100,7 @@ class AssignmentAPI(AuthenticatedAPIBase):
             assignments = Assignment.search(
                 tx,
                 user,
+                start_date=start_date,
                 sort=sort,
                 keyword=keyword,
                 location=location
@@ -111,17 +114,28 @@ class AssignmentByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(assignment_id):
         now = datetime.utcnow()
+        payload = request.json
 
         with transaction() as tx:
             assignment = Assignment.lookup(tx, assignment_id)
 
-            payload = request.json
+            if payload.get('project_id'):
+                assignment.project = Project.lookup(tx, payload['project_id'])
 
             if payload.get('name'):
                 assignment.name = payload['name']
 
+            if payload.get('role'):
+                assignment.role = payload['role']
+
+            if payload.get('start_date'):
+                assignment.start_date = DateTime.validate_and_convert_isoformat_to_date(payload['start_date'], 'start_date')
+
             if payload.get('location_id'):
                 assignment.location = Location.lookup(tx, payload['location_id'])
+
+            if payload.get('people_needed'):
+                assignment.people_needed = payload['people_needed']
 
             if 'status' in payload:
                 new_status = AssignmentStatus.lookup(payload['status'])

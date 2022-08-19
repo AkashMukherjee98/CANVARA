@@ -35,6 +35,11 @@ paths:
       parameters:
         - schema:
             type: string
+          in: query
+          name: user_id
+          description: User ID search for activities.
+        - schema:
+            type: string
             enum:
               - gigs
               - offers
@@ -104,6 +109,11 @@ paths:
       security:
         - AWSCognitoCanvaraPrototype: []
       parameters:
+        - schema:
+            type: string
+          in: query
+          name: user_id
+          description: User ID search for activities.
         - schema:
             type: string
             enum:
@@ -1375,6 +1385,12 @@ paths:
                   type: string
                 title:
                   type: string
+                employee_id:
+                  type: string
+                  description: Employee ID of the user.
+                date_of_birth:
+                  type: string
+                  description: Date of birth.
                 location:
                   type: string
                 languages:
@@ -4568,6 +4584,12 @@ paths:
                   type: string
                 title:
                   type: string
+                employee_id:
+                  type: string
+                  description: Employee ID of the user.
+                date_of_birth:
+                  type: string
+                  description: Date of birth.
                 location:
                   type: string
                 languages:
@@ -4931,6 +4953,14 @@ paths:
                     pronoun:
                       type: string
                       description: Pronoun.
+                    employee_id:
+                      type: string
+                      description: Employee ID of the user.
+                    date_of_birth:
+                      type: string
+                      description: Date of birth.
+                    resume_file:
+                      $ref: '#/components/schemas/UserUpload'
                     location:
                       type: string
                       description: Location of the user.
@@ -6598,6 +6628,12 @@ components:
         - $ref: '#/components/schemas/User'
         - type: object
           properties:
+            employee_id:
+              type: string
+              description: Employee ID of the user.
+            date_of_birth:
+              type: string
+              description: Date of birth.
             team:
               type: array
               items:
@@ -7559,6 +7595,14 @@ components:
             user_id:
               type: string
             name:
+              type: string
+            profile_picture_url:
+              type: string
+            title:
+              type: string
+            pronoun:
+              type: string
+            role:
               type: string
         performer:
           type: object

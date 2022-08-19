@@ -78,10 +78,7 @@ class Feedback(ModelBase):
         feedback = {
             'feedback_id': self.id,
             'post_id': self.post.id,
-            'author': {
-                'user_id': self.author.id,
-                'name': self.author.name,
-            }
+            'author': self.author.as_custom_dict(['title', 'role', 'pronoun'])
         }
 
         user_key = 'performer' if self.user_role == FeedbackUserRole.PERFORMER.value else 'post_owner'

@@ -28,8 +28,9 @@ class ActivityAPI(AuthenticatedAPIBase):
 
         user_id = current_cognito_jwt['sub']
         with transaction() as tx:
+            user_filter = User.lookup(tx, request.args.get('user_id')) if request.args.get('user_id') is not None else None
             activities = Activity.find_multiple(
-                tx, user_id, activities_in=activities_in, keyword=keyword, start=start, limit=limit)
+                tx, user_id, user_filter=user_filter, activities_in=activities_in, keyword=keyword, start=start, limit=limit)
 
             return {
                 'activities': [activitiy.as_dict() for activitiy in activities],
@@ -48,8 +49,12 @@ class ActivityGlobalAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
+
+            user_filter = User.lookup(tx, request.args.get('user_id')) if request.args.get('user_id') is not None else None
             activities = ActivityGlobal.find_multiple(
-                tx, user.customer_id, activities_in=activities_in, keyword=keyword, start=start, limit=limit)
+                tx, user.customer_id, user_filter=user_filter, activities_in=activities_in,
+                keyword=keyword, start=start, limit=limit
+            )
 
             return {
                 'activities': [activitiy.as_dict() for activitiy in activities]

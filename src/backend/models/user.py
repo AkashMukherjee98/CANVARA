@@ -8,6 +8,7 @@ from sqlalchemy import or_, cast, Date
 from sqlalchemy.orm import backref, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
+from backend.common.datetime import DateTime
 from .db import ModelBase
 from .language import Language
 from .skill import SkillWithLevelMixin, SkillWithoutLevelMixin
@@ -331,7 +332,7 @@ class User(ModelBase):
     def profile_copy(self):
         return copy.deepcopy(self.profile) if self.profile is not None else {}
 
-    def update_profile(self, payload):
+    def update_profile(self, payload):  # noqa: C901
         profile = copy.deepcopy(self.profile) if self.profile else {}
         profile_fields = [
             'title',
@@ -349,6 +350,7 @@ class User(ModelBase):
             'pronoun',
             'department',
             'introduction',
+            'employee_id',
             'slack_teams_messaging_id',
             'mentorship_description'
         ]
@@ -378,6 +380,11 @@ class User(ModelBase):
 
         profile['mentorship_hashtags'] = (
             payload['mentorship_hashtags'] if payload.get('mentorship_hashtags') is not None else [])
+
+        if payload.get('date_of_birth'):
+            if DateTime.validate_and_convert_isoformat_to_date(payload.get('date_of_birth'), 'date_of_birth'):
+                profile['date_of_birth'] = payload['date_of_birth']
+
         self.profile = profile
 
     def as_summary_dict(self):
@@ -399,6 +406,8 @@ class User(ModelBase):
                 user[key] = value
 
         add_if_not_none('title', self.profile.get('title'))
+        add_if_not_none('employee_id', self.profile.get('employee_id'))
+        add_if_not_none('date_of_birth', self.profile.get('date_of_birth'))
         add_if_not_none('pronoun', self.profile.get('pronoun'))
         add_if_not_none('location', self.profile.get('location'))
         add_if_not_none('department', self.profile.get('department'))
@@ -450,6 +459,8 @@ class User(ModelBase):
 
         add_if_not_none('username', self.username)
         add_if_not_none('title', self.profile.get('title'))
+        add_if_not_none('employee_id', self.profile.get('employee_id'))
+        add_if_not_none('date_of_birth', self.profile.get('date_of_birth'))
         add_if_not_none('location', self.profile.get('location'))
         add_if_not_none('email', self.profile.get('email'))
         add_if_not_none('phone_number', self.profile.get('phone_number'))

@@ -114,8 +114,8 @@ class UsersAPI(AuthenticatedAPIBase):
                 tenure_lte=tenure_lte
             )
             users = [user.as_custom_dict([
-                'title', 'pronoun', 'department', 'location',
-                'expert_skills',
+                'title', 'employee_id', 'date_of_birth', 'pronoun', 'department', 'location',
+                'expert_skills', 'resume_file',
                 'introduction', 'introduction_video', 'hashtags',
                 'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
                 'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',

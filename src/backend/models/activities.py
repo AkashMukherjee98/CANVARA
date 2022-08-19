@@ -125,7 +125,9 @@ class Activity(ModelBase):
         )
 
     @classmethod
-    def find_multiple(cls, tx, user_id, activities_in, keyword, start=None, limit=None):  # pylint: disable=too-many-arguments
+    def find_multiple(
+        cls, tx, user_id, user_filter, activities_in, keyword, start=None, limit=None
+    ):  # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
         limit = min(limit, cls.ACTIVITY_MAX_LIMIT)
@@ -136,6 +138,11 @@ class Activity(ModelBase):
             cls.user_id == user_id,
             cls.status != ActivityStatus.DELETED.value
         ))
+
+        if user_filter:
+            activities = activities.where(
+                Activity.data['user']['user_id'].astext.ilike(f'%{user_filter.id}%')
+            )
 
         activity_types = ActivityType.types(activities_in)
         if activity_types:
@@ -213,7 +220,7 @@ class ActivityGlobal(ModelBase):
         )
 
     @classmethod
-    def find_multiple(cls, tx, customer_id, activities_in, keyword, start=None, limit=None):
+    def find_multiple(cls, tx, customer_id, user_filter, activities_in, keyword, start=None, limit=None):
         # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
@@ -225,6 +232,11 @@ class ActivityGlobal(ModelBase):
             cls.customer_id == customer_id,
             cls.status != ActivityStatus.DELETED.value
         ))
+
+        if user_filter:
+            activities = activities.where(
+                ActivityGlobal.data['user']['user_id'].astext.ilike(f'%{user_filter.id}%')
+            )
 
         activity_types = ActivityType.types(activities_in)
         if activity_types:

@@ -126,7 +126,7 @@ class Activity(ModelBase):
 
     @classmethod
     def find_multiple(
-        cls, tx, user_id, user_filter, activities_in, keyword, start=None, limit=None
+        cls, tx, user_id, activities_in, keyword, start=None, limit=None
     ):  # pylint: disable=too-many-arguments
         if limit is None:
             limit = cls.ACTIVITY_DEFAULT_LIMIT
@@ -138,11 +138,6 @@ class Activity(ModelBase):
             cls.user_id == user_id,
             cls.status != ActivityStatus.DELETED.value
         ))
-
-        if user_filter:
-            activities = activities.where(
-                Activity.data['user']['user_id'].astext.ilike(f'%{user_filter.id}%')
-            )
 
         activity_types = ActivityType.types(activities_in)
         if activity_types:

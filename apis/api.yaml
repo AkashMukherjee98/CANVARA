@@ -35,11 +35,6 @@ paths:
       parameters:
         - schema:
             type: string
-          in: query
-          name: user_id
-          description: User ID search for activities.
-        - schema:
-            type: string
             enum:
               - gigs
               - offers

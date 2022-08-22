@@ -4,7 +4,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
-from sqlalchemy import or_, cast, Date
+from sqlalchemy import or_, and_, cast, Date
 from sqlalchemy.orm import backref, relationship
 
 from backend.common.exceptions import DoesNotExistError, InvalidArgumentError
@@ -47,6 +47,30 @@ class ProfileCompletionRule():  # pylint: disable=too-few-public-methods
             return percentage[item_name]
         except ValueError as ex:
             raise InvalidArgumentError(f"{item_name} doesn't exists in profile completion rule.") from ex
+
+
+class UserResumeSkill(ModelBase):  # pylint: disable=too-few-public-methods
+    __tablename__ = 'user_resume_skill'
+
+    customer = relationship("Customer")
+    user = relationship("User", foreign_keys="[UserResumeSkill.user_id]")
+    skill = relationship("Skill")
+
+    @classmethod
+    def search(cls, tx, user):
+        skills = tx.query(cls).where(and_(
+            cls.user == user
+        ))
+
+        skills = skills.order_by(UserResumeSkill.confidence_level.desc())
+
+        return skills.all()
+
+    def as_dict(self):
+        return {
+            'skill_id': self.skill.id,
+            'name': self.skill.display_name
+        }
 
 
 class SkillType(enum.Enum):

@@ -5159,6 +5159,23 @@ paths:
         - users
       security:
         - AWSCognitoCanvaraPrototype: []
+  '/users/{user_id}/resume_skills':
+    get:
+      summary: Get skills based on resume parser
+      tags:
+        - users
+      operationId: list_resume_skills
+      security:
+        - AWSCognitoCanvaraPrototype: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
   '/users/{user_id}/introduction_video':
     parameters:
       - schema:

@@ -14,6 +14,7 @@ from backend.models.language import Language
 from backend.models.skill import Skill
 from backend.models.customer import Customer
 from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
+from backend.models.user import UserResumeSkill
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
@@ -407,14 +408,15 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, user_id)
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             if status == UserUploadStatus.UPLOADED:
+                user.resume_file = user_upload
+                user_upload.status = status.value
+
                 # Processing resume file(rchilli)
-                file_path = user_upload.path
+                file_path = user_upload.as_dict()['url']
                 file_name = user_upload.metadata['original_filename']
                 resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
 
-                user.resume_file = user_upload
                 user.resume_data = resume_json
-                user_upload.status = status.value
 
                 # Store new skills
                 for skill in resume_json['SegregatedSkill']:
@@ -435,6 +437,19 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             user.resume_file = None
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()
+
+
+@blueprint.route('/<user_id>/resume_skills')
+class ResumeSkillAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def get(user_id):
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+
+            skills = UserResumeSkill.search(tx, user)
+            return {
+                'skills': [skill.as_dict() for skill in skills]
+            }
 
 
 # Fun facts APIs

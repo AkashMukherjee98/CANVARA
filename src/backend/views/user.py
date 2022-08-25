@@ -410,20 +410,10 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             if status == UserUploadStatus.UPLOADED:
                 user.resume_file = user_upload
                 user_upload.status = status.value
-
-                # Processing resume file(rchilli)
-                file_path = user_upload.as_dict()['url']
-                file_name = user_upload.metadata['original_filename']
-                resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
-
-                user.resume_data = resume_json
-
-                # Store new skills
-                for skill in resume_json['SegregatedSkill']:
-                    Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
-
         return {
             'status': user_upload.status,
+            'file_url': user_upload.as_dict()['url'],
+            'file_name': user_upload.metadata['original_filename']
         }
 
     @staticmethod
@@ -437,6 +427,21 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             user.resume_file = None
             user_upload.status = UserUploadStatus.DELETED.value
         return make_no_content_response()
+
+
+@blueprint.route('/resume_parser')
+class ResumeParserAPI(AuthenticatedAPIBase):
+    @staticmethod
+    def post():
+
+        file_path = request.json['file_url']
+        file_name = request.json['file_name']
+        resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
+        print(resume_json)
+
+        return {
+            'resume_json': resume_json
+        }
 
 
 @blueprint.route('/<user_id>/resume_skills')

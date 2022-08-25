@@ -411,16 +411,16 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
                 user.resume_file = user_upload
                 user_upload.status = status.value
 
+                # Parse resume file
                 try:
-                    # Parse resume file
                     file_url = user_upload.generate_get_url(signed=False)
                     resume_json = Resume.convert_resume_url_to_json_data(file_url)
                     user.resume_data = resume_json
                 except Exception as ex:
                     raise InvalidOperationError(f"Unable to parse resume file: {file_url}") from ex
 
+                # Store new skills
                 try:
-                    # Store new skills
                     for skill in resume_json['SegregatedSkill']:
                         skill_ = Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
 

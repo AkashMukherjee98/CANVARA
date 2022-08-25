@@ -456,7 +456,7 @@ class User(ModelBase):
             'mentorship_video', self.mentorship_video.as_dict(method='get') if self.mentorship_video else None)
 
         add_if_not_none(
-            'resume_file', self.resume_file.as_dict(method='get') if self.resume_file else None)
+            'resume_file', self.resume_file.as_dict(method='get', signed=False) if self.resume_file else None)
 
         add_if_not_none('matching_reason', self.matching_reason)
 
@@ -546,7 +546,7 @@ class User(ModelBase):
             user['mentorship_video'] = self.mentorship_video.as_dict(method='get')
 
         if self.resume_file:
-            user['resume_file'] = self.resume_file.as_dict(method='get')
+            user['resume_file'] = self.resume_file.as_dict(method='get', signed=False)
 
         community_memberships = [community.as_dict(['community_logo']) for community in self.community_memberships]
         if community_memberships:

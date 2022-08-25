@@ -58,6 +58,9 @@ class PerformerFeedbackAPI(AuthenticatedAPIBase):
             if 'additional_comments' in payload:
                 feedback_details['additional_comments'] = payload['additional_comments']
 
+            if 'is_hidden' in payload:
+                feedback_details['is_hidden'] = payload['is_hidden']
+
             feedback = Feedback(
                 id=str(uuid.uuid4()),
                 author=author,
@@ -123,6 +126,9 @@ class PosterFeedbackAPI(AuthenticatedAPIBase):
 
             if 'additional_comments' in payload:
                 feedback_details['additional_comments'] = payload['additional_comments']
+
+            if 'is_hidden' in payload:
+                feedback_details['is_hidden'] = payload['is_hidden']
 
             feedback = Feedback(
                 id=str(uuid.uuid4()),

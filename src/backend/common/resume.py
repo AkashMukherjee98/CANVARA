@@ -27,7 +27,13 @@ class Resume():  # pylint: disable=too-few-public-methods
             }"""
 
             response = requests.post(api_url, data=body, headers=headers)
+            print(api_url)
+            print(user_key)
+            print(sub_userid)
+            print(version)
+            print(response)
             resp = json.loads(response.text)
+            print(resp)
             return resp["ResumeParserData"]
         except ValueError as ex:
             raise InvalidOperationError(f"Unable to parse {file_url}") from ex

@@ -6,7 +6,7 @@ from flask_smorest import Blueprint
 
 from sqlalchemy import select
 
-from backend.common.exceptions import NotAllowedError
+from backend.common.exceptions import NotAllowedError, InvalidOperationError
 from backend.common.http import make_no_content_response
 from backend.common.resume import Resume
 from backend.models.db import transaction
@@ -411,9 +411,35 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
                 user.resume_file = user_upload
                 user_upload.status = status.value
 
+                try:
+                    # Parse resume file
+                    file_url = user_upload.generate_get_url(signed=False)
+                    resume_json = Resume.convert_resume_url_to_json_data(file_url)
+                    user.resume_data = resume_json
+
+                    # Store new skills
+                    for skill in resume_json['SegregatedSkill']:
+                        skill_ = Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
+
+                        exists = bool(tx.query(UserResumeSkill).filter_by(
+                            customer=user.customer,
+                            user=user,
+                            skill=skill_
+                        ).first())
+
+                        if not exists:
+                            resume_skill = UserResumeSkill(
+                                customer=user.customer,
+                                user=user,
+                                skill=skill_,
+                                confidence_level=0.00
+                            )
+                            tx.add(resume_skill)
+                except Exception as ex:
+                    raise InvalidOperationError(f"Unable to parse resume for file: {file_url}") from ex
+
         return {
-            'status': user_upload.status,
-            'file_url': user_upload.generate_get_url(signed=False)
+            'status': user_upload.status
         }
 
     @staticmethod
@@ -429,12 +455,12 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
         return make_no_content_response()
 
 
-@blueprint.route('/resume_parser')
+@blueprint.route('/<user_id>/resume/parser')
 class ResumeParserAPI(AuthenticatedAPIBase):
     @staticmethod
-    def post():
+    def post(user_id):
         with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
+            user = User.lookup(tx, user_id)
 
             # Parse resume file
             file_url = request.json['file_url']

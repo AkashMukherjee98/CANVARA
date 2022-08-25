@@ -62,7 +62,8 @@ class Feedback(ModelBase):
         feedback_fields = [
             'comments',
             'concerns',
-            'additional_comments'
+            'additional_comments',
+            'is_hidden'
         ]
 
         for field_name in feedback_fields:
@@ -78,7 +79,13 @@ class Feedback(ModelBase):
         feedback = {
             'feedback_id': self.id,
             'post_id': self.post.id,
-            'author': self.author.as_custom_dict(['title', 'role', 'pronoun'])
+            'author': {
+                'user_id': self.author.id,
+                'name': self.author.name,
+                'profile_picture_url': self.author.profile_picture_url,
+                'title': self.author.profile['title'] if 'title' in self.author.profile else None,
+                'pronoun': self.author.profile['pronoun'] if 'pronoun' in self.author.profile else None
+            }
         }
 
         user_key = 'performer' if self.user_role == FeedbackUserRole.PERFORMER.value else 'post_owner'
@@ -96,5 +103,9 @@ class Feedback(ModelBase):
 
             if 'additional_comments' in self.feedback:
                 feedback['additional_comments'] = self.feedback['additional_comments']
+
+        feedback['is_hidden'] = False
+        if 'is_hidden' in self.feedback and self.feedback['is_hidden'].lower() in ['true']:
+            feedback['is_hidden'] = True
 
         return feedback

@@ -1973,6 +1973,11 @@ paths:
                 additional_comments:
                   type: string
                   description: Feedback additional comment
+                is_hidden:
+                  type: string
+                  enum:
+                    - true
+                    - false
   '/proposals/{proposal_id}/proposer-feedback':
     parameters:
       - schema:
@@ -2010,6 +2015,11 @@ paths:
                 additional_comments:
                   type: string
                   description: Feedback additional comment
+                is_hidden:
+                  type: string
+                  enum:
+                    - true
+                    - false
   /positions:
     get:
       summary: List all positions
@@ -4121,6 +4131,11 @@ paths:
                   type: string
                 additional_comments:
                   type: string
+                is_hidden:
+                  type: string
+                  enum:
+                    - true
+                    - false
     put:
       summary: update feedback for a performer
       tags:
@@ -4147,6 +4162,11 @@ paths:
                   type: string
                 additional_comments:
                   type: string
+                is_hidden:
+                  type: string
+                  enum:
+                    - true
+                    - false
   '/posts/{post_id}/video':
     parameters:
       - schema:
@@ -4338,6 +4358,11 @@ paths:
                   type: string
                 additional_comments:
                   type: string
+                is_hidden:
+                  type: string
+                  enum:
+                    - true
+                    - false
     put:
       summary: update feedback for a post
       tags:
@@ -4364,6 +4389,11 @@ paths:
                   type: string
                 additional_comments:
                   type: string
+                is_hidden:
+                  type: string
+                  enum:
+                    - true
+                    - false
   /applications:
     get:
       summary: List all applications
@@ -7614,8 +7644,6 @@ components:
               type: string
             pronoun:
               type: string
-            role:
-              type: string
         performer:
           type: object
           properties:
@@ -7636,6 +7664,8 @@ components:
           type: string
         additional_comments:
           type: string
+        is_hidden:
+          type: boolean
     SlackUpdateUserRequest:
       title: Update Slack details for users request
       type: object

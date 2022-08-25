@@ -413,6 +413,9 @@ class OfferFeedbackAPI(AuthenticatedAPIBase):
             if 'additional_comments' in payload:
                 offerer_feedback_details['additional_comments'] = payload['additional_comments']
 
+            if 'is_hidden' in payload:
+                offerer_feedback_details['is_hidden'] = payload['is_hidden']
+
             proposal.offerer_feedback = offerer_feedback_details
             proposal.offerer_feedback_at = now
             proposal.last_updated_at = now
@@ -446,6 +449,9 @@ class ProposerFeedbackAPI(AuthenticatedAPIBase):
 
             if 'additional_comments' in payload:
                 proposer_feedback_details['additional_comments'] = payload['additional_comments']
+
+            if 'is_hidden' in payload:
+                proposer_feedback_details['is_hidden'] = payload['is_hidden']
 
             proposal.proposer_feedback = proposer_feedback_details
             proposal.proposer_feedback_at = now

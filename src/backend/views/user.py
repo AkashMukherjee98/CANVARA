@@ -410,10 +410,10 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
             if status == UserUploadStatus.UPLOADED:
                 user.resume_file = user_upload
                 user_upload.status = status.value
+
         return {
             'status': user_upload.status,
-            'file_url': user_upload.as_dict()['url'],
-            'file_name': user_upload.metadata['original_filename']
+            'file_url': user_upload.generate_get_url(signed=False)
         }
 
     @staticmethod
@@ -433,11 +433,31 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
 class ResumeParserAPI(AuthenticatedAPIBase):
     @staticmethod
     def post():
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
 
-        file_path = request.json['file_url']
-        file_name = request.json['file_name']
-        resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
-        print(resume_json)
+            # Parse resume file
+            file_url = request.json['file_url']
+            resume_json = Resume.convert_resume_url_to_json_data(file_url)
+
+            # Store new skills
+            for skill in resume_json['SegregatedSkill']:
+                skill_ = Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
+
+                exists = bool(tx.query(UserResumeSkill).filter_by(
+                    customer=user.customer,
+                    user=user,
+                    skill=skill_
+                ).first())
+
+                if not exists:
+                    resume_skill = UserResumeSkill(
+                        customer=user.customer,
+                        user=user,
+                        skill=skill_,
+                        confidence_level=0.00
+                    )
+                    tx.add(resume_skill)
 
         return {
             'resume_json': resume_json

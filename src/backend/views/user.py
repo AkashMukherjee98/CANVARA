@@ -136,7 +136,7 @@ class UserAPI(AuthenticatedAPIBase):
             user_details['customer_name'] = user.customer.name
             user_details['profile_completion'] = User.profile_completion(user)
             user_details['unread_notifications'] = Notification.get_unread_count(tx, user.id)
-            user_details['artifacts'] = user.products_enabled
+            user_details['artifacts'] = user.customer.products_enabled
         return user_details
 
 

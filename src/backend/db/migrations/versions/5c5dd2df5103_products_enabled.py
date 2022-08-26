@@ -17,10 +17,10 @@ depends_on = None
 
 
 def upgrade():
-    with op.batch_alter_table('canvara_user') as batch_op:
+    with op.batch_alter_table('customer') as batch_op:
         batch_op.add_column(sa.Column('products_enabled', JSONB))
 
 
 def downgrade():
-    with op.batch_alter_table('canvara_user') as batch_op:
+    with op.batch_alter_table('customer') as batch_op:
         batch_op.drop_column('products_enabled')

@@ -6276,9 +6276,6 @@ components:
         hiring_manager:
           type: object
           description: Information about the manager.
-          required:
-            - user_id
-            - name
           properties:
             user_id:
               type: string
@@ -6289,15 +6286,32 @@ components:
             profile_picture_url:
               type: string
               description: The URL of user's profile picture.
+            title:
+              type: string
+              description: Title of the user.
+            pronoun:
+              type: string
+              description: Pronoun.
             location:
               type: string
-              description: Location of the higring manager.
+              description: Location of the user.
+            company_start_date:
+              type: string
+              description: Company start date.
+            department:
+              type: string
+              description: Department of the user.
             email:
               type: string
               description: Email of the user.
             phone_number:
               type: string
               description: Phone of the user.
+            team:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserSummary'
+              description: List of team members.
         location:
           $ref: '#/components/schemas/Location'
         role_type:
@@ -6741,6 +6755,9 @@ components:
             location:
               type: string
               description: Location of the user.
+            company_start_date:
+              type: string
+              description: Company start date.
             department:
               type: string
               description: Department of the user.

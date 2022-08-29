@@ -432,6 +432,7 @@ class User(ModelBase):
         add_if_not_none('title', self.profile.get('title'))
         add_if_not_none('employee_id', self.profile.get('employee_id'))
         add_if_not_none('date_of_birth', self.profile.get('date_of_birth'))
+        add_if_not_none('company_start_date', self.profile.get('company_start_date'))
         add_if_not_none('pronoun', self.profile.get('pronoun'))
         add_if_not_none('location', self.profile.get('location'))
         add_if_not_none('department', self.profile.get('department'))
@@ -461,6 +462,14 @@ class User(ModelBase):
         add_if_not_none('matching_reason', self.matching_reason)
 
         add_if_not_none('is_bookmarked', self.is_bookmarked if hasattr(self, 'is_bookmarked') else None)
+
+        team = None
+        if self.team:
+            team = [member.as_summary_dict() for member in self.team]
+        elif self.manager:
+            team = [self.manager.as_summary_dict()]
+            team += [member.as_summary_dict() for member in self.manager.team if member.id != self.id]
+        add_if_not_none('team', team)
 
         return user
 

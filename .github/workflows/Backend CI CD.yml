@@ -74,7 +74,7 @@ jobs:
         uses: docker://technosophos/slack-notify
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: Backend Deploy Failed at "checkout" job
+          SLACK_MESSAGE: Backend deployment workflow failed at "checkout" phase
 
   build:
     needs: checkout
@@ -120,7 +120,7 @@ jobs:
         uses: docker://technosophos/slack-notify
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: Backend Deploy Failed at "build" job
+          SLACK_MESSAGE: Backend deployment workflow failed at "build" phase
 
   deploy:
     needs: build
@@ -184,7 +184,7 @@ jobs:
         uses: docker://technosophos/slack-notify
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: Backend Deploy Failed at "deploy" job
+          SLACK_MESSAGE: Backend deployment workflow failed at "service deploy" phase
 
   integration_test:
     needs: deploy
@@ -254,4 +254,4 @@ jobs:
         uses: docker://technosophos/slack-notify
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: Backend Deploy Failed!!
+          SLACK_MESSAGE: Backend deployment workflow failed at "testing" phase

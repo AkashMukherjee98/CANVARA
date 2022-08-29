@@ -76,7 +76,9 @@ class Position(ModelBase):
     def as_dict(self):
         position = {
             'position_id': self.id,
-            'hiring_manager': self.hiring_manager.as_custom_dict(['location', 'phone_number', 'email']),
+            'hiring_manager': self.hiring_manager.as_custom_dict([
+                'title', 'pronoun', 'location', 'company_start_date', 'department', 'phone_number', 'email', 'team'
+            ]),
             'location': self.location.as_dict(),
             'role_type': self.role_type,
             'role': self.role,

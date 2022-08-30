@@ -65,13 +65,14 @@ class Application(ModelBase):
     DEFAULT_FILTER = ApplicationFilter.ALL
 
     @classmethod
-    def lookup(cls, tx, application_id, must_exist=True):
+    def lookup(cls, tx, user, application_id, must_exist=True):
         # TODO: (sunil) eagerload other relationships
         query_options = [
             joinedload(Application.description_video)
         ]
 
         application = tx.query(cls).where(and_(
+            User.customer_id == user.customer_id,
             cls.id == application_id,
             cls.status != ApplicationStatus.DELETED.value,
         )).options(query_options).one_or_none()

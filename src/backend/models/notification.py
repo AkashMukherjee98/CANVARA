@@ -28,6 +28,27 @@ class NotificationType(enum.Enum):
     NEW_APPLICATION = 'new_application'
     NEW_MATCH = 'new_match'
 
+    # My code
+    GIG_POSTED = 'gig_posted'
+    APPLICATION_SUBMITTED = 'application_submitted'
+    GIG_ASSIGNED = 'gig_assigned'
+    APPLICATION_REJECTED = 'application_rejected'
+
+    NEW_OFFER_POSTED = 'new_offer_posted'
+    NEW_PROPOSAL = 'new_proposal'
+
+    NEW_POSITION_POSTED = 'new_position_posted'
+
+    NEW_COMMUNITY_CREATED = 'new_community_created'
+    NEW_MEMBER_IN_YOUR_COMMUNITY = 'new_member_in_your_community'
+
+    NEW_EVENT_POSTED = 'new_event_posted'
+
+    NEW_EMPLOYEE_JOINED = 'new_employee_joined'
+    NEW_ROLE = 'new_role'
+    NEW_MENTORSHIP_BEING_OFFERED = 'new_mentorship_being_offered'
+    # End
+
     @classmethod
     def lookup(cls, notification_type):
         try:
@@ -111,7 +132,7 @@ class Notification(ModelBase):
         return Notification(
             id=str(uuid.uuid4()),
             user=user,
-            type=NotificationType.lookup(notification_type),
+            type=NotificationType.lookup(notification_type).value,
             data=data,
             created_at=datetime.utcnow(),
             status=NotificationStatus.UNREAD.value

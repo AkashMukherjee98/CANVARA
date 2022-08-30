@@ -40,7 +40,8 @@ class PostApplicationAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             # Make sure the user and the post exist
             applicant = User.lookup(tx, current_cognito_jwt['sub'])
-            post = Post.lookup(tx, post_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            post = Post.lookup(tx, user, post_id)
 
             payload = request.json
             details = {
@@ -115,13 +116,15 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(application_id):
         with transaction() as tx:
-            application = Application.lookup(tx, application_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            application = Application.lookup(tx, user, application_id)
             return application.as_dict()
 
     @staticmethod
     def put(application_id):
         with transaction() as tx:
-            application = Application.lookup(tx, application_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            application = Application.lookup(tx, user, application_id)
             payload = request.json
             now = datetime.utcnow()
 
@@ -231,7 +234,7 @@ class ApplicationByIdAPI(AuthenticatedAPIBase):
     def delete(application_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            application = Application.lookup(tx, application_id)
+            application = Application.lookup(tx, user, application_id)
 
             # For now, only the applicant is allowed to delete the application
             if application.applicant.id != user.id:
@@ -262,7 +265,7 @@ class ApplicationVideoByIdAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            application = Application.lookup(tx, application_id)
+            application = Application.lookup(tx, user, application_id)
             if status == UserUploadStatus.UPLOADED:
                 application.description_video = user_upload
                 user_upload.status = status.value
@@ -277,7 +280,7 @@ class ApplicationVideoByIdAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            application = Application.lookup(tx, application_id)
+            application = Application.lookup(tx, user, application_id)
 
             # For now, only the applicant is allowed to delete the application video
             if application.applicant.id != user.id:

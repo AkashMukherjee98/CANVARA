@@ -1,10 +1,13 @@
+# NEW CODE
+
 from datetime import datetime
 import uuid
 
-from backend.models.notification import Notification, NotificationType
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
+
+# from sqlalchemy import select
 
 from backend.models.slack import send_slack_notification
 from backend.common.http import make_no_content_response
@@ -20,7 +23,8 @@ from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
 
 from backend.models.activities import Activity, ActivityGlobal, ActivityType
-
+from backend.models.notification import Notification, NotificationType
+from backend.common.permission import Permissions  # My code
 
 blueprint = Blueprint('offer', __name__, url_prefix='/offers')
 proposal_blueprint = Blueprint('offer_proposal', __name__, url_prefix='/proposals')
@@ -38,16 +42,21 @@ class OfferAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            offers = Offer.search(
-                tx,
-                user,
-                sort=sort,
-                keyword=keyword,
-                location=location,
-                status=status
-            )
-            offers = [offer.as_dict() for offer in offers]
-        return jsonify(offers)
+            # My code
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Offer' and permission['readPermission'] == 'Yes':
+                    offers = Offer.search(
+                        tx,
+                        user,
+                        sort=sort,
+                        keyword=keyword,
+                        location=location,
+                        status=status
+                    )
+                    offers = [offer.as_dict() for offer in offers]
+                    return jsonify(offers)
+            raise NotAllowedError(f"User '{user.id}' has no permission to see")
 
     @staticmethod
     def post():
@@ -61,40 +70,42 @@ class OfferAPI(AuthenticatedAPIBase):
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
 
         with transaction() as tx:
-            user = User.lookup(tx, current_cognito_jwt['sub'])
+            offerer = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Offer' and permission['createPermission'] == 'Yes':
+                    offer = Offer(
+                        id=offer_id,
+                        name=payload.get('name'),
+                        offerer=offerer,
+                        status=OfferStatus.ACTIVE.value,
+                        created_at=now,
+                        last_updated_at=now
+                    )
+                    tx.add(offer)
+                    offer.update_details(payload)
 
-            offer = Offer(
-                id=offer_id,
-                name=payload.get('name'),
-                offerer=user,
-                status=OfferStatus.ACTIVE.value,
-                created_at=now,
-                last_updated_at=now
-            )
-            tx.add(offer)
+                    # Insert activity details in DB
+                    activity_data = {
+                        'offer': {
+                            'offer_id': offer.id,
+                            'name': offer.name
+                        },
+                        'user': {
+                            'user_id': offer.offerer.id,
+                            'name': offer.offerer.name,
+                            'profile_picture_url': offer.offerer.profile_picture_url
+                        }
+                    }
+                    tx.add(Activity.add_activity(offer.offerer, ActivityType.NEW_OFFER_POSTED, data=activity_data))
+                    tx.add(ActivityGlobal.add_activity(
+                        offer.offerer.customer, ActivityType.NEW_OFFER_POSTED, data=activity_data))
 
-            offer.update_details(payload)
+                    offer_details = offer.as_dict()
+                    send_slack_notification(offerer, "Offer created successfully")
 
-            # Insert activity details in DB
-            activity_data = {
-                'offer': {
-                    'offer_id': offer.id,
-                    'name': offer.name
-                },
-                'user': {
-                    'user_id': offer.offerer.id,
-                    'name': offer.offerer.name,
-                    'profile_picture_url': offer.offerer.profile_picture_url
-                }
-            }
-            tx.add(Activity.add_activity(offer.offerer, ActivityType.NEW_OFFER_POSTED, data=activity_data))
-            tx.add(
-                ActivityGlobal.add_activity(offer.offerer.customer, ActivityType.NEW_OFFER_POSTED, data=activity_data))
-
-            offer_details = offer.as_dict()
-            send_slack_notification(user, "Offer created successfully")
-
-        return offer_details
+                    return offer_details
+            raise NotAllowedError(f"User '{offerer.id}' has no permission to create offer")
 
 
 @blueprint.route('/<offer_id>')
@@ -102,8 +113,16 @@ class OfferByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(offer_id):
         with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
             offer = Offer.lookup(tx, offer_id)
-            return offer.as_dict()
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Offer' and permission['readPermission'] == 'Yes':
+                    if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                        # print("-----------customer id ---------------",offer.offerer.customer.id)
+                        return offer.as_dict()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission to see")
 
     @staticmethod
     def put(offer_id):
@@ -112,22 +131,29 @@ class OfferByIdAPI(AuthenticatedAPIBase):
         status = OfferStatus.lookup(payload['status']) if payload.get('status') else None
 
         with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
             offer = Offer.lookup(tx, offer_id)
+            # My code
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Offer' and permission['createPermission'] == 'Yes':
+                    if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                        if payload.get('name'):
+                            offer.name = payload['name']
 
-            if payload.get('name'):
-                offer.name = payload['name']
+                        if status in [OfferStatus.SUSPENDED, OfferStatus.ACTIVE]:
+                            offer.status = status.value
+                            offer.last_updated_at = now
+                            offer.update_details(payload)
 
-            if status in [OfferStatus.SUSPENDED, OfferStatus.ACTIVE]:
-                offer.status = status.value
-
-            offer.last_updated_at = now
-            offer.update_details(payload)
-
-        # Fetch the offer again from the database so the updates made above are reflected in the response
-        with transaction() as tx:
-            offer = Offer.lookup(tx, offer_id)
-            offer_details = offer.as_dict()
-        return offer_details
+                        # Fetch the offer again from the database so the updates made above are reflected in
+                        # the response
+                        with transaction() as tx:
+                            offer = Offer.lookup(tx, offer_id)
+                            offer_details = offer.as_dict()
+                        return offer_details
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(offer_id):
@@ -136,13 +162,20 @@ class OfferByIdAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
             offer = Offer.lookup(tx, offer_id)
-
-            # For now, only the offerer is allowed to delete the offer
-            if offer.offerer_id != user.id:
-                raise NotAllowedError(f"User '{user.id}' is not the creator of this offer")
-            offer.status = OfferStatus.DELETED.value
-            offer.last_updated_at = now
-        return make_no_content_response()
+            # My code
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Offer' and permission['AdminPermission'] == 'Yes':
+                    if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                        # End
+                        # For now, only the offerer is allowed to delete the offer
+                        if offer.offerer_id != user.id:
+                            raise NotAllowedError(f"User '{user.id}' is not the creator of this offer")
+                        offer.status = OfferStatus.DELETED.value
+                        offer.last_updated_at = now
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")
 
 
 @blueprint.route('/<offer_id>/offer_video')
@@ -167,13 +200,15 @@ class OfferVideoByIdAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             offer = Offer.lookup(tx, offer_id)
-            if status == UserUploadStatus.UPLOADED:
-                offer.overview_video_id = user_upload.id
-                user_upload.status = status.value
+            if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                if status == UserUploadStatus.UPLOADED:
+                    offer.overview_video_id = user_upload.id
+                    user_upload.status = status.value
 
-        return {
-            'status': user_upload.status,
-        }
+                return {
+                    'status': user_upload.status,
+                }
+            raise NotAllowedError("Invalid customer id")
 
     @staticmethod
     def delete(offer_id, upload_id):
@@ -181,10 +216,11 @@ class OfferVideoByIdAPI(AuthenticatedAPIBase):
             user = User.lookup(tx, current_cognito_jwt['sub'])
             user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
             offer = Offer.lookup(tx, offer_id)
-
-            offer.overview_video_id = None
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+            if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                offer.overview_video_id = None
+                user_upload.status = UserUploadStatus.DELETED.value
+                return make_no_content_response()
+            raise NotAllowedError("Invalid customer id")
 
 
 @blueprint.route('/<offer_id>/bookmark')
@@ -192,23 +228,25 @@ class OfferBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(offer_id):
         with transaction() as tx:
-            offer = Offer.lookup(tx, offer_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            bookmark = OfferBookmark.lookup(tx, user.id, offer.id, must_exist=False)
-            if bookmark is None:
-                OfferBookmark(user=user, offer=offer, created_at=datetime.utcnow())
-        return make_no_content_response()
+            offer = Offer.lookup(tx, offer_id)
+            if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                bookmark = OfferBookmark.lookup(tx, user.id, offer.id, must_exist=False)
+                if bookmark is None:
+                    OfferBookmark(user=user, offer=offer, created_at=datetime.utcnow())
+                return make_no_content_response()
+            raise NotAllowedError("Invalid customer id")
 
     @staticmethod
     def delete(offer_id):
         with transaction() as tx:
-            offer = Offer.lookup(tx, offer_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            bookmark = OfferBookmark.lookup(tx, user.id, offer.id)
-            tx.delete(bookmark)
-        return make_no_content_response()
+            offer = Offer.lookup(tx, offer_id)
+            if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                bookmark = OfferBookmark.lookup(tx, user.id, offer.id)
+                tx.delete(bookmark)
+                return make_no_content_response()
+            raise NotAllowedError("Invalid customer id")
 
 
 @blueprint.route('/<offer_id>/proposals')
@@ -240,73 +278,76 @@ class OfferProposalAPI(AuthenticatedAPIBase):
             raise InvalidArgumentError(f"Field: {', '.join(missing_fields)} is required.")
 
         with transaction() as tx:
+            proposer = User.lookup(tx, current_cognito_jwt['sub'])
             user = User.lookup(tx, current_cognito_jwt['sub'])
             offer = Offer.lookup(tx, offer_id, [OfferStatus.ACTIVE.value])
-            proposal = OfferProposal(
-                id=proposal_id,
-                name=payload.get('name'),
-                proposer=user,
-                offer_id=offer.id,
-                status=OfferProposalStatus.NEW.value,
-                created_at=now,
-                last_updated_at=now
-            )
-            tx.add(proposal)
+            if Permissions.check_user_permission(offer.offerer.customer.id, user.customer_id):
+                proposal = OfferProposal(
+                    id=proposal_id,
+                    name=payload.get('name'),
+                    proposer=proposer,
+                    offer_id=offer.id,
+                    status=OfferProposalStatus.NEW.value,
+                    created_at=now,
+                    last_updated_at=now
+                )
+                tx.add(proposal)
 
-            tx.add(Notification.add_notification(offer.offerer, NotificationType.NEW_APPLICATION, data={
-                'offer': {
-                    'offer_id': offer.id,
-                    'name': offer.name,
-                },
-                'proposal': {
-                    'proposal_id': proposal.id,
-                    'name': proposal.name,
-                },
-                'user': {
-                    'user_id': user.id,
-                    'name': user.name,
-                    'profile_picture_url': user.profile_picture_url
-                }
-            }))
-            send_slack_notification(offer.offerer, "Offer created successfully")
+                tx.add(Notification.add_notification(offer.offerer, NotificationType.NEW_APPLICATION, data={
+                    'offer': {
+                        'offer_id': offer.id,
+                        'name': offer.name,
+                    },
+                    'proposal': {
+                        'proposal_id': proposal.id,
+                        'name': proposal.name,
+                    },
+                    'user': {
+                        'user_id': proposer.id,
+                        'name': proposer.name,
+                        'profile_picture_url': proposer.profile_picture_url
+                    }
+                }))
+                send_slack_notification(offer.offerer, "Offer created successfully")
 
-            proposal.update_details(payload)
+                proposal.update_details(payload)
 
-            # Insert activity details in DB
-            tx.add(Activity.add_activity(proposal.proposer, ActivityType.NEW_PROPOSAL, data={
-                'offer': {
-                    'offer_id': offer.id,
-                    'name': offer.name
-                },
-                'proposal': {
-                    'proposal_id': proposal.id,
-                    'name': proposal.name
-                },
-                'user': {
-                    'user_id': offer.offerer.id,
-                    'name': offer.offerer.name,
-                    'profile_picture_url': offer.offerer.profile_picture_url
-                }
-            }))
-            tx.add(Activity.add_activity(offer.offerer, ActivityType.NEW_PROPOSAL, data={
-                'offer': {
-                    'offer_id': offer.id,
-                    'name': offer.name
-                },
-                'proposal': {
-                    'proposal_id': proposal.id,
-                    'name': proposal.name
-                },
-                'user': {
-                    'user_id': proposal.proposer.id,
-                    'name': proposal.proposer.name,
-                    'profile_picture_url': proposal.proposer.profile_picture_url
-                }
-            }))
+                # Insert activity details in DB
+                tx.add(Activity.add_activity(proposal.proposer, ActivityType.NEW_PROPOSAL, data={
+                    'offer': {
+                        'offer_id': offer.id,
+                        'name': offer.name
+                    },
+                    'proposal': {
+                        'proposal_id': proposal.id,
+                        'name': proposal.name
+                    },
+                    'user': {
+                        'user_id': offer.offerer.id,
+                        'name': offer.offerer.name,
+                        'profile_picture_url': offer.offerer.profile_picture_url
+                    }
+                }))
+                tx.add(Activity.add_activity(offer.offerer, ActivityType.NEW_PROPOSAL, data={
+                    'offer': {
+                        'offer_id': offer.id,
+                        'name': offer.name
+                    },
+                    'proposal': {
+                        'proposal_id': proposal.id,
+                        'name': proposal.name
+                    },
+                    'user': {
+                        'user_id': proposal.proposer.id,
+                        'name': proposal.proposer.name,
+                        'profile_picture_url': proposal.proposer.profile_picture_url
+                    }
+                }))
 
-            proposal_details = proposal.as_dict()
+                proposal_details = proposal.as_dict()
 
-        return proposal_details
+                return proposal_details
+            raise NotAllowedError("Invalid customer id")
 
 
 @proposal_blueprint.route('/<proposal_id>')

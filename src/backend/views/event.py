@@ -1,10 +1,11 @@
+# NEW CODE
+
 from datetime import datetime
 import uuid
 
 from flask import request, jsonify
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
-
 from backend.common.exceptions import InvalidArgumentError, NotAllowedError, DoesNotExistError
 from backend.common.http import make_no_content_response
 from backend.common.datetime import DateTime
@@ -19,9 +20,8 @@ from backend.models.event import EventBookmark
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.views.base import AuthenticatedAPIBase
-
+from backend.common.permission import Permissions
 from backend.models.activities import Activity, ActivityGlobal, ActivityType
-
 
 blueprint = Blueprint('event', __name__, url_prefix='/events')
 
@@ -39,22 +39,28 @@ class EventAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             # This is the user making the request, for authorization purposes
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            location = Location.lookup(tx, request.args.get('location_id')) if 'location_id' in request.args else None
-            sponsor_community = Community.lookup(
-                tx, request.args.get('sponsor_community_id')) if 'sponsor_community_id' in request.args else None
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['readPermission'] == 'Yes':
+                    location = Location.lookup(tx, request.args.get(
+                        'location_id')) if 'location_id' in request.args else None
+                    sponsor_community = Community.lookup(
+                        tx,
+                        request.args.get('sponsor_community_id')) if 'sponsor_community_id' in request.args else None
 
-            events = Event.search(
-                tx,
-                user,
-                keyword=keyword,
-                location=location,
-                sponsor_community=sponsor_community,
-                event_date=event_date,
-                volunteers_events_only=volunteers_events_only,
-                remote_attendance_support=remote_attendance_support
-            )
-            events = [event.as_dict() for event in events]
-        return jsonify(events)
+                    events = Event.search(
+                        tx,
+                        user,
+                        keyword=keyword,
+                        location=location,
+                        sponsor_community=sponsor_community,
+                        event_date=event_date,
+                        volunteers_events_only=volunteers_events_only,
+                        remote_attendance_support=remote_attendance_support
+                    )
+                    events = [event.as_dict() for event in events]
+                    return jsonify(events)
+            raise NotAllowedError(f"User '{user.id}' has no permission to see the event")
 
     @staticmethod
     def post():  # pylint: disable=too-many-locals
@@ -67,53 +73,60 @@ class EventAPI(AuthenticatedAPIBase):
         if missing_fields:
             raise InvalidArgumentError(f"Parameter: {', '.join(missing_fields)} is required")
 
-        start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['start_datetime'], 'start_datetime')
+        start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['start_datetime'],
+                                                                             'start_datetime')
         end_datetime = DateTime.validate_and_convert_isoformat_to_datetime(payload['end_datetime'], 'end_datetime')
 
         with transaction() as tx:
-            name = Event.validate_event_name(payload['name'])
-            primary_organizer = User.lookup(tx, current_cognito_jwt['sub'])
-            secondary_organizer = User.lookup(tx, payload['secondary_organizer_id']) \
-                if payload.get('secondary_organizer_id') else None
-            location = Location.lookup(tx, payload['location_id'])
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    name = Event.validate_event_name(payload['name'])
+                    primary_organizer = User.lookup(tx, current_cognito_jwt['sub'])
+                    secondary_organizer = User.lookup(tx, payload['secondary_organizer_id']) \
+                        if payload.get('secondary_organizer_id') else None
+                    location = Location.lookup(tx, payload['location_id'])
 
-            sponsor_community = Community.lookup(
-                tx, payload['sponsor_community_id']) if payload.get('sponsor_community_id') else None
+                    sponsor_community = Community.lookup(
+                        tx, payload['sponsor_community_id']) if payload.get('sponsor_community_id') else None
 
-            event = Event(
-                id=event_id,
-                primary_organizer=primary_organizer,
-                secondary_organizer=secondary_organizer,
-                name=name,
-                start_datetime=start_datetime,
-                end_datetime=end_datetime,
-                location=location,
-                sponsor_community=sponsor_community,
-                status=EventStatus.ACTIVE.value,
-                created_at=now,
-                last_updated_at=now,
-            )
-            tx.add(event)
+                    event = Event(
+                        id=event_id,
+                        primary_organizer=primary_organizer,
+                        secondary_organizer=secondary_organizer,
+                        name=name,
+                        start_datetime=start_datetime,
+                        end_datetime=end_datetime,
+                        location=location,
+                        sponsor_community=sponsor_community,
+                        status=EventStatus.ACTIVE.value,
+                        created_at=now,
+                        last_updated_at=now,
+                    )
+                    tx.add(event)
 
-            event.update_details(payload)
+                    event.update_details(payload)
 
-            # Insert activity details in DB
-            activity_data = {
-                'event': {
-                    'event_id': event.id,
-                    'name': event.name
-                },
-                'user': {
-                    'user_id': primary_organizer.id,
-                    'name': primary_organizer.name,
-                    'profile_picture_url': primary_organizer.profile_picture_url
-                }
-            }
-            tx.add(Activity.add_activity(primary_organizer, ActivityType.NEW_EVENT_POSTED, data=activity_data))
-            tx.add(ActivityGlobal.add_activity(primary_organizer.customer, ActivityType.NEW_EVENT_POSTED, data=activity_data))
+                    # Insert activity details in DB
+                    activity_data = {
+                        'event': {
+                            'event_id': event.id,
+                            'name': event.name
+                        },
+                        'user': {
+                            'user_id': primary_organizer.id,
+                            'name': primary_organizer.name,
+                            'profile_picture_url': primary_organizer.profile_picture_url
+                        }
+                    }
+                    tx.add(Activity.add_activity(primary_organizer, ActivityType.NEW_EVENT_POSTED, data=activity_data))
+                    tx.add(ActivityGlobal.add_activity(primary_organizer.customer, ActivityType.NEW_EVENT_POSTED,
+                                                       data=activity_data))
 
-            event_details = event.as_dict()
-        return event_details
+                    event_details = event.as_dict()
+                    return event_details
+            raise NotAllowedError(f"User '{user.id}' has no permission to create event")
 
 
 @blueprint.route('/<event_id>')
@@ -121,45 +134,60 @@ class EventByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(event_id):
         with transaction() as tx:
-            event = Event.lookup(tx, event_id)
-            return event.as_dict()
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['readPermission'] == 'Yes':
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        # print("------ event customer id--------",event.primary_organizer.customer.id)
+                        return event.as_dict()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission to See")
 
     @staticmethod
     def put(event_id):
         now = datetime.utcnow()
 
         with transaction() as tx:
-            event = Event.lookup(tx, event_id)
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(
+                tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        payload = request.json
 
-            payload = request.json
+                        if payload.get('secondary_organizer_id'):
+                            event.secondary_organizer = User.lookup(tx, payload['secondary_organizer_id'])
 
-            if payload.get('secondary_organizer_id'):
-                event.secondary_organizer = User.lookup(tx, payload['secondary_organizer_id'])
+                        if payload.get('name'):
+                            event.name = payload['name']
 
-            if payload.get('name'):
-                event.name = payload['name']
+                        if payload.get('start_datetime'):
+                            event.start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(
+                                payload['start_datetime'], 'start_datetime')
 
-            if payload.get('start_datetime'):
-                event.start_datetime = DateTime.validate_and_convert_isoformat_to_datetime(
-                    payload['start_datetime'], 'start_datetime')
+                        if payload.get('end_datetime'):
+                            event.end_datetime = DateTime.validate_and_convert_isoformat_to_datetime(
+                                payload['end_datetime'], 'end_datetime')
 
-            if payload.get('end_datetime'):
-                event.end_datetime = DateTime.validate_and_convert_isoformat_to_datetime(
-                    payload['end_datetime'], 'end_datetime')
+                        if payload.get('location_id'):
+                            event.location = Location.lookup(tx, payload['location_id'])
 
-            if payload.get('location_id'):
-                event.location = Location.lookup(tx, payload['location_id'])
+                        if payload.get('sponsor_community_id'):
+                            event.sponsor_community = Community.lookup(tx, payload['sponsor_community_id'])
 
-            if payload.get('sponsor_community_id'):
-                event.sponsor_community = Community.lookup(tx, payload['sponsor_community_id'])
+                        event.last_updated_at = now
+                        event.update_details(payload)
 
-            event.last_updated_at = now
-            event.update_details(payload)
-
-        with transaction() as tx:
-            event = Event.lookup(tx, event_id)
-            event_details = event.as_dict()
-        return event_details
+                        with transaction() as tx:
+                            event = Event.lookup(tx, user, event_id)
+                            event_details = event.as_dict()
+                        return event_details
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(event_id):
@@ -167,27 +195,40 @@ class EventByIdAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
 
-            # For now, only the primary organizer is allowed to delete the event
-            if event.primary_organizer_id != user.id:
-                raise NotAllowedError(f"User '{user.id}' is not a primary organizer of the event.")
-            event.status = EventStatus.DELETED.value
-            event.last_updated_at = now
-        return make_no_content_response()
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'Yes':
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        # For now, only the primary organizer is allowed to delete the event
+                        if event.primary_organizer_id != user.id:
+                            raise NotAllowedError(f"User '{user.id}' is not a primary organizer of the event.")
+                        event.status = EventStatus.DELETED.value
+                        event.last_updated_at = now
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")
 
 
 @blueprint.route('/<event_id>/event_logo')
 class EventLogoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(event_id):
-        metadata = {
-            'resource': 'event',
-            'resource_id': event_id,
-            'type': 'event_logo',
-        }
-        return EventLogoAPI.create_user_upload(
-            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'events', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    metadata = {
+                        'resource': 'event',
+                        'resource_id': event_id,
+                        'type': 'event_logo',
+                    }
+                    return EventLogoAPI.create_user_upload(
+                        current_cognito_jwt['sub'], request.json['filename'],
+                        request.json['content_type'], 'events', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update event logo")
 
 
 @blueprint.route('/<event_id>/event_logo/<upload_id>')
@@ -196,40 +237,58 @@ class EventLogoByIdAPI(AuthenticatedAPIBase):
     def put(event_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            event = Event.lookup(tx, event_id)
-            if status == UserUploadStatus.UPLOADED:
-                event.event_logo = user_upload
-                user_upload.status = status.value
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        if status == UserUploadStatus.UPLOADED:
+                            event.event_logo = user_upload
+                            user_upload.status = status.value
 
-        return {
-            'status': user_upload.status,
-        }
+                        return {
+                            'status': user_upload.status,
+                        }
+                    raise NotAllowedError("Invalid Customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update event logo")
 
     @staticmethod
     def delete(event_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            event = Event.lookup(tx, event_id)
-
-            event.event_logo = None
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        event.event_logo = None
+                        user_upload.status = UserUploadStatus.DELETED.value
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid Customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete event logo")
 
 
 @blueprint.route('/<event_id>/overview_video')
 class EventVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
     @staticmethod
     def put(event_id):
-        metadata = {
-            'resource': 'event',
-            'resource_id': event_id,
-            'type': 'event_video',
-        }
-        return EventVideoAPI.create_user_upload(
-            current_cognito_jwt['sub'], request.json['filename'], request.json['content_type'], 'events', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    metadata = {
+                        'resource': 'event',
+                        'resource_id': event_id,
+                        'type': 'event_video',
+                    }
+                    return EventVideoAPI.create_user_upload(
+                        current_cognito_jwt['sub'], request.json['filename'],
+                        request.json['content_type'], 'events', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update overview video")
 
 
 @blueprint.route('/<event_id>/overview_video/<upload_id>')
@@ -239,26 +298,38 @@ class EventVideoByIdAPI(AuthenticatedAPIBase):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            event = Event.lookup(tx, event_id)
-            if status == UserUploadStatus.UPLOADED:
-                event.overview_video = user_upload
-                user_upload.status = status.value
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
 
-        return {
-            'status': user_upload.status,
-        }
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        if status == UserUploadStatus.UPLOADED:
+                            event.overview_video = user_upload
+                            user_upload.status = status.value
+
+                        return {
+                            'status': user_upload.status,
+                        }
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update overview video")
 
     @staticmethod
     def delete(event_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            event = Event.lookup(tx, event_id)
-
-            event.overview_video = None
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        event.overview_video = None
+                        user_upload.status = UserUploadStatus.DELETED.value
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")
 
 
 @blueprint.route('/<event_id>/comments')
@@ -271,28 +342,34 @@ class EventCommentAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(
+                tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        if event is None:
+                            raise DoesNotExistError(f"Event '{event_id}' does not exist.")
 
-            if event is None:
-                raise DoesNotExistError(f"Event '{event_id}' does not exist.")
+                        if 'comment' not in payload.keys():
+                            raise InvalidArgumentError("Field: comment is required.")
 
-            if 'comment' not in payload.keys():
-                raise InvalidArgumentError("Field: comment is required.")
+                        comment = EventComment(
+                            id=comment_id,
+                            event=event,
+                            creator=user,
+                            comment=payload.get('comment'),
+                            status=EventCommentStatus.ACTIVE.value,
+                            created_at=now,
+                            last_updated_at=now
+                        )
+                        tx.add(comment)
 
-            comment = EventComment(
-                id=comment_id,
-                event=event,
-                creator=user,
-                comment=payload.get('comment'),
-                status=EventCommentStatus.ACTIVE.value,
-                created_at=now,
-                last_updated_at=now
-            )
-            tx.add(comment)
-
-            return {
-                'comment_id': comment.id
-            }
+                        return {
+                            'comment_id': comment.id
+                        }
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for create comment")
 
 
 @blueprint.route('/<event_id>/comments/<comment_id>')
@@ -304,23 +381,29 @@ class EventCommentByIdAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            comment = EventComment.lookup(tx, comment_id)
+            current_user_role = Permissions.get_user_role(tx,
+                                                          current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
 
-            if comment.creator != user:
-                raise DoesNotExistError(f"User '{user.id}' is not the creator of comment '{comment_id}'.")
+                    comment = EventComment.lookup(tx, comment_id)
 
-            if comment.event_id != event_id:
-                raise DoesNotExistError(f"Comment '{comment_id}' does not belongs to event '{event_id}'.")
+                    if comment.creator != user:
+                        raise DoesNotExistError(f"User '{user.id}' is not the creator of comment '{comment_id}'.")
 
-            if 'comment' not in payload.keys():
-                raise InvalidArgumentError("Field: comment is required.")
+                    if comment.event_id != event_id:
+                        raise DoesNotExistError(f"Comment '{comment_id}' does not belongs to event '{event_id}'.")
 
-            comment.comment = payload.get('comment')
-            comment.last_updated_at = now
+                    if 'comment' not in payload.keys():
+                        raise InvalidArgumentError("Field: comment is required.")
 
-            return {
-                'comment_id': comment.id
-            }
+                    comment.comment = payload.get('comment')
+                    comment.last_updated_at = now
+
+                    return {
+                        'comment_id': comment.id
+                    }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update comments")
 
     @staticmethod
     def delete(event_id, comment_id):
@@ -328,17 +411,22 @@ class EventCommentByIdAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            comment = EventComment.lookup(tx, comment_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
 
-            if comment.event_id != event_id:
-                raise DoesNotExistError(f"Comment '{comment_id}' does not belongs to Event '{event_id}'.")
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'Yes':
+                    comment = EventComment.lookup(tx, comment_id)
 
-            if comment.creator != user:
-                raise DoesNotExistError(f"User '{user.id}' is not the creator of comment '{comment_id}'.")
+                    if comment.event_id != event_id:
+                        raise DoesNotExistError(f"Comment '{comment_id}' does not belongs to Event '{event_id}'.")
 
-            comment.status = EventCommentStatus.DELETED.value
-            comment.last_updated_at = now
-        return make_no_content_response()
+                    if comment.creator != user:
+                        raise DoesNotExistError(f"User '{user.id}' is not the creator of comment '{comment_id}'.")
+
+                    comment.status = EventCommentStatus.DELETED.value
+                    comment.last_updated_at = now
+                    return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete comments")
 
 
 @blueprint.route('/<event_id>/rsvp')
@@ -349,51 +437,65 @@ class EventRSVPAPI(AuthenticatedAPIBase):
         now = datetime.utcnow()
 
         with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
             guest = User.lookup(tx, current_cognito_jwt['sub'])
-            event = Event.lookup(tx, event_id)
-            rsvp = EventRSVP.find(
-                tx, event.id, guest.id, [
-                    EventRSVPStatus.YES.value,
-                    EventRSVPStatus.NO.value,
-                    EventRSVPStatus.MAYBE.value])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        rsvp = EventRSVP.find(
+                            tx, event.id, guest.id, [
+                                EventRSVPStatus.YES.value,
+                                EventRSVPStatus.NO.value,
+                                EventRSVPStatus.MAYBE.value])
 
-            if rsvp is None:
-                rsvp_id = str(uuid.uuid4())
-                rsvp = EventRSVP(
-                    id=rsvp_id,
-                    guest=guest,
-                    event=event,
-                    status=status.value,
-                    created_at=now,
-                    last_updated_at=now
-                )
-                tx.add(rsvp)
-            else:
-                rsvp.status = status.value
-                rsvp.last_updated_at = now
+                        if rsvp is None:
+                            rsvp_id = str(uuid.uuid4())
+                            rsvp = EventRSVP(
+                                id=rsvp_id,
+                                guest=guest,
+                                event=event,
+                                status=status.value,
+                                created_at=now,
+                                last_updated_at=now
+                            )
+                            tx.add(rsvp)
+                        else:
+                            rsvp.status = status.value
+                            rsvp.last_updated_at = now
 
-            return {
-                'rsvp_id': rsvp.id,
-                'status': rsvp.status,
-            }
+                        return {
+                            'rsvp_id': rsvp.id,
+                            'status': rsvp.status,
+                        }
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{guest.id}' has no permission for update rsvp")
 
     @staticmethod
     def delete(event_id):
         now = datetime.utcnow()
 
         with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
             guest = User.lookup(tx, current_cognito_jwt['sub'])
-            event = Event.lookup(tx, event_id)
-            rsvp = EventRSVP.find(tx, event.id, guest.id, [
-                EventRSVPStatus.YES.value, EventRSVPStatus.NO.value, EventRSVPStatus.MAYBE.value])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'Yes':
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        rsvp = EventRSVP.find(tx, event.id, guest.id, [
+                            EventRSVPStatus.YES.value, EventRSVPStatus.NO.value, EventRSVPStatus.MAYBE.value])
 
-            if rsvp is None:
-                raise DoesNotExistError(f"User is not provided RSVP for event '{event_id}'")
+                        if rsvp is None:
+                            raise DoesNotExistError(f"User is not provided RSVP for event '{event_id}'")
 
-            rsvp.status = EventRSVPStatus.DELETED.value
-            rsvp.last_updated_at = now
+                        rsvp.status = EventRSVPStatus.DELETED.value
+                        rsvp.last_updated_at = now
 
-        return make_no_content_response()
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{guest.id}' has no permission for delete rsvp")
 
 
 @blueprint.route('/<event_id>/gallery')
@@ -402,18 +504,23 @@ class EventGalleryAPI(AuthenticatedAPIBase, UserUploadMixin):
     def put(event_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    event = Event.lookup(tx, user, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        if user.id not in [event.primary_organizer_id, event.secondary_organizer_id]:
+                            raise NotAllowedError(f"User '{user.id}' is not a organizer of the event '{event.id}'")
 
-            if user.id not in [event.primary_organizer_id, event.secondary_organizer_id]:
-                raise NotAllowedError(f"User '{user.id}' is not a organizer of the event '{event.id}'")
-
-        metadata = {
-            'resource': 'event',
-            'resource_id': event_id,
-            'type': 'event_gallery',
-        }
-        return EventGalleryAPI.create_user_upload(
-            user.id, request.json['filename'], request.json['content_type'], 'events', metadata)
+                        metadata = {
+                            'resource': 'event',
+                            'resource_id': event_id,
+                            'type': 'event_gallery',
+                        }
+                        return EventGalleryAPI.create_user_upload(
+                            user.id, request.json['filename'], request.json['content_type'], 'events', metadata)
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update gallery")
 
 
 @blueprint.route('/<event_id>/gallery/<upload_id>')
@@ -422,34 +529,44 @@ class EventGalleryByIdAPI(AuthenticatedAPIBase):
     def put(event_id, upload_id):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
+
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        if user.id not in [event.primary_organizer_id, event.secondary_organizer_id]:
+                            raise NotAllowedError(f"User '{user.id}' is not a organizer of the event '{event.id}'")
 
-            if user.id not in [event.primary_organizer_id, event.secondary_organizer_id]:
-                raise NotAllowedError(f"User '{user.id}' is not a organizer of the event '{event.id}'")
-
-            if status == UserUploadStatus.UPLOADED:
-                event.add_event_gallery_media(user_upload)
-                user_upload.status = status.value
-
-        return {
-            'status': user_upload.status,
-        }
+                        if status == UserUploadStatus.UPLOADED:
+                            event.add_event_gallery_media(user_upload)
+                            user_upload.status = status.value
+                        return {
+                            'status': user_upload.status,
+                        }
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update gallery")
 
     @staticmethod
     def delete(event_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    event = Event.lookup(tx, event_id)
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        if user.id not in [event.primary_organizer_id, event.secondary_organizer_id]:
+                            raise NotAllowedError(f"User '{user.id}' is not a organizer of the event '{event.id}'")
 
-            if user.id not in [event.primary_organizer_id, event.secondary_organizer_id]:
-                raise NotAllowedError(f"User '{user.id}' is not a organizer of the event '{event.id}'")
-
-            event.gallery.remove(user_upload)
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+                        event.gallery.remove(user_upload)
+                        user_upload.status = UserUploadStatus.DELETED.value
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete gallery")
 
 
 @blueprint.route('/<event_id>/bookmark')
@@ -457,20 +574,30 @@ class EventBookmarkAPI(AuthenticatedAPIBase):
     @staticmethod
     def put(event_id):
         with transaction() as tx:
-            event = Event.lookup(tx, event_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            bookmark = EventBookmark.lookup(tx, user.id, event.id, must_exist=False)
-            if bookmark is None:
-                EventBookmark(user=user, event=event, created_at=datetime.utcnow())
-        return make_no_content_response()
+            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['createPermission'] == 'Yes':
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        bookmark = EventBookmark.lookup(tx, user.id, event.id, must_exist=False)
+                        if bookmark is None:
+                            EventBookmark(user=user, event=event, created_at=datetime.utcnow())
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for update bookmark 45")
 
     @staticmethod
     def delete(event_id):
         with transaction() as tx:
-            event = Event.lookup(tx, event_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            bookmark = EventBookmark.lookup(tx, user.id, event.id)
-            tx.delete(bookmark)
-        return make_no_content_response()
+            event = Event.lookup(tx, event_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'Events' and permission['AdminPermission'] == 'No':
+                    if Permissions.check_user_permission(event.primary_organizer.customer.id, user.customer_id):
+                        bookmark = EventBookmark.lookup(tx, user.id, event.id)
+                        tx.delete(bookmark)
+                        return make_no_content_response()
+                    raise NotAllowedError("Invalid customer id")
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete bookmark")

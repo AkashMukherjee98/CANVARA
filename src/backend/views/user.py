@@ -1,26 +1,24 @@
-import json
-from datetime import datetime
+# AGAIN NEW CODE
 
+from datetime import datetime
 from flask import jsonify, request
 from flask_cognito import current_cognito_jwt
 from flask_smorest import Blueprint
-
 from sqlalchemy import select
-
 from backend.common.exceptions import NotAllowedError
 from backend.common.http import make_no_content_response
 from backend.common.resume import Resume
 from backend.models.db import transaction
 from backend.models.language import Language
 from backend.models.skill import Skill
-from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark, as_dict
+from backend.models.customer import Customer
+from backend.models.user import User, UserTypeFilter, SkillType, UserBookmark
 from backend.views.base import AuthenticatedAPIBase
 from backend.models.user_upload import UserUpload, UserUploadStatus
 from backend.views.user_upload import UserUploadMixin
 from backend.models.notification import Notification
-
+from backend.common.permission import Permissions
 from backend.models.activities import Activity, ActivityGlobal, ActivityType
-
 
 blueprint = Blueprint('user', __name__, url_prefix='/users')
 customer_user_blueprint = Blueprint('customer_user', __name__, url_prefix='/customers/<customer_id>/users')
@@ -33,8 +31,12 @@ class CustomerUserAPI(AuthenticatedAPIBase):
     def get(customer_id):
         with transaction() as tx:
             users = tx.execute(select(User).where(User.customer_id == customer_id)).scalars().all()
-            user_details = jsonify([user.as_dict() for user in users])
-        return user_details
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['readPermission'] == 'Yes':
+                    user_details = jsonify([user.as_dict() for user in users])
+                    return user_details
+            raise NotAllowedError("User has no permission to see all the users")
 
     @staticmethod
     def post(customer_id):
@@ -47,6 +49,7 @@ class CustomerUserAPI(AuthenticatedAPIBase):
             name=payload['name'],
         )
         with transaction() as tx:
+            customer = Customer.lookup(tx, customer_id)
             tx.add(user)
             user.update_profile(payload)
 
@@ -70,7 +73,7 @@ class CustomerUserAPI(AuthenticatedAPIBase):
                 }
             }
             tx.add(Activity.add_activity(user, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
-            tx.add(ActivityGlobal.add_activity(user.customer, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
+            tx.add(ActivityGlobal.add_activity(customer, ActivityType.NEW_EMPLOYEE_JOINED, data=activity_data))
 
             user_details = user.as_dict()
         return user_details
@@ -95,32 +98,34 @@ class UsersAPI(AuthenticatedAPIBase):
 
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            skill = Skill.lookup(tx, user.customer_id,
-                                 request.args.get('skill_id')) if 'skill_id' in request.args else None
-
-            users = User.search(
-                tx,
-                user,
-                user_type=user_type,
-                keyword=keyword,
-                title=title,
-                department=department,
-                skill=skill,
-                location=location,
-                language=language,
-                tenure_gte=tenure_gte,
-                tenure_lte=tenure_lte
-            )
-            users = [user.as_custom_dict([
-                'title', 'pronoun', 'department', 'location',
-                'expert_skills',
-                'introduction', 'introduction_video', 'hashtags',
-                'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
-                'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
-                'matching_reason'
-            ]) for user in users]
-        return jsonify(users)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['readPermission'] == 'Yes':
+                    skill = Skill.lookup(tx, user.customer_id,
+                                         request.args.get('skill_id')) if 'skill_id' in request.args else None
+                    users = User.search(
+                        tx,
+                        user,
+                        user_type=user_type,
+                        keyword=keyword,
+                        title=title,
+                        department=department,
+                        skill=skill,
+                        location=location,
+                        language=language,
+                        tenure_gte=tenure_gte,
+                        tenure_lte=tenure_lte
+                    )
+                    users = [user.as_custom_dict([
+                        'title', 'employee_id', 'date_of_birth', 'pronoun', 'department', 'location',
+                        'expert_skills', 'resume_file',
+                        'introduction', 'introduction_video', 'hashtags',
+                        'email', 'phone_number', 'linkedin_url', 'slack_teams_messaging_id',
+                        'mentorship_offered', 'mentorship_description', 'mentorship_hashtags',
+                        'matching_reason', 'is_bookmarked'
+                    ]) for user in users]
+                    return jsonify(users)
+            raise NotAllowedError(f"User '{user.id}' has no permission to see")
 
 
 # Authenticated user APIs
@@ -131,16 +136,13 @@ class UserAPI(AuthenticatedAPIBase):
     def get():
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            print("User Roles Type: ", type(user.role_mapping))
-            #print("================",user.role_mapping[0].user_roles)
-            #print("--------------",dir(user.role_mapping[0].user_roles.permissions))
-            #print("User Roles Type: ", user.role_mapping.UserRole)
-            # print("User Roles: ", as_dict(user.roles))
+            current_user_role = Permissions.get_user_role(tx,
+                                                          current_cognito_jwt['sub'])
             user_details = user.as_dict()
             user_details['customer_name'] = user.customer.name
             user_details['profile_completion'] = User.profile_completion(user)
             user_details['unread_notifications'] = Notification.get_unread_count(tx, user.id)
-            user_details['permissions']= user.role_mapping[0].user_roles.permissions
+            user_details['permissions'] = current_user_role.permissions
         return user_details
 
 
@@ -151,85 +153,95 @@ class UserByIdAPI(AuthenticatedAPIBase):
     @staticmethod
     def get(user_id):
         with transaction() as tx:
-            user = User.lookup(tx, user_id)
-
-            # If the user is viewing someone else's profile,
-            # remove concerns and additional_comments from the feedback
-            scrub_feedback = current_cognito_jwt['sub'] != user_id
-            user_details = user.as_dict(scrub_feedback=scrub_feedback)
-            user_details['customer_name'] = user.customer.name
-        return user_details
+            user_ = User.lookup(tx, current_cognito_jwt['sub'])
+            user = User.lookup(tx, user_id, user_)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['readPermission'] == 'Yes':
+                    # If the user is viewing someone else's profile,
+                    # remove concerns and additional_comments from the feedback
+                    scrub_feedback = current_cognito_jwt['sub'] != user_id
+                    user_details = user.as_dict(scrub_feedback=scrub_feedback)
+                    user_details['customer_name'] = user.customer.name
+                    return user_details
+            raise NotAllowedError(f"User '{user.id}' has no permission to see")
 
     @staticmethod
-    def put(user_id):
+    def put(user_id):  # noqa: C901
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            title_last = user.profile['title'] if (
-                hasattr(user, 'profile') and 'title' in user.profile) else ''
-            mentorship_offered_last = user.profile['mentorship_offered'] if (
-                hasattr(user, 'profile') and 'mentorship_offered' in user.profile) else False
+            current_user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    title_last = user.profile['title'] if (
+                            hasattr(user, 'profile') and 'title' in user.profile) else ''
+                    mentorship_offered_last = user.profile['mentorship_offered'] if (
+                            hasattr(user, 'profile') and 'mentorship_offered' in user.profile) else False
 
-            payload = request.json
+                    payload = request.json
 
-            if payload.get('name'):
-                user.name = payload['name']
+                    if payload.get('name'):
+                        user.name = payload['name']
 
-            if payload.get('username'):
-                user.username = payload['username']
+                    if payload.get('username'):
+                        user.username = payload['username']
 
-            if payload.get('manager_id'):
-                manager = User.lookup(tx, payload['manager_id'])
-                user.manager = user.validate_manager(manager)
+                    if payload.get('manager_id'):
+                        manager = User.lookup(tx, payload['manager_id'])
+                        user.manager = user.validate_manager(manager)
 
-            if payload.get('background_picture_id'):
-                user.background_picture = UserUpload.lookup(tx, payload['background_picture_id'], user.customer_id)
+                    if payload.get('background_picture_id'):
+                        user.background_picture = UserUpload.lookup(tx, payload['background_picture_id'],
+                                                                    user.customer_id)
 
-            # TODO: (sunil) Error if current_skills was given but set to empty list
-            if payload.get('current_skills'):
-                User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
-                user.set_current_skills(tx, payload['current_skills'])
+                    # TODO: (sunil) Error if current_skills was given but set to empty list
+                    if payload.get('current_skills'):
+                        User.validate_skills(payload['current_skills'], SkillType.CURRENT_SKILL)
+                        user.set_current_skills(tx, payload['current_skills'])
 
-            # TODO: (sunil) Allow removing all desired_skills by setting to empty list
-            if payload.get('desired_skills'):
-                User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
-                user.set_desired_skills(tx, payload['desired_skills'])
+                    # TODO: (sunil) Allow removing all desired_skills by setting to empty list
+                    if payload.get('desired_skills'):
+                        User.validate_skills(payload['desired_skills'], SkillType.DESIRED_SKILL)
+                        user.set_desired_skills(tx, payload['desired_skills'])
 
-            user.update_profile(payload)
+                    user.update_profile(payload)
 
-            # Title has been updated
-            if 'title' in payload and payload['title'] != title_last:
-                # Insert activity details in DB
-                activity_data = {
-                    'user': {
-                        'user_id': user.id,
-                        'name': user.name,
-                        'profile_picture_url': user.profile_picture_url
-                    }
-                }
-                tx.add(Activity.add_activity(user, ActivityType.NEW_ROLE, data=activity_data))
-                tx.add(ActivityGlobal.add_activity(user.customer, ActivityType.NEW_ROLE, data=activity_data))
-
-            # Mentorship offered is true
-            if 'mentorship_offered' in payload and payload['mentorship_offered'] is True:
-                if payload['mentorship_offered'] != mentorship_offered_last:
-                    # Insert activity details in DB
-                    activity_data = {
-                        'user': {
-                            'user_id': user.id,
-                            'name': user.name,
-                            'profile_picture_url': user.profile_picture_url
+                    # Title has been updated
+                    if 'title' in payload and payload['title'] != title_last:
+                        # Insert activity details in DB
+                        activity_data = {
+                            'user': {
+                                'user_id': user.id,
+                                'name': user.name,
+                                'profile_picture_url': user.profile_picture_url
+                            }
                         }
-                    }
-                    tx.add(Activity.add_activity(user, ActivityType.NEW_MENTORSHIP_BEING_OFFERED, data=activity_data))
-                    tx.add(ActivityGlobal.add_activity(
-                        user.customer, ActivityType.NEW_MENTORSHIP_BEING_OFFERED, data=activity_data))
+                        tx.add(Activity.add_activity(user, ActivityType.NEW_ROLE, data=activity_data))
+                        tx.add(ActivityGlobal.add_activity(user.customer, ActivityType.NEW_ROLE, data=activity_data))
 
-        # Fetch the user again from the database so the updates made above are reflected in the response
-        with transaction() as tx:
-            user = User.lookup(tx, user_id)
-            user_details = user.as_dict()
-        return user_details
+                    # Mentorship offered is true
+                    if 'mentorship_offered' in payload and payload['mentorship_offered'] is True:
+                        if payload['mentorship_offered'] != mentorship_offered_last:
+                            # Insert activity details in DB
+                            activity_data = {
+                                'user': {
+                                    'user_id': user.id,
+                                    'name': user.name,
+                                    'profile_picture_url': user.profile_picture_url
+                                }
+                            }
+                            tx.add(Activity.add_activity(user, ActivityType.NEW_MENTORSHIP_BEING_OFFERED,
+                                                         data=activity_data))
+                            tx.add(ActivityGlobal.add_activity(
+                                user.customer, ActivityType.NEW_MENTORSHIP_BEING_OFFERED, data=activity_data))
 
+                    # Fetch the user again from the database so the updates made above are reflected in the response
+                    with transaction() as tx:
+                        user = User.lookup(tx, user_id)
+                        user_details = user.as_dict()
+                    return user_details
+            raise NotAllowedError(f"User '{current_user.id}' has no permission for Update")
     # @staticmethod
     # def delete(user_id):
     #     with transaction() as tx:
@@ -248,13 +260,20 @@ class ProfilePictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
     def _put(user_id):
         # TODO: (sunil) add validation for accepted content types
         # user_id = current_cognito_jwt['sub']
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'profile_picture',
-        }
-        return ProfilePictureAPIBase.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    metadata = {
+                        'resource': 'user',
+                        'resource_id': user_id,
+                        'type': 'profile_picture',
+                    }
+                    return ProfilePictureAPIBase.create_user_upload(
+                        user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/profile_picture')
@@ -262,7 +281,13 @@ class ProfilePictureAPI(ProfilePictureAPIBase):
 
     @staticmethod
     def put(user_id):
-        return ProfilePictureAPIBase._put(user_id)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    return ProfilePictureAPIBase._put(user_id)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
@@ -272,15 +297,19 @@ class ProfilePictureByIdAPIBase(AuthenticatedAPIBase):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                user.profile_picture = user_upload
-                user_upload.status = status.value
-            # TODO: (sunil) return an error if this status transition is not supported
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    if status == UserUploadStatus.UPLOADED:
+                        user.profile_picture = user_upload
+                        user_upload.status = status.value
+                    # TODO: (sunil) return an error if this status transition is not supported
 
-        return {
-            'status': user_upload.status,
-        }
+                    return {
+                        'status': user_upload.status,
+                    }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/profile_picture/<upload_id>')
@@ -288,7 +317,13 @@ class ProfilePictureByIdAPI(ProfilePictureByIdAPIBase):
 
     @staticmethod
     def put(user_id, upload_id):
-        return ProfilePictureByIdAPIBase._put(user_id, upload_id)
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    return ProfilePictureByIdAPIBase._put(user_id, upload_id)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 # Background picture APIs
@@ -296,13 +331,19 @@ class BackgroundPictureAPIBase(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def _put(user_id):
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'background_picture',
-        }
-        return BackgroundPictureAPIBase.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    metadata = {
+                        'resource': 'user',
+                        'resource_id': user_id,
+                        'type': 'background_picture',
+                    }
+                    return BackgroundPictureAPIBase.create_user_upload(
+                        user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/background_picture')
@@ -310,7 +351,13 @@ class BackgroundPictureAPI(BackgroundPictureAPIBase):
 
     @staticmethod
     def put(user_id):
-        return BackgroundPictureAPIBase._put(user_id)
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and ['createPermission'] == 'Yes':
+                    return BackgroundPictureAPIBase._put(user_id)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
@@ -320,13 +367,17 @@ class BackgroundPictureByIdAPIBase(AuthenticatedAPIBase):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                user.background_picture = user_upload
-                user_upload.status = status.value
-        return {
-            'status': user_upload.status,
-        }
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    if status == UserUploadStatus.UPLOADED:
+                        user.background_picture = user_upload
+                        user_upload.status = status.value
+                    return {
+                        'status': user_upload.status,
+                    }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/background_picture/<upload_id>')
@@ -334,7 +385,13 @@ class BackgroundPictureByIdAPI(BackgroundPictureByIdAPIBase):
 
     @staticmethod
     def put(user_id, upload_id):
-        return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    return BackgroundPictureByIdAPIBase._put(user_id, upload_id)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 # Introduction video APIs
@@ -343,13 +400,19 @@ class IntroductionVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def put(user_id):
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'introduction_video',
-        }
-        return IntroductionVideoAPI.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, user_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    metadata = {
+                        'resource': 'user',
+                        'resource_id': user_id,
+                        'type': 'introduction_video',
+                    }
+                    return IntroductionVideoAPI.create_user_upload(
+                        user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/introduction_video/<upload_id>')
@@ -360,26 +423,34 @@ class IntroductionVideoByIdAPI(AuthenticatedAPIBase):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                user.introduction_video = user_upload
-                user_upload.status = status.value
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    if status == UserUploadStatus.UPLOADED:
+                        user.introduction_video = user_upload
+                        user_upload.status = status.value
+                    return {
+                        'status': user_upload.status,
+                    }
 
-        return {
-            'status': user_upload.status,
-        }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(user_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['AdminPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
 
-            if user.id != user_id:
-                raise NotAllowedError(f"User '{user.id}' cannot delete introduction video of user '{user_id}'")
-            user.introduction_video = None
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+                    if user.id != user_id:
+                        raise NotAllowedError(f"User '{user.id}' cannot delete introduction video of user '{user_id}'")
+                    user.introduction_video = None
+                    user_upload.status = UserUploadStatus.DELETED.value
+                    return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")
 
 
 # Resume upload APIs
@@ -388,17 +459,25 @@ class ResumeAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def put(user_id):
-        if request.json['content_type'] not in User.ALLOWED_CONTENT_TYPES_FOR_RESUME:
-            raise NotAllowedError(
-                f"Only doc, docx or pdf file is allowed for resume, '{request.json['content_type']}' is not allowed here.")
+        with transaction() as tx:
+            # My code
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    if request.json['content_type'] not in User.ALLOWED_CONTENT_TYPES_FOR_RESUME:
+                        raise NotAllowedError(
+                            f"Only doc, docx or pdf file is allowed for resume,"
+                            f" '{request.json['content_type']}' is not allowed here.")
 
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'resume',
-        }
-        return ResumeAPI.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+                    metadata = {
+                        'resource': 'user',
+                        'resource_id': user_id,
+                        'type': 'resume',
+                    }
+                    return ResumeAPI.create_user_upload(
+                        user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/resume/<upload_id>')
@@ -409,36 +488,44 @@ class ResumeByIdAPI(AuthenticatedAPIBase):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                # Processing resume file(rchilli)
-                file_path = user_upload.path
-                file_name = user_upload.metadata['original_filename']
-                resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    if status == UserUploadStatus.UPLOADED:
+                        # Processing resume file(rchilli)
+                        file_path = user_upload.path
+                        file_name = user_upload.metadata['original_filename']
+                        resume_json = Resume.convert_resume_to_json_data(file_path, file_name)
 
-                user.resume_file = user_upload
-                user.resume_data = resume_json
-                user_upload.status = status.value
+                        user.resume_file = user_upload
+                        user.resume_data = resume_json
+                        user_upload.status = status.value
 
-                # Store new skills
-                for skill in resume_json['SegregatedSkill']:
-                    Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
+                        # Store new skills
+                        for skill in resume_json['SegregatedSkill']:
+                            Skill.lookup_or_add(tx, user.customer_id, name=skill['Skill'], source='resume_parser')
 
-        return {
-            'status': user_upload.status,
-        }
+                        return {
+                            'status': user_upload.status,
+                        }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(user_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['AdminPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
 
-            if user.id != user_id:
-                raise NotAllowedError(f"User '{user.id}' cannot delete resume for user '{user_id}'")
-            user.resume_file = None
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+                    if user.id != user_id:
+                        raise NotAllowedError(f"User '{user.id}' cannot delete resume for user '{user_id}'")
+                    user.resume_file = None
+                    user_upload.status = UserUploadStatus.DELETED.value
+                return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")
 
 
 # Fun facts APIs
@@ -447,14 +534,20 @@ class FunFactAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def put(user_id):
-        # TODO: (sunil) add validation for accepted content types
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'fun_fact',
-        }
-        return FunFactAPI.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    # TODO: (sunil) add validation for accepted content types
+                    metadata = {
+                        'resource': 'user',
+                        'resource_id': user_id,
+                        'type': 'fun_fact',
+                    }
+                    return FunFactAPI.create_user_upload(
+                        user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/fun_fact/<upload_id>')
@@ -465,28 +558,36 @@ class FunFactByIdAPI(AuthenticatedAPIBase):
         status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                user.add_fun_fact(user_upload)
-                user_upload.status = status.value
-            # TODO: (sunil) return an error if this status transition is not supported
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                    if status == UserUploadStatus.UPLOADED:
+                        user.add_fun_fact(user_upload)
+                        user_upload.status = status.value
+                    # TODO: (sunil) return an error if this status transition is not supported
 
-        return {
-            'status': user_upload.status,
-        }
+                    return {
+                        'status': user_upload.status,
+                    }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(user_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['AdminPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
 
-            # For now, only the user is allowed to delete their fun fact
-            if user.id != user_id:
-                raise NotAllowedError(f"User '{user.id}' cannot delete fun fact of user '{user_id}'")
-            user.fun_facts.remove(user_upload)
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+                    # For now, only the user is allowed to delete their fun fact
+                    if user.id != user_id:
+                        raise NotAllowedError(f"User '{user.id}' cannot delete fun fact of user '{user_id}'")
+                    user.fun_facts.remove(user_upload)
+                    user_upload.status = UserUploadStatus.DELETED.value
+                    return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")
 
 
 # Mentorship video APIs
@@ -495,13 +596,19 @@ class MentorshipVideoAPI(AuthenticatedAPIBase, UserUploadMixin):
 
     @staticmethod
     def put(user_id):
-        metadata = {
-            'resource': 'user',
-            'resource_id': user_id,
-            'type': 'mentorship_video',
-        }
-        return MentorshipVideoAPI.create_user_upload(
-            user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+        with transaction() as tx:
+            user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    metadata = {
+                        'resource': 'user',
+                        'resource_id': user_id,
+                        'type': 'mentorship_video',
+                    }
+                    return MentorshipVideoAPI.create_user_upload(
+                        user_id, request.json['filename'], request.json['content_type'], 'users', metadata)
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 @blueprint.route('/<user_id>/mentorship_video/<upload_id>')
@@ -509,29 +616,39 @@ class MentorshipVideoByIdAPI(AuthenticatedAPIBase):
 
     @staticmethod
     def put(user_id, upload_id):
-        status = UserUploadStatus.lookup(request.json['status'])
         with transaction() as tx:
             user = User.lookup(tx, user_id)
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
-            if status == UserUploadStatus.UPLOADED:
-                user.mentorship_video = user_upload
-                user_upload.status = status.value
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    status = UserUploadStatus.lookup(request.json['status'])
+                    with transaction() as tx:
+                        user = User.lookup(tx, user_id)
+                        user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+                        if status == UserUploadStatus.UPLOADED:
+                            user.mentorship_video = user_upload
+                            user_upload.status = status.value
 
-        return {
-            'status': user_upload.status,
-        }
+                        return {
+                            'status': user_upload.status,
+                        }
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(user_id, upload_id):
         with transaction() as tx:
             user = User.lookup(tx, current_cognito_jwt['sub'])
-            user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    user_upload = UserUpload.lookup(tx, upload_id, user.customer_id)
 
-            if user.id != user_id:
-                raise NotAllowedError(f"User '{user.id}' cannot delete mentorship video of user '{user_id}'")
-            user.mentorship_video = None
-            user_upload.status = UserUploadStatus.DELETED.value
-        return make_no_content_response()
+                    if user.id != user_id:
+                        raise NotAllowedError(f"User '{user.id}' cannot delete mentorship video of user '{user_id}'")
+                    user.mentorship_video = None
+                    user_upload.status = UserUploadStatus.DELETED.value
+                    return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
 
 # People bookmark APIs
@@ -542,18 +659,25 @@ class UserBookmarkAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             bookmarked_user = User.lookup(tx, user_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
 
-            bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id, must_exist=False)
-            if bookmark is None:
-                UserBookmark(user=user, bookmarked_user=bookmarked_user, created_at=datetime.utcnow())
-        return make_no_content_response()
+                    bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id, must_exist=False)
+                    if bookmark is None:
+                        UserBookmark(user=user, bookmarked_user=bookmarked_user, created_at=datetime.utcnow())
+                    return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for update")
 
     @staticmethod
     def delete(user_id):
         with transaction() as tx:
             bookmarked_user = User.lookup(tx, user_id)
             user = User.lookup(tx, current_cognito_jwt['sub'])
-
-            bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id)
-            tx.delete(bookmark)
-        return make_no_content_response()
+            current_user_role = Permissions.get_user_role(tx, current_cognito_jwt['sub'])
+            for permission in current_user_role.permissions:
+                if permission["api"] == 'User' and permission['createPermission'] == 'Yes':
+                    bookmark = UserBookmark.lookup(tx, user.id, bookmarked_user.id)
+                    tx.delete(bookmark)
+                    return make_no_content_response()
+            raise NotAllowedError(f"User '{user.id}' has no permission for delete")

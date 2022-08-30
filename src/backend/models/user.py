@@ -546,6 +546,14 @@ class UserRole(ModelBase):
 
     role_permissions = relationship('UserRoleMapping')
 
+    # My code
+    @classmethod
+    def lookup(cls, tx, user_id):
+        user = tx.get(cls, user_id)
+        if user is None:
+            raise DoesNotExistError(f"User '{user_id}' does not exist")
+        return user
+    # End
 
 class UserBookmark(ModelBase):  # pylint: disable=too-few-public-methods
     __tablename__ = 'user_bookmark'

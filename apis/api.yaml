@@ -1274,10 +1274,10 @@ paths:
               properties:
                 name:
                   type: string
-                artifacts:
+                products_enabled:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Artifact'
+                    $ref: '#/components/schemas/ProductsEnabled'
                     description: List of artifacts with status.
               required:
                 - name
@@ -1334,10 +1334,10 @@ paths:
               properties:
                 name:
                   type: string
-                artifacts:
+                products_enabled:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Artifact'
+                    $ref: '#/components/schemas/ProductsEnabled'
                     description: List of artifacts with status.
   '/customers/{customer_id}/users':
     parameters:
@@ -6548,10 +6548,10 @@ components:
           type: string
         name:
           type: string
-        artifacts:
+        products_enabled:
           type: array
           items:
-            $ref: '#/components/schemas/Artifact'
+            $ref: '#/components/schemas/ProductsEnabled'
             description: List of artifacts with status.
       required:
         - customer_id
@@ -6722,10 +6722,10 @@ components:
             unread_notifications:
               type: integer
               description: Number of unread_notifications.
-            artifacts:
+            products_enabled:
               type: array
               items:
-                $ref: '#/components/schemas/Artifact'
+                $ref: '#/components/schemas/ProductsEnabled'
                 description: List of artifacts with status.
     Offer:
       allOf:
@@ -7733,7 +7733,7 @@ components:
           type: boolean
         message:
           type: string
-    Artifact:
+    ProductsEnabled:
       title: Artifact details
       type: object
       properties:

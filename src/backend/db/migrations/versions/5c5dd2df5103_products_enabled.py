@@ -1,7 +1,7 @@
 """products enabled
 
 Revision ID: 5c5dd2df5103
-Revises: 056804a6073c
+Revises: bf39805e2e04
 Create Date: 2022-08-21 13:15:45.603954
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
 revision = '5c5dd2df5103'
-down_revision = '056804a6073c'
+down_revision = 'bf39805e2e04'
 branch_labels = None
 depends_on = None
 

@@ -33,6 +33,7 @@ class CustomerAPI(AuthenticatedAPIBase):
         customer = Customer(
             id=customer_id,
             name=request.json['name'],
+            products_enabled=request.json['artifacts'],
         )
 
         with transaction() as tx:
@@ -54,6 +55,7 @@ class CustomerByIdAPI(AuthenticatedAPIBase):
         with transaction() as tx:
             customer = Customer.lookup(tx, customer_id)
             customer.name = request.json.get('name', customer.name)
+            customer.products_enabled = request.json.get('artifacts', customer.products_enabled)
         return customer.as_dict()
 
     @staticmethod

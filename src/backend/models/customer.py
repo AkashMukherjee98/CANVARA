@@ -20,4 +20,5 @@ class Customer(ModelBase):
         return {
             'customer_id': self.id,
             'name': self.name,
+            'artifacts': self.products_enabled
         }

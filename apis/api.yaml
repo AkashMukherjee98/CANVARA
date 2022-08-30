@@ -1274,6 +1274,11 @@ paths:
               properties:
                 name:
                   type: string
+                artifacts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Artifact'
+                    description: List of artifacts with status.
               required:
                 - name
   '/customers/{customer_id}':
@@ -1329,6 +1334,11 @@ paths:
               properties:
                 name:
                   type: string
+                artifacts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Artifact'
+                    description: List of artifacts with status.
   '/customers/{customer_id}/users':
     parameters:
       - schema:
@@ -6538,6 +6548,11 @@ components:
           type: string
         name:
           type: string
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+            description: List of artifacts with status.
       required:
         - customer_id
         - name
@@ -6707,6 +6722,11 @@ components:
             unread_notifications:
               type: integer
               description: Number of unread_notifications.
+            artifacts:
+              type: array
+              items:
+                $ref: '#/components/schemas/Artifact'
+                description: List of artifacts with status.
     Offer:
       allOf:
         - $ref: '#/components/schemas/OfferMinimal'
@@ -7712,6 +7732,14 @@ components:
         is_success:
           type: boolean
         message:
+          type: string
+    Artifact:
+      title: Artifact details
+      type: object
+      properties:
+        is_enabled:
+          type: boolean
+        artifact_name:
           type: string
   securitySchemes:
     AWSCognitoCanvaraPrototype:

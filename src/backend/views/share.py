@@ -16,6 +16,9 @@ from backend.models.community import Community
 from backend.models.share import Share, ShareItemType
 from backend.views.base import AuthenticatedAPIBase
 
+# My code add
+from backend.models.notification import Notification, NotificationType
+
 
 blueprint = Blueprint('share', __name__, url_prefix='/shareitems')
 
@@ -59,6 +62,20 @@ class EventAPI(AuthenticatedAPIBase):
                 item = Community.lookup(tx, payload['item_id'])
             elif item_type == 'people':
                 item = User.lookup(tx, payload['item_id'])
+
+            # My code
+            notification_data = {
+                'share': {
+                    'share_with_user_ids': share_with_user_id,
+                },
+                'user': {
+                    'item_type': item_type,
+                    'item_id': item.id,
+                    'message': payload['message'] if payload.get('message') else None, 
+                }
+            }
+            tx.add(Notification.add_notification(share.id, NotificationType.NEW_OFFER_POSTED, data=notification_data))
+            # End
 
             share = Share(
                 id=share_id,
